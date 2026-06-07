@@ -57,6 +57,64 @@ wayne open africhart-emr
 > commands above after every `wayne serve`.** No-sudo alternative for local dev:
 > `chmod -R 777 storage bootstrap/cache`.
 
+## Database dumps
+
+Ready-to-import SQL lives in `database/schema/`:
+
+| File | Contents |
+|---|---|
+| `africhart_emr.sql` | Full dump — structure **+ demo data** (2 users, 25 patients, migration rows). Import this for an instant working demo. |
+| `africhart_emr-structure.sql` | Structure only (empty tables). |
+
+Import (no `CREATE DATABASE` in the file, so pick the target DB yourself):
+```bash
+mysql -u <user> -p <database> < database/schema/africhart_emr.sql
+```
+Regenerate after schema changes: `mysqldump -u root -p --no-tablespaces --add-drop-table africhart_emr > database/schema/africhart_emr.sql`.
+
+## Deployment (live server — shared hosting / cPanel)
+
+The live demo runs on cPanel shared hosting at `https://africhart.mgbah.dev`.
+
+**1. PHP 8.3.** Composer/Laravel require PHP ≥ 8.3. On cPanel set the domain's version in
+**MultiPHP Manager**, and for CLI use the 8.3 binary (find it with `ls -d /opt/cpanel/ea-php*`):
+```bash
+alias php=/opt/cpanel/ea-php83/root/usr/bin/php
+```
+Enable these extensions in **Select PHP Version**: `bcmath, ctype, curl, dom, fileinfo,
+intl, mbstring, openssl, pdo, pdo_mysql, tokenizer, xml, zip`.
+
+**2. Get the code + dependencies.** Two options:
+- **Composer/npm on the server (preferred):** `composer install --no-dev --optimize-autoloader`,
+  then `npm install && npm run build` (or upload `public/build` if there's no Node).
+- **Ship artifacts via git (used for this deploy, when the host lacks Composer/npm):**
+  `vendor/` + `public/build/` were force-committed, pulled on the server, then history was
+  squashed back to one clean commit. ⚠️ Because the clean history no longer tracks those
+  folders, **do not run `git pull` / `git reset --hard` on the server** — it would delete
+  them. For future updates, re-ship them the same way or switch to the Composer/npm option.
+
+**3. Configure `.env`** (production):
+```ini
+APP_ENV=production
+APP_DEBUG=false
+APP_URL=https://africhart.mgbah.dev
+```
+Set DB + mail + invite-code values. **No trailing spaces** in values, and quote any with
+special characters (e.g. `DB_PASSWORD="..."`). Then `php artisan key:generate` if `APP_KEY`
+is blank.
+
+**4. Database.** Import `database/schema/africhart_emr.sql` via phpMyAdmin/CLI, **or**
+`php artisan migrate --seed`.
+
+**5. Permissions & web root.**
+```bash
+chmod -R 775 storage bootstrap/cache
+```
+Point the subdomain's document root at `…/africhart.mgbah.dev/public`, or rely on the
+committed root `.htaccess` (it rewrites requests into `public/`).
+
+**6. (Optional) production caches:** `php artisan config:cache route:cache view:cache`.
+
 ## Troubleshooting
 
 | Symptom | Cause | Fix |

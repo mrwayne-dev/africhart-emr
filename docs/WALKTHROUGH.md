@@ -41,6 +41,10 @@
 29. [Responsive layout](#29-responsive-layout)
 30. [Running under Apache (the storage permissions gotcha)](#30-running-under-apache-the-storage-permissions-gotcha)
 
+**Part 4 — Shipping it**
+31. [Migrations vs a SQL dump](#31-migrations-vs-a-sql-dump)
+32. [Deploying to shared hosting (cPanel)](#32-deploying-to-shared-hosting-cpanel)
+
 ---
 
 ## 1. The mental model
@@ -1272,5 +1276,50 @@ See the README's Troubleshooting table for other common issues.
 
 ---
 
-*That's the whole app. Read it once start-to-finish, then open each file next to its
-section above — by the end you'll know exactly why every line is there.*
+# Part 4 — Shipping it: database dumps & deployment
+
+## 31. Migrations vs a SQL dump
+
+Two different things that both describe the database:
+
+- **Migrations** (`database/migrations/`) are the *source of truth* for the schema — PHP
+  that builds tables, versioned in git, reversible, DB-agnostic. You run them with
+  `php artisan migrate`.
+- **A SQL dump** (`database/schema/*.sql`) is a *snapshot* — raw `CREATE TABLE` + `INSERT`
+  statements you can import straight into MySQL (phpMyAdmin, `mysql <db> < file.sql`). Handy
+  when a server can't run `artisan`, or to hand someone a ready-to-go database.
+
+We keep both: `africhart_emr.sql` (structure **+** the 2 demo users and 25 patients, plus the
+`migrations` rows so Laravel knows they've run) and `africhart_emr-structure.sql` (empty).
+Regenerate with `mysqldump`. See the README's "Database dumps" section.
+
+## 32. Deploying to shared hosting (cPanel)
+
+The live demo runs on cPanel shared hosting — a constrained environment (no root, you pick
+PHP versions and extensions through a UI, Composer/Node may be limited). The essentials:
+
+- **PHP 8.3** — selected per-domain in MultiPHP Manager, with the right extensions enabled.
+  The CLI default is often older, which is why `composer` first complained about the PHP
+  version; you point it at the 8.3 binary under `/opt/cpanel/ea-php83/...`.
+- **Dependencies** — normally `composer install --no-dev` (for `vendor/`) and a build step
+  (for `public/build/`). Both are git-ignored, so a fresh clone lacks them.
+- **The git-artifact trick we used** — because this host couldn't build, we temporarily
+  *force-committed* `vendor/` + `public/build/` (`git add -f`, bypassing `.gitignore`),
+  pushed, pulled them on the server, then **squashed history back to a single clean commit**
+  (an orphan branch, force-pushed) so the public repo stays artifact-free and `.env` never
+  enters git. The catch: the server's clone must not be hard-reset/re-pulled afterward, or it
+  would lose those untracked folders. *This is a pragmatic shortcut for a constrained host —
+  the "proper" path is Composer + a build step on the server (or a CI pipeline).*
+- **Web root** — must resolve to `public/`. Either set the domain's document root there, or
+  let the committed root `.htaccess` rewrite into it (the same trick used for the local
+  `wayne` setup in §30).
+- **`.env`** — created on the server, never committed; production means `APP_ENV=production`,
+  `APP_DEBUG=false`, real DB/mail creds (watch for trailing spaces!).
+
+Full step-by-step commands live in the README's "Deployment" section.
+
+---
+
+*That's the whole app — build, behaviour, and deployment. Read it once start-to-finish, then
+open each file next to its section above; by the end you'll know exactly why every line is
+there.*
