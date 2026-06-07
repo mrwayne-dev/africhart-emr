@@ -1,0 +1,31 @@
+@import url('https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600&display=swap');
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../vendor/codeat3/blade-phosphor-icons/resources/svg/*.svg';
+@source '../../storage/framework/views/*.php';
+
+/*
+ * AfriChart EMR — design tokens adapted from the Crestmark spec (light palette).
+ * Generates utilities like bg-page, bg-warm, text-ink, text-muted, rounded-card.
+ */
+@theme {
+    --font-sans: 'General Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+        'Segoe UI Symbol', 'Noto Color Emoji';
+
+    --color-page: #ffffff;
+    --color-warm: #f8f7f5;
+    --color-warm-alt: #faf9f5;
+    --color-ink: #1a1a1a;
+    --color-ink-body: #0d0d0d;
+    --color-muted: #636363;
+    --color-line: #ececec;
+    --color-accent: #c2001d;
+
+    --radius-card: 8px;
+}
+
+/* Hide Alpine elements until Alpine initialises them. */
+[x-cloak] {
+    display: none !important;
+}

@@ -1,0 +1,8 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # AfriChart EMR is a Laravel app: its front controller lives in public/index.php.
+    # The `wayne` CLI points Apache's DocumentRoot at the project root, so we rewrite
+    # every request into public/ (where Laravel's own public/.htaccess takes over).
+    RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>
