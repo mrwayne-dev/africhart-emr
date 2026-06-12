@@ -64,6 +64,10 @@
 46. [The same workflow via the REST API](#46-the-same-clinic-through-software-the-rest-api)
 47. [The one-paragraph version](#47-the-one-paragraph-version)
 
+**Part 7 — Later additions**
+48. [Live updates without WebSockets (polling)](#48-live-updates-without-websockets-polling)
+49. [The billing worklist (so reception can invoice)](#49-the-billing-worklist-so-reception-can-invoice)
+
 ---
 
 ## 1. The mental model
@@ -1530,10 +1534,13 @@ Only Dr. Emeka (or an admin) can edit this consultation later — the Policy enf
 
 Chioma comes back to the front desk to pay.
 
-1. On the consultation (or from **Invoices**) the receptionist clicks **Generate Invoice**.
+1. The moment Dr. Emeka completed the consultation, it appeared in the receptionist's
+   **"Ready to Invoice"** worklist — a billing-only list on her dashboard (patient, doctor,
+   when it finished; **no** clinical notes). She clicks **Generate Invoice** there.
    *The system creates `ACH-INV-20260610-0001` as a **draft**, pre-loaded with the
    consultation fee (a configurable default, not hard-coded) and one line per prescribed
-   drug — priced at ₦0 because drug prices vary by clinic.*
+   drug — priced at ₦0 because drug prices vary by clinic. (See §49 for why billing lives in
+   its own worklist instead of on the clinical consultation page.)*
 2. The receptionist types the real prices straight into the table; **the total re-sums on
    every edit**. They can add ad-hoc lines (a lab test, dressings) too.
 3. Chioma pays cash. They click **Mark as Paid**, choose **Cash**. *Status → **Paid**,
@@ -1602,6 +1609,106 @@ receipt. Everything the patient experienced is then visible as a **timeline** on
 record; everything the staff did is in the **audit log**; the money and volumes roll up
 into the admin's **charts**; and the whole thing is reachable by other software through a
 documented **REST API**. Four roles, one clean line from front door to paid bill.
+
+---
+
+# Part 7 — Later additions
+
+Two features added after the Phase 1 MVP was working. Both follow the same layered shape as
+everything else — no new architecture, just new endpoints and a reusable Alpine component.
+
+## 48. Live updates without WebSockets (polling)
+
+**The problem.** Several roles look at the same data at once: reception checks a patient in,
+a nurse records vitals, a doctor completes a consultation. Before this, everyone saw a
+*static snapshot* until they manually refreshed — the queue a nurse was staring at wouldn't
+show the patient reception just added.
+
+**Why polling, not WebSockets.** The app runs on **shared cPanel hosting**, which can't run
+a long-lived process or a custom port — so self-hosted WebSockets (Reverb/Soketi) are out,
+and a third-party push service (Pusher) would route clinic activity through an external
+cloud, which we don't want for medical data. So we **poll**: every few seconds the browser
+asks the server "has this changed?" It's near-real-time (~8s), needs zero new infrastructure,
+costs nothing, and **no data leaves the server**.
+
+**The trick: re-render the existing Blade partial, swap only when it changed.** Rather than
+rebuild rows in JavaScript (which would duplicate all the styling and role-gating), each
+"live region" is re-rendered by the **same Blade partial** the page already uses, and swapped
+into the DOM. To avoid pointless DOM churn, the server also returns a cheap **hash** of the
+underlying data; the browser only swaps when the hash differs from what it last saw.
+
+- **Server** — a small trait, `app/Http/Controllers/Concerns/RendersLiveFragment.php`. Its
+  `liveFragment($view, $data, $hashParts, $meta)` returns
+  `{ hash, html, meta }` — `html` is the rendered partial, `hash` is `md5()` of cheap change
+  signals (row `id|status|updated_at`, counts, etc.), `meta` carries small extras like a
+  count. A sister method `liveHashResponse()` returns just the hash (for "notify" mode below).
+- **Client** — `Alpine.data('livePoll', …)` in `resources/js/app.js`. You attach it to a
+  region with `x-data="livePoll({ url: '…/live', interval: 8000, hash: '{{ $liveHash }}' })"`
+  and mark the swappable part with `x-ref="region"`. Each tick it fetches the URL; if the
+  hash matches, it does nothing; if it changed, it replaces the region's HTML and calls
+  **`Alpine.initTree(region)`** so any Alpine directives *inside* the swapped HTML (e.g. an
+  assign-doctor dropdown) come alive again.
+
+Three things keep it from being annoying:
+- **It pauses when the tab is hidden** (`document.hidden`) and resumes on focus — no polling
+  in background tabs.
+- **Focus guard** — if you're actively using a control inside the region (an open dropdown),
+  the swap is deferred to the next tick so it isn't yanked out from under you.
+- **"Notify" mode** — on the consultation *detail* page a swap would wipe a doctor's
+  half-typed prescription form, so that page uses `mode: 'notify'`: it polls the hash only
+  and, when something changes, shows a *"This was updated — Refresh"* banner instead of
+  swapping. The doctor refreshes when *they're* ready.
+
+**Where it's live** (each `*/live` endpoint sits behind the *same* role gate as its page, so
+a receptionist hitting a consultation-detail live endpoint gets the same 403 they'd get on
+the page):
+
+| Region | Endpoint | Mode |
+|---|---|---|
+| Patient queue (queue page + nurse/reception/doctor dashboards; `?mine=1` scopes to the doctor) | `GET /queue/live` | swap |
+| Consultation list (preserves the current filters) | `GET /consultations/live` | swap |
+| Consultation detail | `GET /consultations/{c}/live` | notify (banner) |
+| "Ready to Invoice" worklist | `GET /billing/ready-to-invoice/live` | swap |
+
+A small pulsing **"● Live"** badge (`<x-live-indicator>`) marks each live region so users
+know it updates itself. Dashboard **stat cards, charts, and the activity feed are
+deliberately *not* live** — Chart.js doesn't survive an `innerHTML` swap, and those numbers
+don't need second-by-second accuracy; they refresh on navigation.
+
+*If sub-second updates are ever required, the upgrade path is the same Blade regions with a
+different transport (Pusher on shared hosting, or Reverb on a VPS) — only the trait and the
+`livePoll` fetch would change.*
+
+## 49. The billing worklist (so reception can invoice)
+
+**The bug.** The receptionist is the clinic's biller, but she **couldn't generate an
+invoice**. The only "Generate Invoice" button lived on the **consultation show page**, and
+that page is gated `role:admin,doctor,nurse` — reception is *excluded* (clinical notes and a
+diagnosis aren't billing's business). So `InvoicePolicy::create` allowed her to invoice, the
+route existed, but she had no way to *reach* the button. Only an admin could actually click
+it; the doctor/nurse saw the page but no button (their `create` policy is false).
+
+**The fix — give reception a billing-only worklist, not the clinical page.** A new
+**"Ready to Invoice"** section (`<x-ready-to-invoice>`) on the **receptionist and admin**
+dashboards lists *completed consultations that have no invoice yet* — patient, assigned
+doctor, when it finished, and a **Generate Invoice** button. No diagnosis, no notes; just
+what billing needs.
+
+- **Data** — `ConsultationRepository::completedWithoutInvoice()` is the one new query:
+  `where(status, Completed)->whereDoesntHave('invoice')`. It's exposed through
+  `DashboardService::getReadyToInvoice()` and passed to the two dashboards by
+  `DashboardController`.
+- **A guard on the action** — `InvoiceController::generateFromConsultation()` (and its API
+  twin) now refuses to invoice a consultation that isn't **Completed**
+  ("An invoice can only be generated once the consultation is completed."), on top of the
+  existing "already has an invoice → jump to it" behaviour.
+- **It's a live region** — the worklist uses the polling from §48, so a completed
+  consultation appears on reception's screen within seconds of the doctor finishing, without
+  a refresh.
+
+Once she generates the invoice, the consultation drops off the worklist (it now *has* an
+invoice) and she prices it on the normal invoice page — exactly as §43 describes. The admin
+keeps the original button on the consultation page; nothing changed for the clinical roles.
 
 ---
 
