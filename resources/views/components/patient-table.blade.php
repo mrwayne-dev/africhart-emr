@@ -6,7 +6,7 @@
 <div class="overflow-x-auto">
     <table class="w-full text-sm">
         <thead>
-            <tr class="text-left text-muted border-b border-line">
+            <tr class="text-left text-muted border-b border-line whitespace-nowrap">
                 <th class="px-4 py-3 font-medium">Patient ID</th>
                 <th class="px-4 py-3 font-medium">Name</th>
                 <th class="px-4 py-3 font-medium">Age</th>

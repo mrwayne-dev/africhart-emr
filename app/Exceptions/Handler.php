@@ -39,7 +39,7 @@ class Handler extends ExceptionHandler
             return response()->json([
                 'success' => false,
                 'message' => 'Validation failed.',
-                'errors'  => $e->errors(),
+                'errors' => $e->errors(),
             ], 422);
         }
 

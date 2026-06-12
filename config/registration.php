@@ -16,6 +16,8 @@ return [
     'codes' => [
         'admin' => env('REGISTER_CODE_ADMIN'),
         'doctor' => env('REGISTER_CODE_DOCTOR'),
+        'nurse' => env('REGISTER_CODE_NURSE'),
+        'receptionist' => env('REGISTER_CODE_RECEPTIONIST'),
     ],
 
     /*

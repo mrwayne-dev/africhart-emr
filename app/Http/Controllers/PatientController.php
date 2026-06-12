@@ -61,7 +61,10 @@ class PatientController extends BaseController
     {
         $patient->load('registeredBy');
 
-        return view('patients.show', compact('patient'));
+        return view('patients.show', [
+            'patient' => $patient,
+            'timeline' => $this->patientService->getTimeline($patient),
+        ]);
     }
 
     public function edit(Patient $patient): View

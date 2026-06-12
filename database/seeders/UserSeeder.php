@@ -23,5 +23,19 @@ class UserSeeder extends Seeder
             'password' => 'password',
             'role' => 'doctor',
         ])->forceFill(['email_verified_at' => now()])->save();
+
+        User::create([
+            'name' => 'Nurse Amina',
+            'email' => 'nurse@africhart.com',
+            'password' => 'password',
+            'role' => 'nurse',
+        ])->forceFill(['email_verified_at' => now()])->save();
+
+        User::create([
+            'name' => 'Front Desk — Chioma',
+            'email' => 'reception@africhart.com',
+            'password' => 'password',
+            'role' => 'receptionist',
+        ])->forceFill(['email_verified_at' => now()])->save();
     }
 }

@@ -43,6 +43,40 @@
             <x-phosphor-users class="w-5 h-5" />
             Patients
         </a>
+
+        <a href="{{ route('queue.index') }}" @click="sidebarOpen = false"
+            class="flex items-center gap-3 px-3 py-2.5 rounded-card text-sm font-medium transition-colors
+                {{ request()->routeIs('queue.*') ? 'bg-warm text-ink' : 'text-muted hover:bg-warm hover:text-ink' }}">
+            <x-phosphor-list-checks class="w-5 h-5" />
+            Queue
+        </a>
+
+        @unless ($user->isReceptionist())
+            <a href="{{ route('consultations.index') }}" @click="sidebarOpen = false"
+                class="flex items-center gap-3 px-3 py-2.5 rounded-card text-sm font-medium transition-colors
+                    {{ request()->routeIs('consultations.*') ? 'bg-warm text-ink' : 'text-muted hover:bg-warm hover:text-ink' }}">
+                <x-phosphor-stethoscope class="w-5 h-5" />
+                Consultations
+            </a>
+        @endunless
+
+        @unless ($user->isNurse())
+            <a href="{{ route('invoices.index') }}" @click="sidebarOpen = false"
+                class="flex items-center gap-3 px-3 py-2.5 rounded-card text-sm font-medium transition-colors
+                    {{ request()->routeIs('invoices.*') ? 'bg-warm text-ink' : 'text-muted hover:bg-warm hover:text-ink' }}">
+                <x-phosphor-receipt class="w-5 h-5" />
+                Invoices
+            </a>
+        @endunless
+
+        @if ($user->isAdmin())
+            <a href="{{ route('audit.index') }}" @click="sidebarOpen = false"
+                class="flex items-center gap-3 px-3 py-2.5 rounded-card text-sm font-medium transition-colors
+                    {{ request()->routeIs('audit.*') ? 'bg-warm text-ink' : 'text-muted hover:bg-warm hover:text-ink' }}">
+                <x-phosphor-clock-counter-clockwise class="w-5 h-5" />
+                Audit Log
+            </a>
+        @endif
     </nav>
 
     {{-- User info --}}

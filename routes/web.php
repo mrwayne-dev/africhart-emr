@@ -1,10 +1,16 @@
 <?php
 
+use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\ConsultationController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EmailVerificationController;
+use App\Http\Controllers\ExportController;
+use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\PasswordResetController;
 use App\Http\Controllers\PatientController;
+use App\Http\Controllers\PatientQueueController;
+use App\Http\Controllers\PrescriptionController;
 use App\Http\Controllers\RegisterController;
 use Illuminate\Support\Facades\Route;
 
@@ -41,7 +47,82 @@ Route::middleware('auth')->group(function () {
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-    Route::middleware('role:admin,doctor')->group(function () {
+    // Patient management — all clinical staff and reception
+    Route::middleware('role:admin,doctor,nurse,receptionist')->group(function () {
         Route::resource('patients', PatientController::class)->except(['destroy']);
     });
+
+    // --- Patient Queue ---
+    // Viewing the queue is open to everyone; mutating it is role-gated.
+    Route::get('/queue', [PatientQueueController::class, 'index'])->name('queue.index');
+    Route::get('/queue/live', [PatientQueueController::class, 'live'])->name('queue.live');
+
+    Route::middleware('role:admin,nurse,receptionist')->group(function () {
+        Route::post('/queue', [PatientQueueController::class, 'store'])->name('queue.store');
+        Route::patch('/queue/{queue}/assign', [PatientQueueController::class, 'assign'])->name('queue.assign');
+    });
+
+    Route::middleware('role:admin,receptionist')->group(function () {
+        Route::patch('/queue/{queue}/cancel', [PatientQueueController::class, 'cancel'])->name('queue.cancel');
+    });
+
+    // --- Consultations ---
+    // Viewing + recording vitals: admin, doctor, nurse.
+    Route::middleware('role:admin,doctor,nurse')->group(function () {
+        Route::get('/consultations', [ConsultationController::class, 'index'])->name('consultations.index');
+        Route::get('/consultations/live', [ConsultationController::class, 'liveIndex'])->name('consultations.live');
+        Route::get('/consultations/{consultation}', [ConsultationController::class, 'show'])
+            ->whereNumber('consultation')->name('consultations.show');
+        Route::get('/consultations/{consultation}/live', [ConsultationController::class, 'liveShow'])
+            ->whereNumber('consultation')->name('consultations.live.show');
+        Route::patch('/consultations/{consultation}/vitals', [ConsultationController::class, 'recordVitals'])
+            ->whereNumber('consultation')->name('consultations.vitals');
+    });
+
+    // Creating / editing / completing + prescriptions: admin, doctor.
+    Route::middleware('role:admin,doctor')->group(function () {
+        Route::get('/consultations/create', [ConsultationController::class, 'create'])->name('consultations.create');
+        Route::post('/consultations', [ConsultationController::class, 'store'])->name('consultations.store');
+        Route::get('/consultations/{consultation}/edit', [ConsultationController::class, 'edit'])
+            ->whereNumber('consultation')->name('consultations.edit');
+        Route::put('/consultations/{consultation}', [ConsultationController::class, 'update'])
+            ->whereNumber('consultation')->name('consultations.update');
+        Route::patch('/consultations/{consultation}/complete', [ConsultationController::class, 'complete'])
+            ->whereNumber('consultation')->name('consultations.complete');
+
+        // Prescriptions are nested under a consultation.
+        Route::post('/consultations/{consultation}/prescriptions', [PrescriptionController::class, 'store'])
+            ->whereNumber('consultation')->name('prescriptions.store');
+        Route::delete('/prescriptions/{prescription}', [PrescriptionController::class, 'destroy'])
+            ->name('prescriptions.destroy');
+    });
+
+    // --- Invoices ---
+    // Viewing: admin, receptionist, doctor.
+    Route::middleware('role:admin,doctor,receptionist')->group(function () {
+        Route::get('/invoices', [InvoiceController::class, 'index'])->name('invoices.index');
+        Route::get('/invoices/{invoice}', [InvoiceController::class, 'show'])->name('invoices.show');
+        Route::get('/invoices/{invoice}/pdf', [InvoiceController::class, 'downloadPdf'])->name('invoices.pdf');
+    });
+
+    // Managing: admin, receptionist.
+    Route::middleware('role:admin,receptionist')->group(function () {
+        Route::get('/billing/ready-to-invoice/live', [DashboardController::class, 'readyToInvoiceLive'])->name('billing.ready.live');
+        Route::post('/invoices/from-consultation/{consultation}', [InvoiceController::class, 'generateFromConsultation'])
+            ->whereNumber('consultation')->name('invoices.generate');
+        Route::put('/invoices/{invoice}', [InvoiceController::class, 'update'])->name('invoices.update');
+        Route::post('/invoices/{invoice}/items', [InvoiceController::class, 'addItem'])->name('invoices.items.store');
+        Route::patch('/invoice-items/{item}', [InvoiceController::class, 'updateItem'])->name('invoices.items.update');
+        Route::delete('/invoice-items/{item}', [InvoiceController::class, 'removeItem'])->name('invoices.items.destroy');
+        Route::patch('/invoices/{invoice}/issue', [InvoiceController::class, 'issue'])->name('invoices.issue');
+        Route::patch('/invoices/{invoice}/pay', [InvoiceController::class, 'markPaid'])->name('invoices.pay');
+    });
+
+    // --- Audit log (admin only) ---
+    Route::get('/audit-log', [AuditLogController::class, 'index'])->name('audit.index');
+
+    // --- Data export (admin only) ---
+    Route::get('/export/patients', [ExportController::class, 'patients'])->name('export.patients');
+    Route::get('/export/consultations', [ExportController::class, 'consultations'])->name('export.consultations');
+    Route::get('/export/invoices', [ExportController::class, 'invoices'])->name('export.invoices');
 });

@@ -45,6 +45,25 @@
 31. [Migrations vs a SQL dump](#31-migrations-vs-a-sql-dump)
 32. [Deploying to shared hosting (cPanel)](#32-deploying-to-shared-hosting-cpanel)
 
+**Part 5 — Phase 1: the full clinical MVP**
+33. [What's new at a glance](#33-whats-new-at-a-glance)
+34. [Three new patterns (Policies, audit trait, API Resources)](#34-three-new-patterns)
+35. [The modules (queue, consultation, prescription, invoice)](#35-the-modules-queue-consultation-prescription-invoice)
+36. [The REST API](#36-the-rest-api-routesapiphp)
+37. [The overdelivery features](#37-the-overdelivery-features)
+38. [Running Phase 1](#38-running-phase-1)
+
+**Part 6 — A day at the clinic: the end-to-end workflow**
+39. [The cast (who logs in, what they can touch)](#39-the-cast-who-logs-in-and-what-they-can-touch)
+40. [Patient arrives (Receptionist)](#40-830-am--a-patient-arrives-receptionist)
+41. [Vitals (Nurse)](#41-845-am--vitals-nurse)
+42. [The consultation (Doctor)](#42-900-am--the-consultation-doctor)
+43. [Billing (Receptionist)](#43-920-am--billing-receptionist)
+44. [The patient's timeline](#44-the-patients-story-forever-anyone-viewing-her-record)
+45. [Oversight (Admin)](#45-end-of-day--oversight-admin)
+46. [The same workflow via the REST API](#46-the-same-clinic-through-software-the-rest-api)
+47. [The one-paragraph version](#47-the-one-paragraph-version)
+
 ---
 
 ## 1. The mental model
@@ -1317,6 +1336,272 @@ PHP versions and extensions through a UI, Composer/Node may be limited). The ess
   `APP_DEBUG=false`, real DB/mail creds (watch for trailing spaces!).
 
 Full step-by-step commands live in the README's "Deployment" section.
+
+---
+
+# Part 5 — Phase 1: the full clinical MVP
+
+Phase 1 turns the patient registry into a working clinic system. The architecture is
+*exactly the same* as Phase 0 (`Route → Controller → Service → Repository → Model`) — we
+just add more of each, plus three new patterns. If you understood Parts 1–4, this is more
+of the same shape.
+
+## 33. What's new at a glance
+
+- **Four roles** instead of two: `UserRole` gains `Nurse` and `Receptionist`. The `role`
+  column was already a string, so no migration — just enum cases, `User` helpers
+  (`isNurse()`, `isReceptionist()`, `isClinicalStaff()`), invite codes, and seeded accounts.
+- **Six new tables**: `consultations`, `prescriptions`, `invoices`, `invoice_items`,
+  `patient_queue`, `audit_logs` (plus Sanctum's `personal_access_tokens`). Each follows the
+  same migration conventions as `patients` (indexes, `foreignId(...)->constrained()`,
+  `onDelete` rules). Status columns are backed by enums with a `label()` **and** a `color()`
+  (a Tailwind class string for status badges).
+- **The clinical workflow**: check in (queue) → record vitals → start consultation → write
+  notes + prescriptions → complete → generate invoice → mark paid. Each step is a service
+  method; the controllers stay thin.
+
+## 34. Three new patterns
+
+**1. Policies (fine-grained authorization).** Middleware answers "is this role allowed on
+this route?" Policies answer "is *this user* allowed on *this row*?" — e.g. only the doctor
+who created a consultation (or an admin) may edit it. `ConsultationPolicy` and
+`InvoicePolicy` live in `app/Policies/` and are auto-discovered by name. Controllers call
+`$this->authorize('update', $consultation)`; the base `Controller` now uses the
+`AuthorizesRequests` trait so that method exists. Two non-model abilities
+(`view-audit-log`, `export-data`, both admin-only) are plain Gates in `AppServiceProvider`.
+
+**2. The audit trail (a model trait).** `app/Traits/HasAuditTrail.php` hooks Eloquent's
+`created`/`updated`/`deleted` events and writes an `AuditLog` row (who, what, when,
+before/after). Apply it to a model and tracking is automatic — `Patient`, `Consultation`,
+`Prescription` and `Invoice` all `use HasAuditTrail`. Because it's on the *model*, it fires
+no matter who triggers the write (web, API, tinker). A model can define `auditDescription()`
+to make the log human-readable ("Completed consultation ACH-C-… for Chioma Nwosu").
+
+**3. API Resources (JSON shaping).** For the REST API we never return raw models. Each
+model has a Resource in `app/Http/Resources/` (`PatientResource`, `ConsultationResource`, …)
+that defines the exact JSON shape and uses `whenLoaded()` so relations only appear when
+eager-loaded. This keeps the API contract stable and decoupled from the DB columns.
+
+## 35. The modules (queue, consultation, prescription, invoice)
+
+Each module is the **same five-layer stack** you already know:
+
+- **Queue** — `PatientQueueService::checkIn()` assigns the next daily number;
+  `markInConsultation()` / `markCompleted()` are called *by the consultation service* so the
+  queue reflects clinical reality. The check-in UI is a reusable `<x-check-in-modal>`.
+- **Consultation** — `ConsultationService::startConsultation()` generates `ACH-C-YYYYMMDD-XXXX`
+  (same generator pattern as patient IDs) and flips the queue entry. The **show page**
+  (`consultations/show.blade.php`) is the clinical workspace: patient + vitals + notes +
+  prescriptions + invoice panel + "Complete". Vitals are a separate `RecordVitalsRequest`
+  (nurses can record them even though they can't write notes).
+- **Prescription** — nested under a consultation. The form is an Alpine component
+  (`prescriptionForm` in `app.js`) that grows/shrinks rows and autocompletes from
+  `storage/app/data/medications.json`. It posts `items[]`, so one submit saves several drugs;
+  `StorePrescriptionRequest` validates the array.
+- **Invoice** — `InvoiceService::generateFromConsultation()` seeds a draft with the
+  consultation fee (`config/billing.php`, not a magic number) + one line per medication.
+  `recalculateTotals()` re-sums on every item edit. The show page lets a receptionist edit
+  prices inline (each row is a tiny PATCH form) and `markAsPaid()` records the method + time.
+
+## 36. The REST API (`routes/api.php`)
+
+Everything lives under `/api/v1` behind `auth:sanctum`. `POST /auth/login` checks the
+password and returns a Sanctum token (`$user->createToken(...)`). The **same services** the
+web controllers use are reused by `app/Http/Controllers/Api/V1/*` — only the input
+(JSON) and output (Resources + the `ApiResponse` envelope `{success,message,data,meta}`)
+differ. Role middleware + the same Policies enforce access, so the API and the web UI can
+never drift apart on permissions. Validation reuses the web Form Requests: because
+`bootstrap/app.php` renders JSON for `api/*`, a failed `FormRequest` returns a clean
+`422` with an `errors` object instead of redirecting.
+
+**Interactive docs.** Controllers carry `@OA\…` annotations (OpenAPI); the global Info +
+Sanctum security scheme live in `Api/V1/OpenApi.php`. `php artisan l5-swagger:generate`
+builds `storage/api-docs/api-docs.json`, served as Swagger UI at `/api/documentation`. One
+gotcha: l5-swagger's default analyser reads PHP-8 *attributes* only, so we point
+`config/l5-swagger.php`'s `scanOptions.analyser` at a `ReflectionAnalyser` that also reads
+doc-comment annotations (and added `doctrine/annotations`).
+
+## 37. The overdelivery features
+
+- **Patient timeline** — `PatientService::getTimeline()` merges registration + consultations
+  + invoices into one sorted collection; `<x-timeline>` renders it on the patient page.
+- **Dashboard charts** — `DashboardService` returns plain arrays
+  (`getRegistrationTrend`, `getRevenueTrend`, `getConsultationStatusBreakdown`); the reusable
+  `<x-chart>` component feeds them to Chart.js (imported in `app.js`). The admin activity
+  feed reads the latest `AuditLog` rows.
+- **PDF invoices** — `barryvdh/laravel-dompdf` renders `invoices/pdf.blade.php` (plain
+  inline-CSS HTML, since dompdf has no flexbox) via `InvoiceController::downloadPdf`.
+- **CSV export** — `ExportController` streams patients/consultations/invoices with
+  `fputcsv` (admin-only via the `export-data` gate).
+- **Print views** — an `@media print` block in `app.css` hides the chrome (`aside, header,
+  nav, .no-print, button`); a `<x-print-button>` calls `window.print()`.
+
+## 38. Running Phase 1
+
+```bash
+composer install                      # adds sanctum, l5-swagger, dompdf, doctrine/annotations
+npm install && npm run build          # adds chart.js
+php artisan migrate:fresh --seed      # 4 users, 25 patients, + Phase1DemoSeeder clinical data
+php artisan l5-swagger:generate       # build API docs → /api/documentation
+```
+
+`Phase1DemoSeeder` creates consultations, prescriptions, invoices (some paid, backdated for
+the charts) and a live queue **through the services**, so the demo data is indistinguishable
+from real use — and, like the patient seeder, it never fires admin emails (those live in the
+controllers, which the seeder bypasses).
+
+---
+
+# Part 6 — A day at the clinic: the end-to-end workflow
+
+This part is the system from the **outside in** — not "what file does what," but "what
+actually happens when a real patient walks into a real Nigerian clinic," and what the
+software does at each step. Read Parts 1–5 for the *how*; read this for the *why it's
+shaped this way*. Each step names the screen the staff member sees, the action they take,
+and — in *italics* — what the system does behind the glass.
+
+## 39. The cast (who logs in, and what they can touch)
+
+A clinic running AfriChart has four kinds of staff. Everyone logs in at `/login`; the
+system drops each person on a **different dashboard** for their role, and the sidebar only
+shows the sections they're allowed to use.
+
+| Role | Their job in the building | What the app lets them do |
+|---|---|---|
+| **Receptionist** (front desk) | Greets patients, registers new ones, takes payment | Register/search patients, check patients into the queue, generate & settle invoices |
+| **Nurse** | Takes vitals before the doctor sees the patient | See the queue, record temperature/BP/pulse/weight/height |
+| **Doctor** | Examines, diagnoses, prescribes | See their queue, run consultations, write notes & diagnosis, prescribe drugs, complete the visit |
+| **Admin** | Owner/manager — oversight, money, compliance | Everything, plus dashboard analytics, the audit log, and CSV exports |
+
+*Behind the glass:* role is stored on the `users` row and cast to the `UserRole` enum.
+The **`role` middleware** blocks whole sections by role; **Policies** then decide
+row-by-row questions ("is this *your* consultation?"). Hiding a sidebar link is just
+convenience — the real gate is server-side, so typing the URL directly still gets a 403.
+
+## 40. 8:30 AM — A patient arrives (Receptionist)
+
+Mrs. Chioma Nwosu walks in with a 3-day headache.
+
+1. **Is she already a patient?** The receptionist opens **Patients**, types "Chioma" or her
+   phone number in the search box. If she's new, they click **Register Patient**, fill the
+   modal (name, date of birth, phone, blood group, allergies) and save.
+   *The system validates the Nigerian phone format, generates her permanent ID
+   `ACH-20260610-0001`, and writes an audit-log line "Registered patient Chioma Nwosu."*
+2. **Check her in.** From **Queue** (or straight from the dashboard) the receptionist clicks
+   **Check In Patient**, picks Chioma, optionally assigns a doctor, and adds a reason
+   ("Headache"). *She's now `#1` in today's queue with status **Waiting**. The number resets
+   to 1 each morning automatically.*
+
+At this point Chioma sits down. The queue board now shows her, live, to everyone on shift.
+
+## 41. 8:45 AM — Vitals (Nurse)
+
+The nurse sees Chioma waiting at the top of the **Queue**.
+
+1. The nurse can't write clinical notes — that's the doctor's job — but they **can record
+   vitals**. (In this build the doctor opens the consultation and the nurse fills the vitals
+   panel there; the *Record Vitals* action is open to nurses, doctors and admins.)
+2. They enter Temp 37.2 °C, BP 120/80, Pulse 72, Weight 68 kg, Height 170 cm and save.
+   *The system stores them on the consultation and **computes BMI automatically** (24.2) —
+   nobody does the maths. Blood pressure is validated as `systolic/diastolic`.*
+
+## 42. 9:00 AM — The consultation (Doctor)
+
+Dr. Emeka logs in and lands on the **Doctor Dashboard**, which shows **his queue** for today.
+
+1. He clicks Chioma's row (or **New Consultation** from her patient page) and a consultation
+   opens. *The moment it starts, the system mints `ACH-C-20260610-0001` and **flips Chioma's
+   queue status to "In Consultation"** — the front desk sees that change without asking.*
+2. The **consultation show page** is his workspace: patient summary and allergies up top,
+   the vitals the nurse took on the right, and a **Clinical Notes** block where he records
+   the chief complaint, his examination notes, the **diagnosis** ("Tension headache") and a
+   **plan**.
+3. **Prescriptions.** In the prescriptions panel he types "Paracetamol" — the field
+   autocompletes from the clinic's common-drug list and pre-fills a sensible dose and
+   frequency. He adds a second drug with **+ Add another** and saves both at once.
+   *Each line is stored against this consultation and audited.*
+4. When he's done he clicks **Complete Consultation**. *Status becomes **Completed**,
+   Chioma's queue entry closes, and all the admins get an email alert — but only because a
+   real person clicked the button (seeded data never emails anyone).*
+
+Only Dr. Emeka (or an admin) can edit this consultation later — the Policy enforces it.
+
+## 43. 9:20 AM — Billing (Receptionist)
+
+Chioma comes back to the front desk to pay.
+
+1. On the consultation (or from **Invoices**) the receptionist clicks **Generate Invoice**.
+   *The system creates `ACH-INV-20260610-0001` as a **draft**, pre-loaded with the
+   consultation fee (a configurable default, not hard-coded) and one line per prescribed
+   drug — priced at ₦0 because drug prices vary by clinic.*
+2. The receptionist types the real prices straight into the table; **the total re-sums on
+   every edit**. They can add ad-hoc lines (a lab test, dressings) too.
+3. Chioma pays cash. They click **Mark as Paid**, choose **Cash**. *Status → **Paid**,
+   payment method and timestamp recorded; this feeds the admin's "Payments Today" and the
+   revenue chart.*
+4. They hand her a receipt: **PDF** (a clean, branded invoice) or **Print** (the screen
+   strips the sidebar and prints just the invoice).
+
+Chioma leaves. Total elapsed: she was a name on a waiting list, became a clinical record,
+a prescription, and a settled bill — each step owned by the right person, each writing one
+honest trail.
+
+## 44. The patient's story, forever (anyone viewing her record)
+
+Open Chioma's **patient page** any time and the right-hand **Timeline** shows her whole
+history in order: *Registered → Consultation (Tension headache, Dr. Emeka) → Invoice
+₦6,400 (Paid)*. Click any entry to jump to it. *This is assembled on the fly from her
+consultations and invoices — there's no separate "history" table to keep in sync.*
+
+This is the feature that sells the system in a demo: "here's the full patient journey on
+one screen."
+
+## 45. End of day — Oversight (Admin)
+
+The owner logs in to the **Admin Dashboard**:
+
+- **Six stat cards** — patients total/today/this week, today's consultations, pending
+  invoices, revenue this month.
+- **Charts** — registrations over 30 days (line), revenue over 6 months (bar), and
+  consultations by status (donut). *These read straight from the live tables, so they're
+  always current.*
+- **Recent Activity** — a feed of the day's audit entries: "Dr. Emeka completed
+  consultation… ", "Front Desk marked invoice… as paid." For the full searchable history
+  they open **Audit Log** (admin-only) and filter by staff member or record type.
+- **Export** — one click downloads patients, consultations or invoices as **CSV** for the
+  accountant or for NHIS reporting.
+
+*Every write the staff made during the day — create, update, delete — was logged
+automatically by the audit trait, with who/when/before/after. Nobody had to "remember to
+log" anything.*
+
+## 46. The same clinic, through software (the REST API)
+
+Everything above is the web UI a human uses. The **exact same workflow** is available to
+machines over `/api/v1`, because the API controllers call the **same services** as the web
+controllers — a future AfriChart mobile app, a pharmacy system, or an NHIS integration
+would:
+
+1. `POST /api/v1/auth/login` → receive a token.
+2. `POST /api/v1/queue` to check a patient in, `PATCH …/vitals`, `POST /api/v1/consultations`,
+   `POST …/prescriptions`, `PATCH …/complete`, `POST /api/v1/invoices/from-consultation/{id}`,
+   `PATCH …/pay` — the identical sequence the front desk, nurse and doctor performed by hand.
+3. The same role rules and Policies apply, so an integration literally cannot do something a
+   logged-in user of that role couldn't.
+
+Developers explore and try all of this live at **`/api/documentation`** (Swagger UI).
+
+## 47. The one-paragraph version
+
+A receptionist **registers** a patient and **checks them in**; the patient becomes a
+numbered entry on the day's **queue**. A nurse records **vitals**. A doctor opens the
+**consultation**, writes notes and a **diagnosis**, adds **prescriptions**, and
+**completes** it — the queue updates itself as this happens. The receptionist **generates
+an invoice** from that consultation, prices it, takes payment, and prints or PDFs a
+receipt. Everything the patient experienced is then visible as a **timeline** on their
+record; everything the staff did is in the **audit log**; the money and volumes roll up
+into the admin's **charts**; and the whole thing is reachable by other software through a
+documented **REST API**. Four roles, one clean line from front door to paid bill.
 
 ---
 

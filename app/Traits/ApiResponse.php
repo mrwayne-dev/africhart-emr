@@ -11,7 +11,7 @@ trait ApiResponse
         return response()->json([
             'success' => true,
             'message' => $message,
-            'data'    => $data,
+            'data' => $data,
         ], $status);
     }
 
@@ -32,14 +32,14 @@ trait ApiResponse
     protected function paginated(mixed $data, string $message = 'Success'): JsonResponse
     {
         return response()->json([
-            'success'  => true,
-            'message'  => $message,
-            'data'     => $data->items(),
-            'meta'     => [
+            'success' => true,
+            'message' => $message,
+            'data' => $data->items(),
+            'meta' => [
                 'current_page' => $data->currentPage(),
-                'last_page'    => $data->lastPage(),
-                'per_page'     => $data->perPage(),
-                'total'        => $data->total(),
+                'last_page' => $data->lastPage(),
+                'per_page' => $data->perPage(),
+                'total' => $data->total(),
             ],
         ]);
     }

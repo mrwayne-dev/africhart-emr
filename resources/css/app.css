@@ -29,3 +29,24 @@
 [x-cloak] {
     display: none !important;
 }
+
+/* Print: strip the app chrome and show only the record being printed. */
+@media print {
+    aside,
+    header,
+    nav,
+    .no-print,
+    button {
+        display: none !important;
+    }
+
+    main {
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    .print-clean {
+        border: 1px solid #ddd !important;
+        box-shadow: none !important;
+    }
+}

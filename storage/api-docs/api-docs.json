@@ -1,0 +1,1153 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "AfriChart EMR API",
+        "description": "REST API for the AfriChart EMR — patients, consultations, prescriptions, invoices and the patient queue. All endpoints (except login) require a Sanctum bearer token.",
+        "contact": {
+            "name": "Lymora Tech",
+            "email": "michael@mgbah.dev"
+        },
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "/api/v1",
+            "description": "API v1"
+        }
+    ],
+    "paths": {
+        "/auth/login": {
+            "post": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Authenticate and receive an API token",
+                "operationId": "985cd5203e2d0a820e113f2f4fdb2847",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "email",
+                                    "password"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "doctor@africhart.com"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "password"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Authenticated — returns user + token"
+                    },
+                    "401": {
+                        "description": "Invalid credentials"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                }
+            }
+        },
+        "/auth/logout": {
+            "post": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Revoke the current API token",
+                "operationId": "a05022a34eef599e04fb0a5254375b84",
+                "responses": {
+                    "200": {
+                        "description": "Logged out"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/auth/user": {
+            "get": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Get the authenticated user",
+                "operationId": "5df1e3769ba9fc9f727bcf278c51470f",
+                "responses": {
+                    "200": {
+                        "description": "Current user"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/consultations": {
+            "get": {
+                "tags": [
+                    "Consultations"
+                ],
+                "summary": "List consultations (paginated)",
+                "operationId": "49b937dc81f039aed05a57bbdb3a4daf",
+                "parameters": [
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "in_progress",
+                                "completed",
+                                "follow_up"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "mine",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Paginated consultation list"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Consultations"
+                ],
+                "summary": "Start a consultation",
+                "operationId": "873ca7aeffa41b854a6b4d5a38339150",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "patient_id",
+                                    "chief_complaint",
+                                    "clinical_notes"
+                                ],
+                                "properties": {
+                                    "patient_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "chief_complaint": {
+                                        "type": "string"
+                                    },
+                                    "clinical_notes": {
+                                        "type": "string"
+                                    },
+                                    "diagnosis": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "plan": {
+                                        "type": "string",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Consultation started"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/consultations/{consultation}": {
+            "get": {
+                "tags": [
+                    "Consultations"
+                ],
+                "summary": "Show a consultation (with prescriptions + invoice)",
+                "operationId": "aaebe74f4ee179a78a2ef9dc4ac10f31",
+                "parameters": [
+                    {
+                        "name": "consultation",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Consultation detail"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Consultations"
+                ],
+                "summary": "Update consultation notes (owner doctor or admin)",
+                "operationId": "6f84ee032c19c687d1bdb19e31188455",
+                "parameters": [
+                    {
+                        "name": "consultation",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Updated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/consultations/{consultation}/vitals": {
+            "patch": {
+                "tags": [
+                    "Consultations"
+                ],
+                "summary": "Record vitals (doctor, nurse or admin)",
+                "operationId": "c2d88e2c4778ea9cbd66b7d96b66803c",
+                "parameters": [
+                    {
+                        "name": "consultation",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "temperature": {
+                                        "type": "number",
+                                        "example": 37.2
+                                    },
+                                    "blood_pressure": {
+                                        "type": "string",
+                                        "example": "120/80"
+                                    },
+                                    "pulse_rate": {
+                                        "type": "integer",
+                                        "example": 72
+                                    },
+                                    "weight": {
+                                        "type": "number",
+                                        "example": 68
+                                    },
+                                    "height": {
+                                        "type": "number",
+                                        "example": 170
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Vitals recorded"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/consultations/{consultation}/complete": {
+            "patch": {
+                "tags": [
+                    "Consultations"
+                ],
+                "summary": "Mark a consultation completed",
+                "operationId": "1248db21c0b9f4b4f7188685aebf67f3",
+                "parameters": [
+                    {
+                        "name": "consultation",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Completed"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/dashboard/stats": {
+            "get": {
+                "tags": [
+                    "Dashboard"
+                ],
+                "summary": "Statistics for the authenticated user's role",
+                "operationId": "cdf38134d004e02d340154be1b536248",
+                "responses": {
+                    "200": {
+                        "description": "Role-specific stats"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/invoices": {
+            "get": {
+                "tags": [
+                    "Invoices"
+                ],
+                "summary": "List invoices (paginated)",
+                "operationId": "176f86601dff5362250710476b314be6",
+                "parameters": [
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "draft",
+                                "issued",
+                                "paid",
+                                "partially_paid",
+                                "cancelled"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Paginated invoice list"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/invoices/{invoice}": {
+            "get": {
+                "tags": [
+                    "Invoices"
+                ],
+                "summary": "Show an invoice with line items",
+                "operationId": "755978598358507deaa9cb9ad2f8ff4a",
+                "parameters": [
+                    {
+                        "name": "invoice",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Invoice detail"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Invoices"
+                ],
+                "summary": "Update invoice tax / discount / notes",
+                "operationId": "9eed7a7f666725292048e52baea4e1f2",
+                "parameters": [
+                    {
+                        "name": "invoice",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "tax": {
+                                        "type": "number"
+                                    },
+                                    "discount": {
+                                        "type": "number"
+                                    },
+                                    "notes": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Updated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/invoices/from-consultation/{consultation}": {
+            "post": {
+                "tags": [
+                    "Invoices"
+                ],
+                "summary": "Generate an invoice from a consultation",
+                "operationId": "68ba4af1af260701ff45371e637a5536",
+                "parameters": [
+                    {
+                        "name": "consultation",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Invoice generated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/invoices/{invoice}/pay": {
+            "patch": {
+                "tags": [
+                    "Invoices"
+                ],
+                "summary": "Mark an invoice as paid",
+                "operationId": "7ef8c800ca81714c0962c9ee88b591f6",
+                "parameters": [
+                    {
+                        "name": "invoice",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "payment_method"
+                                ],
+                                "properties": {
+                                    "payment_method": {
+                                        "type": "string",
+                                        "enum": [
+                                            "cash",
+                                            "transfer",
+                                            "card",
+                                            "insurance",
+                                            "other"
+                                        ]
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Marked paid"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/patients": {
+            "get": {
+                "tags": [
+                    "Patients"
+                ],
+                "summary": "List patients (paginated, searchable)",
+                "operationId": "25da496d74a0ef65407930b3a958b687",
+                "parameters": [
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "blood_group",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Paginated patient list"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Patients"
+                ],
+                "summary": "Register a new patient",
+                "operationId": "1c5763b2aa6fe7d167f31b0a017a4ee6",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "full_name",
+                                    "date_of_birth",
+                                    "phone",
+                                    "blood_group"
+                                ],
+                                "properties": {
+                                    "full_name": {
+                                        "type": "string",
+                                        "example": "Chioma Nwosu"
+                                    },
+                                    "date_of_birth": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "1990-05-01"
+                                    },
+                                    "phone": {
+                                        "type": "string",
+                                        "example": "08031234567"
+                                    },
+                                    "blood_group": {
+                                        "type": "string",
+                                        "example": "O+"
+                                    },
+                                    "allergies": {
+                                        "type": "string",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Patient created"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/patients/{patient}": {
+            "get": {
+                "tags": [
+                    "Patients"
+                ],
+                "summary": "Show one patient",
+                "operationId": "c11edbbc003c976c0403d7de42a041da",
+                "parameters": [
+                    {
+                        "name": "patient",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Patient"
+                    },
+                    "404": {
+                        "description": "Not found"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Patients"
+                ],
+                "summary": "Update a patient",
+                "operationId": "5a4810febcaedc2b35e3594d2b71c457",
+                "parameters": [
+                    {
+                        "name": "patient",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "full_name": {
+                                        "type": "string"
+                                    },
+                                    "phone": {
+                                        "type": "string"
+                                    },
+                                    "blood_group": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Patient updated"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/patients/{patient}/timeline": {
+            "get": {
+                "tags": [
+                    "Patients"
+                ],
+                "summary": "Patient visit history (registration, consultations, invoices)",
+                "operationId": "0003323f8efa86d2024cce66ae6a3b37",
+                "parameters": [
+                    {
+                        "name": "patient",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Chronological timeline"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/consultations/{consultation}/prescriptions": {
+            "get": {
+                "tags": [
+                    "Prescriptions"
+                ],
+                "summary": "List prescriptions for a consultation",
+                "operationId": "fe3efaae12b07680443f4b94c7a4412f",
+                "parameters": [
+                    {
+                        "name": "consultation",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Prescription list"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Prescriptions"
+                ],
+                "summary": "Add one or more prescriptions to a consultation",
+                "operationId": "f4446e05aa9840614e485a004a9c7501",
+                "parameters": [
+                    {
+                        "name": "consultation",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "items"
+                                ],
+                                "properties": {
+                                    "items": {
+                                        "type": "array",
+                                        "items": {
+                                            "required": [
+                                                "medication_name",
+                                                "dosage",
+                                                "frequency",
+                                                "duration",
+                                                "route"
+                                            ],
+                                            "properties": {
+                                                "medication_name": {
+                                                    "type": "string",
+                                                    "example": "Paracetamol"
+                                                },
+                                                "dosage": {
+                                                    "type": "string",
+                                                    "example": "500mg"
+                                                },
+                                                "frequency": {
+                                                    "type": "string",
+                                                    "example": "3 times daily"
+                                                },
+                                                "duration": {
+                                                    "type": "string",
+                                                    "example": "5 days"
+                                                },
+                                                "route": {
+                                                    "type": "string",
+                                                    "example": "oral"
+                                                },
+                                                "quantity": {
+                                                    "type": "integer",
+                                                    "example": 20
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Prescriptions added"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/prescriptions/{prescription}": {
+            "delete": {
+                "tags": [
+                    "Prescriptions"
+                ],
+                "summary": "Remove a prescription (owner doctor or admin)",
+                "operationId": "fa1c5a241459a00196c41d6bb2f79932",
+                "parameters": [
+                    {
+                        "name": "prescription",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Removed"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/queue": {
+            "get": {
+                "tags": [
+                    "Queue"
+                ],
+                "summary": "Today's patient queue",
+                "operationId": "3be2515f12da45db4b74b74ade66bd52",
+                "responses": {
+                    "200": {
+                        "description": "Queue entries"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Queue"
+                ],
+                "summary": "Check a patient into the queue",
+                "operationId": "6b1ac87071aadac23b99ec76f77584b0",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "patient_id"
+                                ],
+                                "properties": {
+                                    "patient_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "assigned_doctor_id": {
+                                        "type": "integer",
+                                        "nullable": true
+                                    },
+                                    "reason": {
+                                        "type": "string",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Checked in"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/queue/{queue}/assign": {
+            "patch": {
+                "tags": [
+                    "Queue"
+                ],
+                "summary": "Assign a doctor to a queued patient",
+                "operationId": "984d77bf6301ad7d146ee875752d2bce",
+                "parameters": [
+                    {
+                        "name": "queue",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "assigned_doctor_id"
+                                ],
+                                "properties": {
+                                    "assigned_doctor_id": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Doctor assigned"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/queue/{queue}/cancel": {
+            "patch": {
+                "tags": [
+                    "Queue"
+                ],
+                "summary": "Cancel a queue entry",
+                "operationId": "553c276a99447687831e511a88becc55",
+                "parameters": [
+                    {
+                        "name": "queue",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Cancelled"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        }
+    },
+    "components": {
+        "securitySchemes": {
+            "sanctum": {
+                "type": "http",
+                "description": "Sanctum personal access token returned by POST /auth/login.",
+                "bearerFormat": "Token",
+                "scheme": "bearer"
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Auth",
+            "description": "Authentication & tokens"
+        },
+        {
+            "name": "Patients",
+            "description": "Patient records"
+        },
+        {
+            "name": "Consultations",
+            "description": "Clinical consultations & vitals"
+        },
+        {
+            "name": "Prescriptions",
+            "description": "Medications prescribed within a consultation"
+        },
+        {
+            "name": "Invoices",
+            "description": "Billing & payments"
+        },
+        {
+            "name": "Queue",
+            "description": "Daily patient queue"
+        },
+        {
+            "name": "Dashboard",
+            "description": "Role-based statistics"
+        }
+    ]
+}

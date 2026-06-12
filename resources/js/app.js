@@ -1,6 +1,8 @@
 import Alpine from 'alpinejs';
+import Chart from 'chart.js/auto';
 
 window.Alpine = Alpine;
+window.Chart = Chart;
 
 /*
  * Toast store — a global, append-only list of notifications.
@@ -110,6 +112,112 @@ Alpine.data('patientModal', () => ({
         } catch (e) {
             this.processing = false;
             window.toast('error', 'Something went wrong. Please try again.');
+        }
+    },
+}));
+
+/*
+ * Prescription form — a repeatable set of medication rows the doctor can grow
+ * or shrink before submitting them all at once (normal POST, items[] array).
+ * `presets` is the common-medication list used for lightweight autocomplete.
+ */
+Alpine.data('prescriptionForm', (presets = []) => ({
+    loading: false,
+    presets,
+    blank() {
+        return { medication_name: '', dosage: '', frequency: '', duration: '', route: 'oral', instructions: '', quantity: '' };
+    },
+    items: [],
+
+    init() {
+        this.items = [this.blank()];
+    },
+
+    addItem() {
+        this.items.push(this.blank());
+    },
+
+    removeItem(index) {
+        if (this.items.length > 1) this.items.splice(index, 1);
+    },
+
+    // Fill dosage/frequency/route from a preset when the medication name matches.
+    applyPreset(index) {
+        const name = (this.items[index].medication_name || '').trim().toLowerCase();
+        const preset = this.presets.find((p) => p.name.toLowerCase() === name);
+        if (!preset) return;
+        if (!this.items[index].dosage && preset.dosages?.length) this.items[index].dosage = preset.dosages[0];
+        if (!this.items[index].frequency && preset.common_frequency) this.items[index].frequency = preset.common_frequency;
+        if (preset.routes?.length) this.items[index].route = preset.routes[0];
+    },
+}));
+
+/*
+ * livePoll — near-real-time updates without WebSockets. Polls a "live" endpoint
+ * that returns { hash, html, meta }; swaps the region's HTML only when the hash
+ * changes (re-initialising Alpine inside it), pauses while the tab is hidden, and
+ * won't yank a form control the user is currently interacting with.
+ *
+ * Usage:  <div x-data="livePoll({ url: '/queue/live', interval: 8000, label: 'Queue updated',
+ *                                  hash: '{{ $liveHash }}', meta: { count: {{ $queue->count() }} } })">
+ *           <span x-text="meta.count"></span>
+ *           <div x-ref="region"> ...server-rendered partial... </div>
+ *         </div>
+ */
+Alpine.data('livePoll', (config = {}) => ({
+    url: config.url,
+    interval: config.interval ?? 8000,
+    label: config.label ?? null,
+    mode: config.mode ?? 'swap', // 'swap' = replace region HTML; 'notify' = show a refresh banner
+    hash: config.hash ?? null,
+    meta: config.meta ?? {},
+    stale: false, // notify mode: set true when the server data has changed
+    inflight: false,
+    timer: null,
+
+    init() {
+        this.timer = setInterval(() => this.tick(), this.interval);
+    },
+
+    destroy() {
+        if (this.timer) clearInterval(this.timer);
+    },
+
+    async tick() {
+        if (document.hidden || this.inflight || !this.url || this.stale) return;
+        this.inflight = true;
+        try {
+            const res = await fetch(this.url, {
+                headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+            });
+            if (!res.ok) return;
+            const data = await res.json();
+            if (data.hash === this.hash) return;
+
+            // Notify mode: don't touch the DOM (the page may hold unsaved input) — flag it.
+            if (this.mode === 'notify') {
+                this.stale = true;
+                return;
+            }
+
+            // Focus guard: don't replace the region while the user is using a control in it.
+            const region = this.$refs.region;
+            const active = document.activeElement;
+            if (region && active && region.contains(active) && /^(INPUT|SELECT|TEXTAREA)$/.test(active.tagName)) {
+                return; // retry on the next tick
+            }
+
+            this.hash = data.hash;
+            this.meta = data.meta ?? this.meta;
+            if (region && data.html != null) {
+                region.innerHTML = data.html;
+                window.Alpine.initTree(region);
+            }
+            if (this.label) window.toast('success', this.label);
+        } catch (e) {
+            // transient network error — ignore and try next tick
+        } finally {
+            this.inflight = false;
         }
     },
 }));

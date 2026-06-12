@@ -11,16 +11,13 @@
 
         {{-- Role tabs --}}
         <div class="grid grid-cols-2 gap-1 p-1 bg-warm rounded-card mb-6">
-            <button type="button" @click="role = 'doctor'"
-                class="py-2 text-sm font-medium rounded transition-colors"
-                :class="role === 'doctor' ? 'bg-page text-ink' : 'text-muted hover:text-ink'">
-                Doctor
-            </button>
-            <button type="button" @click="role = 'admin'"
-                class="py-2 text-sm font-medium rounded transition-colors"
-                :class="role === 'admin' ? 'bg-page text-ink' : 'text-muted hover:text-ink'">
-                Admin
-            </button>
+            @foreach (['doctor' => 'Doctor', 'admin' => 'Admin', 'nurse' => 'Nurse', 'receptionist' => 'Receptionist'] as $value => $label)
+                <button type="button" @click="role = '{{ $value }}'"
+                    class="py-2 text-sm font-medium rounded transition-colors"
+                    :class="role === '{{ $value }}' ? 'bg-page text-ink' : 'text-muted hover:text-ink'">
+                    {{ $label }}
+                </button>
+            @endforeach
         </div>
 
         <form method="POST" action="{{ route('register') }}" class="space-y-5"
@@ -57,7 +54,7 @@
             {{-- Invite code --}}
             <div>
                 <label for="invite_code" class="block text-sm font-medium text-ink-body mb-2">
-                    <span x-text="role === 'admin' ? 'Admin invite code' : 'Doctor invite code'"></span>
+                    <span x-text="role.charAt(0).toUpperCase() + role.slice(1) + ' invite code'"></span>
                 </label>
                 <input type="text" name="invite_code" id="invite_code" value="{{ old('invite_code') }}" required
                     class="w-full bg-warm rounded text-sm text-ink-body px-4 py-3 border border-transparent

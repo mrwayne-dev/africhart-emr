@@ -16,6 +16,33 @@
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
 --
+-- Table structure for table `audit_logs`
+--
+
+DROP TABLE IF EXISTS `audit_logs`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `audit_logs` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `user_id` bigint unsigned DEFAULT NULL,
+  `user_name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `action` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `model_type` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `model_id` bigint unsigned NOT NULL,
+  `description` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `old_values` json DEFAULT NULL,
+  `new_values` json DEFAULT NULL,
+  `ip_address` varchar(45) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `audit_logs_model_type_model_id_index` (`model_type`,`model_id`),
+  KEY `audit_logs_user_id_index` (`user_id`),
+  KEY `audit_logs_created_at_index` (`created_at`),
+  CONSTRAINT `audit_logs_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB AUTO_INCREMENT=21 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
 -- Table structure for table `cache`
 --
 
@@ -48,6 +75,43 @@ CREATE TABLE `cache_locks` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
+-- Table structure for table `consultations`
+--
+
+DROP TABLE IF EXISTS `consultations`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `consultations` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `patient_id` bigint unsigned NOT NULL,
+  `doctor_id` bigint unsigned NOT NULL,
+  `chief_complaint` text COLLATE utf8mb4_unicode_ci NOT NULL,
+  `clinical_notes` text COLLATE utf8mb4_unicode_ci NOT NULL,
+  `diagnosis` text COLLATE utf8mb4_unicode_ci,
+  `plan` text COLLATE utf8mb4_unicode_ci,
+  `status` enum('in_progress','completed','follow_up') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'in_progress',
+  `temperature` decimal(4,1) DEFAULT NULL,
+  `blood_pressure` varchar(10) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `pulse_rate` int DEFAULT NULL,
+  `weight` decimal(5,1) DEFAULT NULL,
+  `height` decimal(5,1) DEFAULT NULL,
+  `vitals_notes` text COLLATE utf8mb4_unicode_ci,
+  `consultation_id` varchar(25) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `consultations_consultation_id_unique` (`consultation_id`),
+  KEY `consultations_patient_id_index` (`patient_id`),
+  KEY `consultations_doctor_id_index` (`doctor_id`),
+  KEY `consultations_status_index` (`status`),
+  KEY `consultations_consultation_id_index` (`consultation_id`),
+  KEY `consultations_created_at_index` (`created_at`),
+  CONSTRAINT `consultations_doctor_id_foreign` FOREIGN KEY (`doctor_id`) REFERENCES `users` (`id`) ON DELETE RESTRICT,
+  CONSTRAINT `consultations_patient_id_foreign` FOREIGN KEY (`patient_id`) REFERENCES `patients` (`id`) ON DELETE RESTRICT
+) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
 -- Table structure for table `failed_jobs`
 --
 
@@ -66,6 +130,66 @@ CREATE TABLE `failed_jobs` (
   UNIQUE KEY `failed_jobs_uuid_unique` (`uuid`),
   KEY `failed_jobs_connection_queue_failed_at_index` (`connection`,`queue`,`failed_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `invoice_items`
+--
+
+DROP TABLE IF EXISTS `invoice_items`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `invoice_items` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `invoice_id` bigint unsigned NOT NULL,
+  `description` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `unit_price` decimal(10,2) NOT NULL,
+  `quantity` int NOT NULL DEFAULT '1',
+  `amount` decimal(12,2) NOT NULL,
+  `category` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'service',
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `invoice_items_invoice_id_index` (`invoice_id`),
+  CONSTRAINT `invoice_items_invoice_id_foreign` FOREIGN KEY (`invoice_id`) REFERENCES `invoices` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=25 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `invoices`
+--
+
+DROP TABLE IF EXISTS `invoices`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `invoices` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `patient_id` bigint unsigned NOT NULL,
+  `consultation_id` bigint unsigned DEFAULT NULL,
+  `created_by` bigint unsigned NOT NULL,
+  `invoice_number` varchar(25) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `subtotal` decimal(12,2) NOT NULL DEFAULT '0.00',
+  `tax` decimal(12,2) NOT NULL DEFAULT '0.00',
+  `discount` decimal(12,2) NOT NULL DEFAULT '0.00',
+  `total` decimal(12,2) NOT NULL DEFAULT '0.00',
+  `status` enum('draft','issued','paid','partially_paid','cancelled') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'draft',
+  `payment_method` enum('cash','transfer','card','insurance','other') COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `paid_at` timestamp NULL DEFAULT NULL,
+  `notes` text COLLATE utf8mb4_unicode_ci,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `invoices_invoice_number_unique` (`invoice_number`),
+  KEY `invoices_consultation_id_foreign` (`consultation_id`),
+  KEY `invoices_created_by_foreign` (`created_by`),
+  KEY `invoices_patient_id_index` (`patient_id`),
+  KEY `invoices_invoice_number_index` (`invoice_number`),
+  KEY `invoices_status_index` (`status`),
+  KEY `invoices_created_at_index` (`created_at`),
+  CONSTRAINT `invoices_consultation_id_foreign` FOREIGN KEY (`consultation_id`) REFERENCES `consultations` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `invoices_created_by_foreign` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE RESTRICT,
+  CONSTRAINT `invoices_patient_id_foreign` FOREIGN KEY (`patient_id`) REFERENCES `patients` (`id`) ON DELETE RESTRICT
+) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -122,7 +246,7 @@ CREATE TABLE `migrations` (
   `migration` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
   `batch` int NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -138,6 +262,38 @@ CREATE TABLE `password_reset_tokens` (
   `created_at` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`email`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `patient_queue`
+--
+
+DROP TABLE IF EXISTS `patient_queue`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `patient_queue` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `patient_id` bigint unsigned NOT NULL,
+  `checked_in_by` bigint unsigned NOT NULL,
+  `assigned_doctor_id` bigint unsigned DEFAULT NULL,
+  `status` enum('waiting','in_consultation','completed','cancelled') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'waiting',
+  `queue_number` int NOT NULL,
+  `reason` text COLLATE utf8mb4_unicode_ci,
+  `checked_in_at` timestamp NOT NULL,
+  `seen_at` timestamp NULL DEFAULT NULL,
+  `completed_at` timestamp NULL DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `patient_queue_patient_id_foreign` (`patient_id`),
+  KEY `patient_queue_checked_in_by_foreign` (`checked_in_by`),
+  KEY `patient_queue_status_created_at_index` (`status`,`created_at`),
+  KEY `patient_queue_checked_in_at_index` (`checked_in_at`),
+  KEY `patient_queue_assigned_doctor_id_index` (`assigned_doctor_id`),
+  CONSTRAINT `patient_queue_assigned_doctor_id_foreign` FOREIGN KEY (`assigned_doctor_id`) REFERENCES `users` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `patient_queue_checked_in_by_foreign` FOREIGN KEY (`checked_in_by`) REFERENCES `users` (`id`) ON DELETE RESTRICT,
+  CONSTRAINT `patient_queue_patient_id_foreign` FOREIGN KEY (`patient_id`) REFERENCES `patients` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -166,6 +322,62 @@ CREATE TABLE `patients` (
   KEY `patients_patient_id_index` (`patient_id`),
   CONSTRAINT `patients_registered_by_foreign` FOREIGN KEY (`registered_by`) REFERENCES `users` (`id`) ON DELETE RESTRICT
 ) ENGINE=InnoDB AUTO_INCREMENT=26 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `personal_access_tokens`
+--
+
+DROP TABLE IF EXISTS `personal_access_tokens`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `personal_access_tokens` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `tokenable_type` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `tokenable_id` bigint unsigned NOT NULL,
+  `name` text COLLATE utf8mb4_unicode_ci NOT NULL,
+  `token` varchar(64) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `abilities` text COLLATE utf8mb4_unicode_ci,
+  `last_used_at` timestamp NULL DEFAULT NULL,
+  `expires_at` timestamp NULL DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `personal_access_tokens_token_unique` (`token`),
+  KEY `personal_access_tokens_tokenable_type_tokenable_id_index` (`tokenable_type`,`tokenable_id`),
+  KEY `personal_access_tokens_expires_at_index` (`expires_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `prescriptions`
+--
+
+DROP TABLE IF EXISTS `prescriptions`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `prescriptions` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `consultation_id` bigint unsigned NOT NULL,
+  `patient_id` bigint unsigned NOT NULL,
+  `prescribed_by` bigint unsigned NOT NULL,
+  `medication_name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `dosage` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `frequency` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `duration` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `route` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'oral',
+  `instructions` text COLLATE utf8mb4_unicode_ci,
+  `quantity` int DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `prescriptions_prescribed_by_foreign` (`prescribed_by`),
+  KEY `prescriptions_consultation_id_index` (`consultation_id`),
+  KEY `prescriptions_patient_id_index` (`patient_id`),
+  CONSTRAINT `prescriptions_consultation_id_foreign` FOREIGN KEY (`consultation_id`) REFERENCES `consultations` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `prescriptions_patient_id_foreign` FOREIGN KEY (`patient_id`) REFERENCES `patients` (`id`) ON DELETE RESTRICT,
+  CONSTRAINT `prescriptions_prescribed_by_foreign` FOREIGN KEY (`prescribed_by`) REFERENCES `users` (`id`) ON DELETE RESTRICT
+) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -209,7 +421,7 @@ CREATE TABLE `users` (
   `updated_at` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `users_email_unique` (`email`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
@@ -221,4 +433,4 @@ CREATE TABLE `users` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-06-07 21:58:06
+-- Dump completed on 2026-06-10 22:37:09

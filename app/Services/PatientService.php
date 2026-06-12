@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Patient;
 use App\Repositories\PatientRepository;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
 
 class PatientService extends BaseService
 {
@@ -43,6 +44,48 @@ class PatientService extends BaseService
         $patient->update($data);
 
         return $patient->fresh();
+    }
+
+    /**
+     * Build a chronological timeline of everything that's happened to a patient:
+     * registration, consultations, and invoices. Newest first.
+     */
+    public function getTimeline(Patient $patient): Collection
+    {
+        $events = collect();
+
+        $events->push([
+            'type' => 'registration',
+            'date' => $patient->created_at,
+            'title' => 'Patient Registered',
+            'subtitle' => 'Registered by '.($patient->registeredBy?->name ?? 'System'),
+            'icon' => 'phosphor-user-plus',
+            'link' => null,
+        ]);
+
+        foreach ($patient->consultations()->with('doctor')->latest()->get() as $consultation) {
+            $events->push([
+                'type' => 'consultation',
+                'date' => $consultation->created_at,
+                'title' => 'Consultation — '.($consultation->diagnosis ?: 'In Progress'),
+                'subtitle' => ($consultation->doctor?->name ?? 'Unknown').' · '.$consultation->status->label(),
+                'icon' => 'phosphor-stethoscope',
+                'link' => route('consultations.show', $consultation),
+            ]);
+        }
+
+        foreach ($patient->invoices()->latest()->get() as $invoice) {
+            $events->push([
+                'type' => 'invoice',
+                'date' => $invoice->created_at,
+                'title' => 'Invoice '.$invoice->invoice_number,
+                'subtitle' => '₦'.number_format((float) $invoice->total, 2).' · '.$invoice->status->label(),
+                'icon' => 'phosphor-receipt',
+                'link' => route('invoices.show', $invoice),
+            ]);
+        }
+
+        return $events->sortByDesc('date')->values();
     }
 
     /**
