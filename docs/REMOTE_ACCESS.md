@@ -117,14 +117,16 @@ cPanel hosts often use a **non-standard** SSH port (22 is frequently closed). If
 know it, probe the common ones from the laptop:
 
 ```bash
-for p in 22 21098 2222 7822 18765; do
+for p in 22 2222 7822; do
   timeout 4 bash -c "echo > /dev/tcp/<SERVER_IP>/$p" 2>/dev/null \
     && echo "port $p: OPEN" || echo "port $p: closed"
 done
 ```
 
-In our case the open port was **`<SSH_PORT>`** (a common Namecheap/Spaceship cPanel port).
-Note: cPanel's web port (2083) is **not** SSH.
+cPanel SSH ports are often **non-standard** (Namecheap/Spaceship hosts frequently use a
+`21xxx` port). If the common ports above don't connect, find the exact one under
+cPanel → **SSH Access**, and add it to the probe list. Note: cPanel's *web* port (2083) is
+**not** SSH.
 
 ### 5.2 Authorize the laptop's public key on the server
 
