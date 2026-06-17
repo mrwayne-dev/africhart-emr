@@ -41,18 +41,23 @@ Alpine.data('patientModal', () => ({
     mode: 'create',
     processing: false,
     id: null,
+    idempotencyKey: null,
     form: { full_name: '', date_of_birth: '', phone: '', blood_group: '', allergies: '' },
     errors: {},
 
     reset() {
         this.errors = {};
         this.id = null;
+        this.idempotencyKey = null;
         this.form = { full_name: '', date_of_birth: '', phone: '', blood_group: '', allergies: '' };
     },
 
     openCreate() {
         this.reset();
         this.mode = 'create';
+        // One key per registration attempt — survives retries so a double-submit
+        // after a flaky response can't create two patient records.
+        this.idempotencyKey = (crypto.randomUUID?.() ?? String(Date.now() + Math.random()));
         this.open = true;
     },
 
@@ -86,9 +91,99 @@ Alpine.data('patientModal', () => ({
         const url = this.mode === 'create' ? '/patients' : `/patients/${this.id}`;
         const method = this.mode === 'create' ? 'POST' : 'PUT';
 
+        const headers = {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+        };
+        if (this.mode === 'create' && this.idempotencyKey) {
+            headers['X-Idempotency-Key'] = this.idempotencyKey;
+        }
+
         try {
-            const res = await fetch(url, {
-                method,
+            const res = await fetch(url, { method, headers, body: JSON.stringify(this.form) });
+
+            if (res.status === 422) {
+                const data = await res.json();
+                this.errors = data.errors ?? {};
+                this.processing = false;
+                return;
+            }
+
+            // Expired CSRF / session — the submit can't succeed until the page reloads.
+            if (res.status === 419) {
+                window.toast('error', 'Your session expired — refreshing the page…');
+                setTimeout(() => window.location.reload(), 1200);
+                return;
+            }
+
+            if (!res.ok) throw new Error('Request failed');
+
+            const data = await res.json();
+            window.location = data.redirect;
+        } catch (e) {
+            // fetch only throws on a network-level failure (offline, timeout, DNS).
+            this.processing = false;
+            const noun = this.mode === 'create' ? 'patient was NOT saved' : 'changes were NOT saved';
+            window.toast('error', `Network problem — ${noun}. Please check your connection and try again.`);
+        }
+    },
+}));
+
+/*
+ * Queue vitals modal — the nurse records vitals against a waiting queue entry,
+ * before any consultation is open. One modal serves every row; a row button
+ * dispatches `open-queue-vitals` with the entry's id + current vitals. Submits
+ * via fetch so validation errors show inline; on success follows the redirect.
+ */
+Alpine.data('queueVitals', () => ({
+    open: false,
+    processing: false,
+    id: null,
+    patient: '',
+    form: { temperature: '', blood_pressure: '', pulse_rate: '', weight: '', height: '', vitals_notes: '' },
+    errors: {},
+
+    openFor(detail) {
+        this.errors = {};
+        this.id = detail.id;
+        this.patient = detail.patient ?? '';
+        this.form = {
+            temperature: detail.temperature ?? '',
+            blood_pressure: detail.blood_pressure ?? '',
+            pulse_rate: detail.pulse_rate ?? '',
+            weight: detail.weight ?? '',
+            height: detail.height ?? '',
+            vitals_notes: detail.vitals_notes ?? '',
+        };
+        this.open = true;
+    },
+
+    close() {
+        this.open = false;
+    },
+
+    error(field) {
+        return this.errors[field]?.[0] ?? null;
+    },
+
+    get bmi() {
+        const w = parseFloat(this.form.weight);
+        const h = parseFloat(this.form.height);
+        if (!w || !h) return null;
+        const m = h / 100;
+        return (w / (m * m)).toFixed(1);
+    },
+
+    async submit() {
+        if (this.processing) return;
+        this.processing = true;
+        this.errors = {};
+
+        try {
+            const res = await fetch(`/queue/${this.id}/vitals`, {
+                method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
                     Accept: 'application/json',
@@ -99,19 +194,21 @@ Alpine.data('patientModal', () => ({
             });
 
             if (res.status === 422) {
-                const data = await res.json();
-                this.errors = data.errors ?? {};
+                this.errors = (await res.json()).errors ?? {};
                 this.processing = false;
                 return;
             }
-
+            if (res.status === 419) {
+                window.toast('error', 'Your session expired — refreshing…');
+                setTimeout(() => window.location.reload(), 1200);
+                return;
+            }
             if (!res.ok) throw new Error('Request failed');
 
-            const data = await res.json();
-            window.location = data.redirect;
+            window.location = (await res.json()).redirect;
         } catch (e) {
             this.processing = false;
-            window.toast('error', 'Something went wrong. Please try again.');
+            window.toast('error', 'Network problem — vitals were NOT saved. Please try again.');
         }
     },
 }));

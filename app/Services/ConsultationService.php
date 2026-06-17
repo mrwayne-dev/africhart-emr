@@ -4,7 +4,9 @@ namespace App\Services;
 
 use App\Enums\ConsultationStatus;
 use App\Models\Consultation;
+use App\Models\PatientQueue;
 use App\Repositories\ConsultationRepository;
+use App\Repositories\PatientQueueRepository;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 class ConsultationService extends BaseService
@@ -12,6 +14,7 @@ class ConsultationService extends BaseService
     public function __construct(
         protected ConsultationRepository $consultationRepository,
         protected PatientQueueService $patientQueueService,
+        protected PatientQueueRepository $patientQueueRepository,
     ) {
         parent::__construct($consultationRepository);
     }
@@ -32,6 +35,17 @@ class ConsultationService extends BaseService
         $data['consultation_id'] = $this->generateConsultationId();
         $data['doctor_id'] = $doctorId;
         $data['status'] = ConsultationStatus::InProgress;
+
+        // Absorb any vitals the nurse took while the patient was waiting, unless
+        // the consultation already carries that field.
+        $entry = $this->patientQueueRepository->findTodayByPatient($data['patient_id']);
+        if ($entry) {
+            foreach (PatientQueue::VITALS_FIELDS as $field) {
+                if (! isset($data[$field]) && $entry->{$field} !== null) {
+                    $data[$field] = $entry->{$field};
+                }
+            }
+        }
 
         $consultation = $this->consultationRepository->create($data);
 

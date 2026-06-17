@@ -7,9 +7,24 @@
 @section('content')
 <div x-data="patientModal()" x-on:edit-patient.window="openEdit($event.detail)">
 
+    @if (auth()->user()->isAdmin())
+        {{-- Active / Archived toggle --}}
+        <div class="flex items-center gap-2 mb-4 text-sm">
+            <a href="{{ route('patients.index') }}"
+                class="px-3 py-1.5 rounded-full font-medium transition-colors {{ $archived ? 'text-muted hover:text-ink' : 'bg-ink text-white' }}">
+                Active
+            </a>
+            <a href="{{ route('patients.index', ['archived' => 1]) }}"
+                class="px-3 py-1.5 rounded-full font-medium transition-colors {{ $archived ? 'bg-ink text-white' : 'text-muted hover:text-ink' }}">
+                Archived
+            </a>
+        </div>
+    @endif
+
     {{-- Search & filter bar --}}
     <div class="bg-page border border-line rounded-card p-4 mb-6">
         <form method="GET" action="{{ route('patients.index') }}" class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+            @if ($archived)<input type="hidden" name="archived" value="1">@endif
             <div class="flex-1">
                 <input type="text" name="search" value="{{ request('search') }}"
                     placeholder="Search by name, phone, or patient ID..."
@@ -48,16 +63,18 @@
     <div class="bg-page border border-line rounded-card">
         <div class="px-6 py-4 border-b border-line flex items-center justify-between">
             <h2 class="text-base font-medium text-ink tracking-tight">
-                {{ $patients->total() }} {{ Str::plural('patient', $patients->total()) }}
+                {{ $patients->total() }} {{ $archived ? 'archived ' : '' }}{{ Str::plural('patient', $patients->total()) }}
             </h2>
-            <a href="{{ route('patients.create') }}" @click.prevent="openCreate()"
-                class="inline-flex items-center gap-1.5 bg-ink text-white rounded-full px-4 py-2 text-sm font-medium hover:bg-ink/90 transition-colors">
-                <x-phosphor-plus class="w-4 h-4" />
-                Register Patient
-            </a>
+            @unless ($archived)
+                <a href="{{ route('patients.create') }}" @click.prevent="openCreate()"
+                    class="inline-flex items-center gap-1.5 bg-ink text-white rounded-full px-4 py-2 text-sm font-medium hover:bg-ink/90 transition-colors">
+                    <x-phosphor-plus class="w-4 h-4" />
+                    Register Patient
+                </a>
+            @endunless
         </div>
 
-        <x-patient-table :patients="$patients" :editable="true" />
+        <x-patient-table :patients="$patients" :editable="! $archived" :archived="$archived" />
 
         @if ($patients->hasPages())
             <div class="px-6 py-4 border-t border-line">

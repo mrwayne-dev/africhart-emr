@@ -6,8 +6,10 @@ use App\Enums\InvoiceStatus;
 use App\Models\Consultation;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
+use App\Models\Medication;
 use App\Repositories\InvoiceRepository;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Str;
 
 class InvoiceService extends BaseService
 {
@@ -44,12 +46,14 @@ class InvoiceService extends BaseService
             'category' => 'service',
         ]);
 
-        // One line per prescribed medication (price set later by the receptionist).
+        // One line per prescribed medication, pre-priced from the drug catalog
+        // (still editable inline by the receptionist).
+        $prices = $this->catalogPrices($consultation->prescriptions->pluck('medication_name'));
         foreach ($consultation->prescriptions as $prescription) {
             $qty = $prescription->quantity ?? 1;
             $this->addItem($invoice, [
                 'description' => trim("{$prescription->medication_name} {$prescription->dosage}")." × {$qty}",
-                'unit_price' => 0,
+                'unit_price' => $prices[Str::lower($prescription->medication_name)] ?? 0,
                 'quantity' => $qty,
                 'category' => 'medication',
             ]);
@@ -58,6 +62,26 @@ class InvoiceService extends BaseService
         $this->recalculateTotals($invoice);
 
         return $invoice->fresh(['items']);
+    }
+
+    /**
+     * Build a lowercased name => default_price map for the given medication names.
+     *
+     * @param  \Illuminate\Support\Collection<int, string>  $names
+     * @return array<string, float>
+     */
+    private function catalogPrices($names): array
+    {
+        $names = $names->filter()->unique()->values();
+
+        if ($names->isEmpty()) {
+            return [];
+        }
+
+        return Medication::whereIn('name', $names)
+            ->pluck('default_price', 'name')
+            ->mapWithKeys(fn ($price, $name) => [Str::lower($name) => (float) $price])
+            ->all();
     }
 
     /**

@@ -31,6 +31,18 @@
                     <x-phosphor-pencil-simple class="w-4 h-4" />
                     Edit
                 </a>
+                @if (auth()->user()->isAdmin())
+                    <form method="POST" action="{{ route('patients.archive', $patient) }}"
+                        onsubmit="return confirm('Archive {{ $patient->full_name }}? The record and all its history are preserved and can be restored later.')">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit"
+                            class="inline-flex items-center gap-1.5 border border-line text-muted rounded-full px-4 py-2 text-sm font-medium hover:text-accent hover:border-accent transition-colors">
+                            <x-phosphor-archive class="w-4 h-4" />
+                            Archive
+                        </button>
+                    </form>
+                @endif
             </div>
         </div>
 

@@ -7,6 +7,7 @@ use App\Http\Requests\RecordVitalsRequest;
 use App\Http\Requests\StoreConsultationRequest;
 use App\Http\Requests\UpdateConsultationRequest;
 use App\Models\Consultation;
+use App\Models\Medication;
 use App\Models\Patient;
 use App\Services\AdminNotifier;
 use App\Services\ConsultationService;
@@ -139,11 +140,10 @@ class ConsultationController extends BaseController
      */
     private function loadMedicationPresets(): array
     {
-        $path = storage_path('app/data/medications.json');
-
-        return is_file($path)
-            ? (json_decode(file_get_contents($path), true) ?: [])
-            : [];
+        return Medication::active()
+            ->orderBy('name')
+            ->get(['name', 'dosages', 'routes', 'common_frequency'])
+            ->toArray();
     }
 
     public function edit(Consultation $consultation): View

@@ -15,7 +15,7 @@ Route::get('/health', function () {
 
 Route::prefix('v1')->group(function () {
     // --- Public ---
-    Route::post('/auth/login', [AuthController::class, 'login']);
+    Route::post('/auth/login', [AuthController::class, 'login'])->middleware('throttle:5,1');
 
     // --- Authenticated (Sanctum token) ---
     Route::middleware('auth:sanctum')->group(function () {

@@ -18,9 +18,14 @@ class PatientRepository extends BaseRepository
     public function getPaginated(
         ?string $search = null,
         ?string $bloodGroup = null,
-        int $perPage = 15
+        int $perPage = 15,
+        bool $archived = false
     ): LengthAwarePaginator {
         $query = $this->model->with('registeredBy');
+
+        if ($archived) {
+            $query->onlyTrashed();
+        }
 
         if ($search) {
             $query->where(function ($q) use ($search) {

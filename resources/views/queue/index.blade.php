@@ -7,6 +7,7 @@
 @php
     $user = auth()->user();
     $canCheckIn = $user->isAdmin() || $user->isNurse() || $user->isReceptionist();
+    $canVitals = $user->isAdmin() || $user->isNurse() || $user->isReceptionist();
 @endphp
 
 @section('content')
@@ -36,5 +37,9 @@
 
     @if ($canCheckIn)
         <x-check-in-modal :patients="$patients" :doctors="$doctors" />
+    @endif
+
+    @if ($canVitals)
+        <x-queue-vitals-modal />
     @endif
 @endsection

@@ -6,6 +6,7 @@ use App\Enums\UserRole;
 use App\Http\Controllers\Concerns\RendersLiveFragment;
 use App\Http\Requests\AssignDoctorRequest;
 use App\Http\Requests\CheckInRequest;
+use App\Http\Requests\RecordQueueVitalsRequest;
 use App\Models\Patient;
 use App\Models\PatientQueue;
 use App\Models\User;
@@ -81,6 +82,21 @@ class PatientQueueController extends BaseController
         $this->queueService->assignDoctor($queue, $request->integer('assigned_doctor_id'));
 
         return back()->with('success', 'Doctor assigned to the patient.');
+    }
+
+    public function recordVitals(RecordQueueVitalsRequest $request, PatientQueue $queue): RedirectResponse|JsonResponse
+    {
+        $this->queueService->recordVitals($queue, $request->validated(), auth()->id());
+
+        $message = 'Vitals recorded for the patient.';
+
+        if ($request->wantsJson()) {
+            session()->flash('success', $message);
+
+            return response()->json(['redirect' => route('queue.index')]);
+        }
+
+        return back()->with('success', $message);
     }
 
     public function cancel(PatientQueue $queue): RedirectResponse

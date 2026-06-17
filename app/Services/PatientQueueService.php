@@ -31,7 +31,7 @@ class PatientQueueService extends BaseService
      */
     public function liveHashParts(Collection $queue): array
     {
-        return $queue->map(fn ($e) => $e->id.'|'.$e->status->value.'|'.$e->assigned_doctor_id.'|'.$e->updated_at)->all();
+        return $queue->map(fn ($e) => $e->id.'|'.$e->status->value.'|'.$e->assigned_doctor_id.'|'.$e->has_vitals.'|'.$e->updated_at)->all();
     }
 
     /**
@@ -52,6 +52,20 @@ class PatientQueueService extends BaseService
             'reason' => $reason,
             'checked_in_at' => now(),
         ]);
+    }
+
+    /**
+     * Record vitals against a waiting queue entry (the nurse's pre-consultation step).
+     */
+    public function recordVitals(PatientQueue $entry, array $vitals, int $userId): PatientQueue
+    {
+        $entry->update([
+            ...$vitals,
+            'vitals_recorded_by' => $userId,
+            'vitals_recorded_at' => now(),
+        ]);
+
+        return $entry->fresh();
     }
 
     public function assignDoctor(PatientQueue $entry, int $doctorId): PatientQueue

@@ -7,11 +7,13 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EmailVerificationController;
 use App\Http\Controllers\ExportController;
 use App\Http\Controllers\InvoiceController;
+use App\Http\Controllers\MedicationController;
 use App\Http\Controllers\PasswordResetController;
 use App\Http\Controllers\PatientController;
 use App\Http\Controllers\PatientQueueController;
 use App\Http\Controllers\PrescriptionController;
 use App\Http\Controllers\RegisterController;
+use App\Http\Controllers\StaffController;
 use Illuminate\Support\Facades\Route;
 
 // --- Public ---
@@ -20,7 +22,7 @@ Route::get('/', fn () => redirect()->route('login'));
 // --- Guests only ---
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
-    Route::post('/login', [AuthController::class, 'login']);
+    Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1');
 
     Route::get('/register', [RegisterController::class, 'show'])->name('register');
     Route::post('/register', [RegisterController::class, 'store']);
@@ -52,6 +54,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::resource('patients', PatientController::class)->except(['destroy']);
     });
 
+    // Archiving (soft-delete) and restoring patients — admin only.
+    Route::middleware('role:admin')->group(function () {
+        Route::delete('/patients/{patient}/archive', [PatientController::class, 'archive'])->name('patients.archive');
+        Route::patch('/patients/{patient}/restore', [PatientController::class, 'restore'])->withTrashed()->name('patients.restore');
+    });
+
     // --- Patient Queue ---
     // Viewing the queue is open to everyone; mutating it is role-gated.
     Route::get('/queue', [PatientQueueController::class, 'index'])->name('queue.index');
@@ -60,6 +68,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::middleware('role:admin,nurse,receptionist')->group(function () {
         Route::post('/queue', [PatientQueueController::class, 'store'])->name('queue.store');
         Route::patch('/queue/{queue}/assign', [PatientQueueController::class, 'assign'])->name('queue.assign');
+        Route::patch('/queue/{queue}/vitals', [PatientQueueController::class, 'recordVitals'])->name('queue.vitals');
     });
 
     Route::middleware('role:admin,receptionist')->group(function () {
@@ -116,6 +125,21 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('/invoice-items/{item}', [InvoiceController::class, 'removeItem'])->name('invoices.items.destroy');
         Route::patch('/invoices/{invoice}/issue', [InvoiceController::class, 'issue'])->name('invoices.issue');
         Route::patch('/invoices/{invoice}/pay', [InvoiceController::class, 'markPaid'])->name('invoices.pay');
+    });
+
+    // --- Staff management (admin only) ---
+    Route::middleware('role:admin')->group(function () {
+        Route::get('/staff', [StaffController::class, 'index'])->name('staff.index');
+        Route::delete('/staff/{user}/deactivate', [StaffController::class, 'deactivate'])->name('staff.deactivate');
+        Route::patch('/staff/{user}/reactivate', [StaffController::class, 'reactivate'])->withTrashed()->name('staff.reactivate');
+    });
+
+    // --- Drug catalog (admin only) ---
+    Route::middleware('role:admin')->group(function () {
+        Route::get('/drug-catalog', [MedicationController::class, 'index'])->name('medications.index');
+        Route::post('/drug-catalog', [MedicationController::class, 'store'])->name('medications.store');
+        Route::put('/drug-catalog/{medication}', [MedicationController::class, 'update'])->name('medications.update');
+        Route::patch('/drug-catalog/{medication}/toggle', [MedicationController::class, 'toggle'])->name('medications.toggle');
     });
 
     // --- Audit log (admin only) ---

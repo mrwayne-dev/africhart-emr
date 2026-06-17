@@ -17,6 +17,14 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
     'checked_in_at',
     'seen_at',
     'completed_at',
+    'temperature',
+    'blood_pressure',
+    'pulse_rate',
+    'weight',
+    'height',
+    'vitals_notes',
+    'vitals_recorded_by',
+    'vitals_recorded_at',
 ])]
 class PatientQueue extends Model
 {
@@ -29,8 +37,19 @@ class PatientQueue extends Model
             'checked_in_at' => 'datetime',
             'seen_at' => 'datetime',
             'completed_at' => 'datetime',
+            'temperature' => 'decimal:1',
+            'weight' => 'decimal:1',
+            'height' => 'decimal:1',
+            'vitals_recorded_at' => 'datetime',
         ];
     }
+
+    /**
+     * The vitals fields a consultation absorbs on start.
+     *
+     * @var array<int, string>
+     */
+    public const VITALS_FIELDS = ['temperature', 'blood_pressure', 'pulse_rate', 'weight', 'height', 'vitals_notes'];
 
     // --- Relationships ---
 
@@ -47,6 +66,29 @@ class PatientQueue extends Model
     public function assignedDoctor(): BelongsTo
     {
         return $this->belongsTo(User::class, 'assigned_doctor_id');
+    }
+
+    public function vitalsRecordedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'vitals_recorded_by');
+    }
+
+    // --- Accessors ---
+
+    public function getBmiAttribute(): ?float
+    {
+        if ($this->weight && $this->height) {
+            $heightInMeters = $this->height / 100;
+
+            return round($this->weight / ($heightInMeters * $heightInMeters), 1);
+        }
+
+        return null;
+    }
+
+    public function getHasVitalsAttribute(): bool
+    {
+        return (bool) ($this->temperature || $this->blood_pressure || $this->pulse_rate);
     }
 
     // --- Scopes ---

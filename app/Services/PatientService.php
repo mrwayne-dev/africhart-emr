@@ -20,9 +20,27 @@ class PatientService extends BaseService
      */
     public function getPatientList(
         ?string $search = null,
-        ?string $bloodGroup = null
+        ?string $bloodGroup = null,
+        bool $archived = false
     ): LengthAwarePaginator {
-        return $this->patientRepository->getPaginated($search, $bloodGroup);
+        return $this->patientRepository->getPaginated($search, $bloodGroup, archived: $archived);
+    }
+
+    /**
+     * Archive (soft-delete) a patient. The record and all its history stay in the
+     * database — medical records are never destroyed.
+     */
+    public function archivePatient(Patient $patient): void
+    {
+        $patient->delete();
+    }
+
+    /**
+     * Restore a previously archived patient.
+     */
+    public function restorePatient(Patient $patient): void
+    {
+        $patient->restore();
     }
 
     /**

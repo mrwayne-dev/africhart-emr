@@ -7,7 +7,8 @@
     $user = auth()->user();
     $canAssign = $user->isAdmin() || $user->isNurse() || $user->isReceptionist();
     $canCancel = $user->isAdmin() || $user->isReceptionist();
-    $showActions = ($canAssign || $canCancel) && count($doctors) > 0;
+    $canVitals = $user->isAdmin() || $user->isNurse() || $user->isReceptionist();
+    $showActions = $canAssign || $canCancel || $canVitals;
 @endphp
 
 <div class="overflow-x-auto">
@@ -33,7 +34,14 @@
                         <a href="{{ route('patients.show', $entry->patient_id) }}" class="hover:underline">
                             {{ $entry->patient?->full_name ?? '—' }}
                         </a>
-                        <span class="block text-xs text-muted">{{ $entry->patient?->patient_id }}</span>
+                        <span class="block text-xs text-muted">
+                            {{ $entry->patient?->patient_id }}
+                            @if ($entry->has_vitals)
+                                <span class="ml-1 inline-flex items-center gap-0.5 text-emerald-600" title="Vitals recorded">
+                                    <x-phosphor-heartbeat class="w-3 h-3" /> vitals
+                                </span>
+                            @endif
+                        </span>
                     </td>
                     <td class="px-4 py-3 text-muted max-w-[12rem] truncate">{{ $entry->reason ?? '—' }}</td>
                     <td class="px-4 py-3 text-muted">{{ $entry->assignedDoctor?->name ?? '—' }}</td>
@@ -46,7 +54,24 @@
                     @if ($showActions)
                         <td class="px-4 py-3 text-right whitespace-nowrap">
                             <div class="flex items-center justify-end gap-2">
-                                @if ($canAssign && in_array($entry->status, [\App\Enums\QueueStatus::Waiting, \App\Enums\QueueStatus::InConsultation]))
+                                @if ($canVitals && in_array($entry->status, [\App\Enums\QueueStatus::Waiting, \App\Enums\QueueStatus::InConsultation]))
+                                    <button type="button" title="Record vitals"
+                                        class="text-muted hover:text-ink"
+                                        @click="$dispatch('open-queue-vitals', @js([
+                                            'id' => $entry->id,
+                                            'patient' => $entry->patient?->full_name,
+                                            'temperature' => $entry->temperature,
+                                            'blood_pressure' => $entry->blood_pressure,
+                                            'pulse_rate' => $entry->pulse_rate,
+                                            'weight' => $entry->weight,
+                                            'height' => $entry->height,
+                                            'vitals_notes' => $entry->vitals_notes,
+                                        ]))">
+                                        <x-phosphor-heartbeat class="w-4 h-4" />
+                                    </button>
+                                @endif
+
+                                @if ($canAssign && count($doctors) > 0 && in_array($entry->status, [\App\Enums\QueueStatus::Waiting, \App\Enums\QueueStatus::InConsultation]))
                                     <form method="POST" action="{{ route('queue.assign', $entry) }}" class="flex items-center gap-1.5">
                                         @csrf
                                         @method('PATCH')
