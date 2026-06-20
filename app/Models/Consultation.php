@@ -34,6 +34,8 @@ class Consultation extends Model
     {
         return [
             'status' => ConsultationStatus::class,
+            'patient_id' => 'integer',
+            'doctor_id' => 'integer',
             'temperature' => 'decimal:1',
             'weight' => 'decimal:1',
             'height' => 'decimal:1',
