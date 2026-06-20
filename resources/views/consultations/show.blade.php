@@ -34,7 +34,7 @@
                 </span>
             </div>
         </div>
-        <div class="flex items-center gap-2 no-print">
+        <div class="flex flex-wrap items-center gap-2 no-print">
             <x-print-button />
             @can('update', $consultation)
                 <a href="{{ route('consultations.edit', $consultation) }}"
