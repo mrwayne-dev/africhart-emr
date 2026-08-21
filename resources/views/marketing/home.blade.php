@@ -3,246 +3,232 @@
 @section('title', 'AfriChart — Clinic management software for Nigerian clinics')
 @section('description', 'See every patient, every prescription and every naira in your clinic — from anywhere. Built in Port Harcourt for Nigerian private clinics.')
 
+@php
+    /*
+     * Hero background. Detect whichever extension was supplied rather than
+     * hard-coding one, so dropping in a .webp or .png just works. When no file
+     * exists the section falls back to the flat ink panel underneath — the page
+     * never breaks waiting on an asset.
+     */
+    $heroImage = collect(['webp', 'jpg', 'jpeg', 'png'])
+        ->map(fn ($ext) => "images/africhart-home.{$ext}")
+        ->first(fn ($path) => file_exists(public_path($path)));
+
+    $featured = collect($tiers)->firstWhere('featured', true);
+    $otherTiers = collect($tiers)->where('featured', false)->values();
+@endphp
+
 @section('content')
 
     {{-- ========================= HERO ========================= --}}
     {{--
-        Full viewport below the sticky nav. `svh` not `vh` so mobile browser
-        chrome doesn't clip it, and `min-h` not `h` so a short laptop viewport
-        lets the hero grow instead of cropping the content.
+        Full-bleed textural background, content anchored to the bottom rather
+        than centred. `svh` not `vh` so mobile browser chrome can't clip it;
+        `min-h` not `h` so a short viewport grows instead of cropping.
     --}}
-    <section class="bg-page relative min-h-[calc(100svh-4rem)] flex items-center py-16 sm:py-20">
-        <div class="max-w-7xl mx-auto px-6 sm:px-8 w-full">
-            <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
+    <section class="relative min-h-[calc(100svh-4rem)] flex flex-col justify-end overflow-hidden bg-ink-body">
 
-                <div class="lg:col-span-6" data-reveal>
-                    <p class="text-xs font-semibold text-muted uppercase tracking-wide mb-5">
-                        For Nigerian private clinics
-                    </p>
+        @if ($heroImage)
+            <img src="{{ asset($heroImage) }}" alt=""
+                class="absolute inset-0 w-full h-full object-cover hero-settle" aria-hidden="true">
+        @endif
 
-                    <h1 class="text-4xl sm:text-5xl lg:text-6xl font-medium text-ink tracking-tight leading-[1.05]">
-                        See every patient, every prescription, and every naira.
-                    </h1>
+        {{-- Two-stop gradient: darkest at the lower-left where the headline
+             sits, opening up toward the upper-right so the image still reads. --}}
+        <div class="absolute inset-0 bg-gradient-to-tr from-ink-body via-ink-body/75 to-ink-body/30" aria-hidden="true"></div>
 
-                    <p class="text-base sm:text-lg text-muted mt-6 leading-relaxed max-w-xl">
-                        AfriChart runs your front desk, consulting room and billing in one place —
-                        so the queue moves, nothing goes unbilled, and you can check on the clinic
-                        from anywhere.
-                    </p>
+        <div class="relative max-w-7xl mx-auto px-6 sm:px-8 w-full pt-28 pb-8">
 
-                    <div class="flex flex-col sm:flex-row gap-3 mt-9">
-                        <a href="{{ route('signup') }}"
-                            class="group inline-flex items-center justify-center gap-2 bg-ink text-white rounded-full px-7 py-3.5 text-sm font-medium hover:bg-ink/90 transition-colors">
-                            Get started
-                            <x-phosphor-arrow-right class="w-4 h-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
-                        </a>
-                        <a href="{{ route('demo') }}"
-                            class="inline-flex items-center justify-center border border-line text-ink rounded-full px-7 py-3.5 text-sm font-medium hover:bg-warm hover:border-muted/30 transition-colors">
-                            Book a demo
-                        </a>
-                    </div>
+            <p class="font-mono text-xs text-white/60 uppercase tracking-[0.2em] mb-6" data-reveal>
+                [ For Nigerian clinics ]
+            </p>
 
-                    <ul class="flex flex-wrap items-center gap-x-6 gap-y-2 mt-8">
-                        @foreach (['30-day free trial', 'Naira pricing', 'Your own database'] as $point)
-                            <li class="inline-flex items-center gap-1.5 text-xs text-muted">
-                                <x-phosphor-check-circle class="w-4 h-4 text-ink" aria-hidden="true" />
-                                {{ $point }}
-                            </li>
-                        @endforeach
-                    </ul>
-                </div>
+            <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-10 lg:gap-16">
+                <h1 class="font-medium text-white uppercase tracking-tight leading-[0.95] max-w-4xl
+                        text-[clamp(2.25rem,6.5vw,5.5rem)]"
+                    data-reveal data-reveal-delay="100">
+                    See everything<br>your clinic does.
+                </h1>
 
-                {{-- Product visual, built from real markup rather than a screenshot
-                     so it stays truthful and sharp at any size. --}}
-                <div class="lg:col-span-6" data-reveal data-reveal-delay="120">
-                    <div class="bg-warm rounded-card border border-line p-5 sm:p-6" aria-hidden="true">
-                        <div class="flex items-center justify-between mb-5">
-                            <p class="text-sm font-medium text-ink tracking-tight">Today's queue</p>
-                            <span class="inline-flex items-center gap-1.5 text-xs text-muted">
-                                <span class="relative flex h-2 w-2">
-                                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-ink opacity-60"></span>
-                                    <span class="relative inline-flex rounded-full h-2 w-2 bg-ink"></span>
-                                </span>
-                                Live
-                            </span>
-                        </div>
-
-                        <div class="flex flex-col gap-2.5">
-                            @foreach ([
-                                ['Chioma A. Nwosu', 'Fever · 08:42', 'In consultation'],
-                                ['Emeka C. Obi', 'Follow-up · 08:55', 'Waiting'],
-                                ['Fatima B. Mohammed', 'New complaint · 09:10', 'Waiting'],
-                                ['Oluwaseun D. Adeyemi', 'Lab results · 09:24', 'Waiting'],
-                            ] as [$name, $meta, $status])
-                                <div class="bg-page border border-line rounded-card px-4 py-3 flex items-center justify-between gap-3">
-                                    <div class="min-w-0">
-                                        <p class="text-sm font-medium text-ink truncate">{{ $name }}</p>
-                                        <p class="text-xs text-muted mt-0.5">{{ $meta }}</p>
-                                    </div>
-                                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium shrink-0
-                                        {{ $status === 'In consultation' ? 'bg-ink text-white' : 'bg-warm text-muted' }}">
-                                        {{ $status }}
-                                    </span>
-                                </div>
-                            @endforeach
-                        </div>
-
-                        <div class="flex items-center justify-between mt-5 pt-4 border-t border-line">
-                            <p class="text-xs text-muted">Collected today</p>
-                            <p class="text-lg font-medium text-ink tracking-tight">&#8358;86,500</p>
-                        </div>
-                    </div>
-                </div>
+                <p class="text-base text-white/70 leading-relaxed max-w-sm lg:text-right lg:pb-3"
+                    data-reveal data-reveal-delay="220">
+                    Front desk, consulting room and billing in one place — so the queue moves,
+                    nothing goes unbilled, and you can check on the clinic from anywhere.
+                </p>
             </div>
-        </div>
 
-        {{-- Scroll cue. Hidden on short viewports where the hero already fills
-             the screen without room to spare. --}}
-        <div class="hidden lg:block absolute bottom-8 left-1/2 -translate-x-1/2" aria-hidden="true">
-            <x-phosphor-caret-down class="w-5 h-5 text-muted animate-bounce" />
+            <div class="flex flex-col sm:flex-row gap-3 mt-10" data-reveal data-reveal-delay="320">
+                <a href="{{ route('signup') }}"
+                    class="group inline-flex items-center justify-center gap-2 bg-page text-ink rounded-full px-7 py-3.5 text-sm font-medium hover:bg-warm transition-colors">
+                    Get started
+                    <x-phosphor-arrow-right class="w-4 h-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
+                </a>
+                <a href="{{ route('demo') }}"
+                    class="inline-flex items-center justify-center border border-white/30 text-white rounded-full px-7 py-3.5 text-sm font-medium hover:bg-white/10 hover:border-white/50 transition-colors">
+                    Book a demo
+                </a>
+            </div>
+
+            {{-- Meta bar. The clock is Lagos time, not the visitor's — the point
+                 is "we're in your timezone", so a clinic owner sees their own. --}}
+            <div class="flex flex-wrap items-center gap-x-8 gap-y-3 mt-12 pt-5 border-t border-white/15
+                    font-mono text-xs text-white/60 uppercase tracking-[0.15em]"
+                data-reveal data-reveal-delay="420">
+                <span>4 staff roles</span>
+                <span>Port Harcourt built</span>
+                <span>Naira pricing</span>
+                <span class="ml-auto" x-data="lagosClock">
+                    [ <span x-text="now">00:00:00</span> WAT ]
+                </span>
+            </div>
         </div>
     </section>
 
     {{-- ========================= HOW IT WORKS ========================= --}}
-    <x-marketing-section tone="warm">
-        <div data-reveal>
-            <x-marketing-heading
-                eyebrow="How it works"
-                title="One flow, from the front desk to the owner's phone."
-                lead="Every role sees exactly what they need, and each step hands cleanly to the next." />
-        </div>
-
-        <ol class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            @foreach ([
-                ['icon' => 'phosphor-users-three', 'role' => 'Reception', 'text' => 'Registers the patient and checks them into today\'s queue.'],
-                ['icon' => 'phosphor-heartbeat', 'role' => 'Nurse', 'text' => 'Records vitals while the patient waits — before the doctor opens anything.'],
-                ['icon' => 'phosphor-stethoscope', 'role' => 'Doctor', 'text' => 'Consults, diagnoses and prescribes, with the vitals already there.'],
-                ['icon' => 'phosphor-receipt', 'role' => 'Reception', 'text' => 'Invoice totals itself from the visit. Take payment, print the receipt.'],
-            ] as $i => $step)
-                <li class="group bg-page border border-line rounded-card p-6 transition-all duration-200 hover:-translate-y-0.5 hover:border-muted/30"
-                    data-reveal data-reveal-delay="{{ $i * 80 }}">
-                    <div class="flex items-center justify-between mb-5">
-                        <x-dynamic-component :component="$step['icon']" class="w-6 h-6 text-ink" aria-hidden="true" />
-                        <span class="text-xs font-semibold text-muted">0{{ $i + 1 }}</span>
-                    </div>
-                    <h3 class="text-base font-medium text-ink tracking-tight">{{ $step['role'] }}</h3>
-                    <p class="text-sm text-muted mt-2 leading-relaxed">{{ $step['text'] }}</p>
-                </li>
-            @endforeach
-        </ol>
-
-        <p class="text-sm text-muted mt-8 max-w-2xl leading-relaxed" data-reveal>
-            And the owner sees all of it — every consultation, every invoice, every change —
-            without standing in the clinic.
-        </p>
-    </x-marketing-section>
-
-    {{-- ========================= WHAT YOU GET (BENTO) ========================= --}}
-    {{--
-        Bento grid on a 6-column desktop track: 4+2 / 3+3 / 3+3. Span classes are
-        written literally — Tailwind 4 scans for complete class names, so a
-        computed "lg:col-span-{{ $n }}" would never be generated.
-    --}}
+    {{-- Editorial flow, not a row of cards: numeral, role, copy, hairline. --}}
     <x-marketing-section tone="page">
         <div data-reveal>
             <x-marketing-heading
+                eyebrow="How it works"
+                title="One flow, front desk to owner."
+                lead="Every role sees exactly what they need, and each step hands cleanly to the next." />
+        </div>
+
+        <div class="border-t border-line">
+            @foreach ([
+                ['role' => 'Reception', 'text' => 'Registers the patient and checks them into today\'s queue.'],
+                ['role' => 'Nurse', 'text' => 'Records vitals while the patient waits — before the doctor opens anything.'],
+                ['role' => 'Doctor', 'text' => 'Consults, diagnoses and prescribes, with the vitals already there.'],
+                ['role' => 'Reception', 'text' => 'The invoice totals itself from the visit. Take payment, print the receipt.'],
+                ['role' => 'Owner', 'text' => 'Sees all of it — every consultation, every invoice, every change — without standing in the clinic.'],
+            ] as $i => $step)
+                <div class="flex flex-col sm:flex-row sm:items-baseline gap-2 sm:gap-10 py-7 border-b border-line
+                        transition-colors hover:bg-warm/60 -mx-4 px-4"
+                    data-reveal data-reveal-delay="{{ $i * 70 }}">
+                    <span class="font-mono text-xs text-muted shrink-0 sm:w-16 tracking-widest">[ 0{{ $i + 1 }} ]</span>
+                    <h3 class="text-xl sm:text-2xl font-medium text-ink tracking-tight shrink-0 sm:w-56">{{ $step['role'] }}</h3>
+                    <p class="text-base text-muted leading-relaxed max-w-2xl">{{ $step['text'] }}</p>
+                </div>
+            @endforeach
+        </div>
+    </x-marketing-section>
+
+    {{-- ========================= WHAT YOU GET (STICKY SHOWCASE) ========================= --}}
+    {{--
+        Feature list left, sticky visual right that swaps as you scroll.
+        Below lg the sticky column is dropped entirely and each feature renders
+        its own visual inline, so the section degrades to a readable stack.
+    --}}
+    @php
+        $showcase = [
+            ['key' => 'records', 'title' => 'Patient records', 'icon' => 'phosphor-clipboard-text',
+             'text' => 'One record per patient with the full visit timeline. Nobody has to ask what happened last time.'],
+            ['key' => 'queue', 'title' => 'Live queue', 'icon' => 'phosphor-clock',
+             'text' => 'Who is waiting, who is being seen, and for how long. The board updates itself, so nobody walks to the front desk to ask.'],
+            ['key' => 'consult', 'title' => 'Consultations & vitals', 'icon' => 'phosphor-stethoscope',
+             'text' => 'Notes, diagnosis and plan, with the nurse\'s vitals already attached — and prescriptions from your own drug list, at your own prices.'],
+            ['key' => 'billing', 'title' => 'Billing & receipts', 'icon' => 'phosphor-receipt',
+             'text' => 'Invoices total themselves from the visit. PDF receipts, cash or transfer, nothing quietly missed.'],
+            ['key' => 'audit', 'title' => 'Audit & oversight', 'icon' => 'phosphor-chart-line',
+             'text' => 'Every action attributed to a person, and a dashboard that shows the week at a glance.'],
+        ];
+    @endphp
+
+    <x-marketing-section tone="warm">
+        <div data-reveal>
+            <x-marketing-heading
                 eyebrow="What you get"
-                title="Everything a clinic actually does, in one system."
+                title="Everything a clinic actually does."
                 lead="Not a hospital suite bolted down to fit. The workflow a private clinic runs every day." />
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-5">
+        <div x-data="featureShowcase" class="lg:grid lg:grid-cols-2 lg:gap-16 xl:gap-24">
 
-            <x-feature-cell title="Live queue" icon="phosphor-clock" tall
-                class="sm:col-span-2 lg:col-span-4" data-reveal>
-                Who is waiting, who is being seen, and for how long. The board updates itself, so
-                nobody walks to the front desk to ask.
+            {{-- List --}}
+            <div>
+                @foreach ($showcase as $i => $item)
+                    <div data-showcase-item="{{ $i }}"
+                        class="py-8 lg:py-16 border-b border-line last:border-b-0">
 
-                <x-slot:visual>
-                    <div class="w-full bg-warm border border-line rounded-card p-4">
-                        <div class="flex flex-col gap-2">
-                            @foreach ([['Waiting', '4'], ['In consultation', '1'], ['Ready to invoice', '2']] as [$label, $count])
-                                <div class="flex items-center justify-between">
-                                    <span class="text-xs text-muted">{{ $label }}</span>
-                                    <span class="text-sm font-medium text-ink tabular-nums">{{ $count }}</span>
-                                </div>
-                            @endforeach
+                        <div class="flex items-center gap-3">
+                            <x-dynamic-component :component="$item['icon']"
+                                class="w-5 h-5 shrink-0 transition-colors"
+                                ::class="active === {{ $i }} ? 'text-ink' : 'text-muted'" aria-hidden="true" />
+                            <h3 class="text-xl sm:text-2xl font-medium tracking-tight transition-colors"
+                                ::class="active === {{ $i }} ? 'text-ink' : 'text-muted'">
+                                {{ $item['title'] }}
+                            </h3>
+                        </div>
+
+                        <p class="text-base text-muted leading-relaxed mt-3 max-w-md">{{ $item['text'] }}</p>
+
+                        {{-- Progress rule — marks the active item on desktop. --}}
+                        <div class="hidden lg:block h-px bg-line mt-6 overflow-hidden">
+                            <div class="h-full bg-ink origin-left transition-transform duration-500 ease-out"
+                                ::class="active === {{ $i }} ? 'scale-x-100' : 'scale-x-0'"></div>
+                        </div>
+
+                        {{-- Mobile: the visual lives with its feature. --}}
+                        <div class="lg:hidden mt-6">
+                            @include('marketing.partials.showcase-visual', ['key' => $item['key']])
                         </div>
                     </div>
-                </x-slot:visual>
-            </x-feature-cell>
+                @endforeach
+            </div>
 
-            <x-feature-cell title="Patient records" icon="phosphor-clipboard-text"
-                class="lg:col-span-2" data-reveal data-reveal-delay="80">
-                One record per patient with a full visit timeline — never re-ask what happened last time.
-            </x-feature-cell>
-
-            <x-feature-cell title="Consultations & vitals" icon="phosphor-stethoscope"
-                class="lg:col-span-3" data-reveal>
-                Notes, diagnosis and plan, with the nurse's vitals already attached to the visit.
-            </x-feature-cell>
-
-            <x-feature-cell title="Prescriptions" icon="phosphor-first-aid-kit"
-                class="lg:col-span-3" data-reveal data-reveal-delay="80">
-                Autocomplete from your own drug list, at your own prices — not a generic formulary.
-            </x-feature-cell>
-
-            <x-feature-cell title="Billing & receipts" icon="phosphor-receipt"
-                class="lg:col-span-3" data-reveal>
-                Invoices total themselves from the visit. PDF receipts, cash or transfer, nothing missed.
-            </x-feature-cell>
-
-            <x-feature-cell title="Audit & oversight" icon="phosphor-chart-line"
-                class="lg:col-span-3" data-reveal data-reveal-delay="80">
-                Every action attributed to a person, and a dashboard that shows the week at a glance.
-            </x-feature-cell>
+            {{-- Sticky visual (desktop only) --}}
+            <div class="hidden lg:block">
+                <div class="sticky top-28">
+                    @foreach ($showcase as $i => $item)
+                        <div x-show="active === {{ $i }}" x-cloak
+                            x-transition:enter="transition ease-out duration-300"
+                            x-transition:enter-start="opacity-0 translate-y-2"
+                            x-transition:enter-end="opacity-100 translate-y-0"
+                            x-transition:leave="transition ease-in duration-150"
+                            x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
+                            @include('marketing.partials.showcase-visual', ['key' => $item['key']])
+                        </div>
+                    @endforeach
+                </div>
+            </div>
         </div>
     </x-marketing-section>
 
     {{-- ========================= YOUR DATA ========================= --}}
-    <x-marketing-section tone="warm">
-        <div data-reveal>
-            <x-marketing-heading
-                align="center"
-                eyebrow="Your data"
-                title="Your clinic's records live in your clinic's own database." />
+    <x-marketing-section tone="page">
+        <div class="max-w-3xl" data-reveal>
+            <p class="text-xs font-semibold text-muted uppercase tracking-wide mb-4">Your data</p>
+            <h2 class="text-3xl sm:text-5xl font-medium text-ink tracking-tight leading-[1.05]">
+                Separate by construction, not by a filter someone could forget.
+            </h2>
         </div>
 
-        <x-trust-tiles :tiles="[
-            ['icon' => 'phosphor-database', 'name' => 'Per-clinic database', 'sub' => 'Isolated'],
-            ['icon' => 'phosphor-lock-key', 'name' => 'Backups', 'sub' => 'Encrypted'],
-            ['icon' => 'phosphor-clipboard-text', 'name' => 'Audit trail', 'sub' => 'Every action'],
-            ['icon' => 'phosphor-shield-check', 'name' => 'NDPA', 'sub' => 'Aligned'],
-            ['icon' => 'phosphor-users-three', 'name' => 'Support', 'sub' => 'Port Harcourt'],
-        ]" />
+        <div class="mt-12">
+            <x-trust-strip :items="[
+                ['icon' => 'phosphor-database', 'name' => 'Per-clinic database', 'sub' => 'Isolated'],
+                ['icon' => 'phosphor-lock-key', 'name' => 'Backups', 'sub' => 'Encrypted'],
+                ['icon' => 'phosphor-clipboard-text', 'name' => 'Audit trail', 'sub' => 'Every action'],
+                ['icon' => 'phosphor-shield-check', 'name' => 'NDPA', 'sub' => 'Aligned'],
+                ['icon' => 'phosphor-users-three', 'name' => 'Support', 'sub' => 'Port Harcourt'],
+            ]" />
+        </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 mt-16">
-            <div data-reveal>
-                <p class="text-xs font-semibold text-muted uppercase tracking-wide mb-4">Isolation</p>
-                <h3 class="text-3xl sm:text-4xl font-medium text-ink tracking-tight leading-tight">
-                    Separate by construction, not by a filter someone could forget.
-                </h3>
-                <p class="text-base text-muted mt-4 leading-relaxed">
-                    Not a shared table with a column telling clinics apart. Each clinic gets its own
-                    database, so one clinic's records cannot be reached from another — and we can say
-                    exactly that, in one sentence, to anyone who asks.
-                </p>
-            </div>
+        <div class="lg:grid lg:grid-cols-12 lg:gap-16 mt-16">
+            <p class="text-base text-muted leading-relaxed lg:col-span-5" data-reveal>
+                Not a shared table with a column telling clinics apart. Each clinic gets its own
+                database, so one clinic's records cannot be reached from another — and we can say
+                exactly that, in one sentence, to anyone who asks.
+            </p>
 
-            <div class="flex flex-col gap-8">
+            <div class="lg:col-span-7 mt-10 lg:mt-0 border-t border-line">
                 @foreach ([
-                    ['icon' => 'phosphor-database', 'title' => 'One database per clinic', 'text' => 'Isolation is structural. There is no query that could return another clinic\'s patients, because their records are not in the same database.'],
-                    ['icon' => 'phosphor-lock-key', 'title' => 'Encrypted, tested backups', 'text' => 'Automatic daily backups, AES-256 encrypted, stored off the server — with a restore we have actually rehearsed rather than assumed.'],
-                    ['icon' => 'phosphor-shield-check', 'title' => 'Built for the NDPA', 'text' => 'A documented data-isolation guarantee and a per-clinic data-processing agreement, so your compliance paperwork has something to point at.'],
+                    ['title' => 'One database per clinic', 'text' => 'There is no query that could return another clinic\'s patients, because their records are not in the same database.'],
+                    ['title' => 'Encrypted, tested backups', 'text' => 'Daily backups, AES-256 encrypted, stored off the server — with a restore we have actually rehearsed rather than assumed.'],
+                    ['title' => 'Built for the NDPA', 'text' => 'A documented data-isolation guarantee and a per-clinic data-processing agreement, so your compliance paperwork has something to point at.'],
                 ] as $i => $item)
-                    <div class="flex items-start gap-4" data-reveal data-reveal-delay="{{ $i * 90 }}">
-                        <span class="bg-page border border-line rounded-card p-2.5 shrink-0">
-                            <x-dynamic-component :component="$item['icon']" class="w-5 h-5 text-ink" aria-hidden="true" />
-                        </span>
-                        <div>
-                            <h4 class="text-sm font-medium text-ink tracking-tight">{{ $item['title'] }}</h4>
-                            <p class="text-sm text-muted mt-1.5 leading-relaxed">{{ $item['text'] }}</p>
-                        </div>
+                    <div class="py-6 border-b border-line" data-reveal data-reveal-delay="{{ $i * 80 }}">
+                        <h3 class="text-base font-medium text-ink tracking-tight">{{ $item['title'] }}</h3>
+                        <p class="text-sm text-muted mt-2 leading-relaxed max-w-xl">{{ $item['text'] }}</p>
                     </div>
                 @endforeach
             </div>
@@ -250,7 +236,12 @@
     </x-marketing-section>
 
     {{-- ========================= PRICING ========================= --}}
-    <x-marketing-section tone="page">
+    {{--
+        One plan carries the section. The other two are a click away rather than
+        competing for attention — the recommendation reads as a recommendation,
+        not as the middle column of three.
+    --}}
+    <x-marketing-section tone="warm">
         <div data-reveal>
             <x-marketing-heading
                 align="center"
@@ -259,27 +250,48 @@
                 lead="No dollar invoices, no surprise conversion. The setup fee is shown up front." />
         </div>
 
-        {{-- Full cards, not the compact variant: the feature checklist is the
-             substance of this card, and hiding it was why it read as thin. --}}
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-5 max-w-5xl mx-auto">
-            @foreach ($tiers as $i => $tier)
-                <div data-reveal data-reveal-delay="{{ $i * 90 }}">
-                    <x-pricing-tier :tier="$tier" />
-                </div>
-            @endforeach
-        </div>
+        <div x-data="{ others: false }" class="max-w-5xl mx-auto">
 
-        <p class="text-center mt-10" data-reveal>
-            <a href="{{ route('pricing') }}"
-                class="group inline-flex items-center gap-1.5 text-sm text-ink font-medium hover:underline">
-                Compare every plan
-                <x-phosphor-arrow-right class="w-4 h-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
-            </a>
-        </p>
+            <div data-reveal>
+                <x-pricing-tier :tier="$featured" size="lg" />
+            </div>
+
+            <div class="text-center mt-8">
+                <button type="button" @click="others = ! others"
+                    :aria-expanded="others ? 'true' : 'false'"
+                    aria-controls="other-plans"
+                    class="group inline-flex items-center gap-2 border border-line bg-page text-ink rounded-full px-5 py-2.5 text-sm font-medium hover:bg-warm hover:border-muted/30 transition-colors">
+                    <span x-text="others ? 'Hide other plans' : 'See other plans'">See other plans</span>
+                    <x-phosphor-caret-down class="w-4 h-4 text-muted transition-transform duration-300"
+                        ::class="others && 'rotate-180'" />
+                </button>
+            </div>
+
+            {{-- Same grid-rows height technique as the FAQ. --}}
+            <div id="other-plans"
+                class="grid transition-[grid-template-rows] duration-500 ease-out"
+                :class="others ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'">
+                <div class="overflow-hidden">
+                    <div class="grid md:grid-cols-2 gap-5 pt-8">
+                        @foreach ($otherTiers as $tier)
+                            <x-pricing-tier :tier="$tier" />
+                        @endforeach
+                    </div>
+                </div>
+            </div>
+
+            <p class="text-center mt-10" data-reveal>
+                <a href="{{ route('pricing') }}"
+                    class="group inline-flex items-center gap-1.5 text-sm text-ink font-medium hover:underline">
+                    Compare every plan in detail
+                    <x-phosphor-arrow-right class="w-4 h-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
+                </a>
+            </p>
+        </div>
     </x-marketing-section>
 
     {{-- ========================= FAQ ========================= --}}
-    <x-marketing-section tone="warm">
+    <x-marketing-section tone="page">
         <div class="max-w-3xl mx-auto" data-reveal>
             <x-marketing-heading align="center" eyebrow="FAQ" title="Questions clinic owners ask" />
 
@@ -293,7 +305,7 @@
                 ['question' => 'What if the internet goes down?',
                  'answer' => 'Actions that fail tell you plainly that they did not save, rather than failing silently — so nobody is left guessing whether a patient was registered.'],
                 ['question' => 'Is there a setup fee?',
-                 'answer' => 'Yes, once, and it is shown on the pricing page next to each plan. It covers configuring your clinic, loading your drug list and prices, and onboarding your staff.'],
+                 'answer' => 'Yes, once, and it is shown next to each plan. It covers configuring your clinic, loading your drug list and prices, and onboarding your staff.'],
                 ['question' => 'Who do I call when something breaks?',
                  'answer' => 'Us, in Port Harcourt. Not an overseas ticket queue. Clinic and Group plans include WhatsApp support.'],
             ]" />
@@ -301,7 +313,7 @@
     </x-marketing-section>
 
     {{-- ========================= CLOSING CTA ========================= --}}
-    <x-marketing-section tone="page">
+    <x-marketing-section tone="warm">
         <div data-reveal>
             <x-cta-band />
         </div>

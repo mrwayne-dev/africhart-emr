@@ -70,6 +70,21 @@ textarea:focus-visible {
     transform: none;
 }
 
+/*
+ * Hero background settle. A slow scale-down on load gives the still image a
+ * sense of motion without a video. The global reduced-motion rule below
+ * collapses the duration, which lands it on the end state (scale 1) — so no
+ * separate guard is needed here.
+ */
+@keyframes hero-settle {
+    from { transform: scale(1.06); }
+    to   { transform: scale(1); }
+}
+
+.hero-settle {
+    animation: hero-settle 1400ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
 /* Honour a reduced-motion preference: collapse every transition/animation
    rather than removing them, so Alpine's x-transition still fires its
    enter/leave hooks and elements don't get stuck mid-state. */

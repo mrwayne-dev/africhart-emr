@@ -320,6 +320,70 @@ Alpine.data('livePoll', (config = {}) => ({
 }));
 
 /*
+ * Hero clock — Lagos time, ticking each second.
+ *
+ * Shows WAT rather than the visitor's local time on purpose: the point is
+ * "we are in your timezone", and a Nigerian clinic owner reading it should see
+ * their own clock. Intl handles the offset, so no manual maths and no DST bug.
+ */
+Alpine.data('lagosClock', () => ({
+    now: '',
+    timer: null,
+
+    init() {
+        this.tick();
+        this.timer = setInterval(() => this.tick(), 1000);
+    },
+
+    destroy() {
+        if (this.timer) clearInterval(this.timer);
+    },
+
+    tick() {
+        this.now = new Intl.DateTimeFormat('en-GB', {
+            hour: '2-digit', minute: '2-digit', second: '2-digit',
+            hour12: false, timeZone: 'Africa/Lagos',
+        }).format(new Date());
+    },
+}));
+
+/*
+ * Feature showcase — a list on the left, a sticky visual on the right that
+ * swaps as the reader scrolls past each item.
+ *
+ * The observer band is a thin slice through the middle of the viewport
+ * (rootMargin -45%/-45%), so an item becomes active as it crosses the centre
+ * rather than the moment it peeks in at the bottom.
+ *
+ * Degrades honestly: `active` starts at 0, and the markup renders every item's
+ * copy and its own inline visual on small screens, so with no JS (or no
+ * IntersectionObserver) the section is still a readable list.
+ */
+Alpine.data('featureShowcase', () => ({
+    active: 0,
+    observer: null,
+
+    init() {
+        if (! ('IntersectionObserver' in window)) return;
+
+        this.observer = new IntersectionObserver((entries) => {
+            entries.forEach((entry) => {
+                if (! entry.isIntersecting) return;
+                const index = Number(entry.target.dataset.showcaseItem);
+                if (! Number.isNaN(index)) this.active = index;
+            });
+        }, { rootMargin: '-45% 0px -45% 0px', threshold: 0 });
+
+        this.$el.querySelectorAll('[data-showcase-item]')
+            .forEach((el) => this.observer.observe(el));
+    },
+
+    destroy() {
+        if (this.observer) this.observer.disconnect();
+    },
+}));
+
+/*
  * Scroll reveal for the marketing pages.
  *
  * Deliberately NOT an Alpine plugin: @alpinejs/intersect isn't installed and a
@@ -372,7 +436,18 @@ Alpine.data('livePoll', (config = {}) => ({
             threshold: 0.05,
         });
 
-        targets.forEach((el) => observer.observe(el));
+        /*
+         * Force the browser to paint the hidden state BEFORE anything can reveal
+         * it, then start observing on the next frame.
+         *
+         * Without this, elements already in the viewport at load go from
+         * opacity:0 to opacity:1 within a single frame — the transition has no
+         * start value and is skipped entirely. Below-the-fold elements were
+         * unaffected (they scroll in later), which made the hero look like it
+         * simply had no animation while the rest of the page worked.
+         */
+        void document.body.offsetHeight;
+        requestAnimationFrame(() => targets.forEach((el) => observer.observe(el)));
     };
 
     if (document.readyState === 'loading') {
