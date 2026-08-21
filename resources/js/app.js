@@ -319,4 +319,67 @@ Alpine.data('livePoll', (config = {}) => ({
     },
 }));
 
+/*
+ * Scroll reveal for the marketing pages.
+ *
+ * Deliberately NOT an Alpine plugin: @alpinejs/intersect isn't installed and a
+ * single observer doesn't justify the dependency.
+ *
+ * Two safety properties worth preserving if this is ever edited:
+ *
+ * 1. The hidden state is added HERE, by JS. Elements ship visible in the HTML,
+ *    so if this script fails, is blocked, or never runs, the page reads
+ *    normally instead of sitting blank behind an observer that never fired.
+ *
+ * 2. Reduced motion short-circuits in JS, not only in CSS. The global
+ *    prefers-reduced-motion rule in app.css collapses durations, but an element
+ *    already at opacity:0 would simply stay invisible — so here we skip hiding
+ *    altogether and leave the page static.
+ *
+ * Usage:  <div data-reveal>                  fade + rise once, on entry
+ *         <div data-reveal data-reveal-delay="80">   stagger within a group
+ */
+(function initScrollReveal() {
+    const start = () => {
+        const targets = document.querySelectorAll('[data-reveal]');
+        if (! targets.length) return;
+
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+        targets.forEach((el) => {
+            el.classList.add('reveal');
+            if (el.dataset.revealDelay) {
+                el.style.setProperty('--reveal-delay', `${el.dataset.revealDelay}ms`);
+            }
+        });
+
+        // Very old browsers: show everything rather than leave it hidden.
+        if (! ('IntersectionObserver' in window)) {
+            targets.forEach((el) => el.classList.add('is-visible'));
+            return;
+        }
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach((entry) => {
+                if (! entry.isIntersecting) return;
+                entry.target.classList.add('is-visible');
+                observer.unobserve(entry.target); // reveal once, never re-hide
+            });
+        }, {
+            // Fire a little before the element is fully in view so the motion
+            // finishes as it settles, rather than starting late.
+            rootMargin: '0px 0px -8% 0px',
+            threshold: 0.05,
+        });
+
+        targets.forEach((el) => observer.observe(el));
+    };
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', start);
+    } else {
+        start();
+    }
+})();
+
 Alpine.start();

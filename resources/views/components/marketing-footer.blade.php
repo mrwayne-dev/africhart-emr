@@ -5,7 +5,7 @@
     the site stays entirely light so marketing and the EMR feel continuous.
 --}}
 <footer class="bg-warm border-t border-line">
-    <div class="max-w-5xl mx-auto px-6 sm:px-8 py-14 sm:py-16">
+    <div class="max-w-7xl mx-auto px-6 sm:px-8 py-14 sm:py-16">
 
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-8 sm:gap-5">
 
