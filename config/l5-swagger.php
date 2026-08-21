@@ -1,9 +1,6 @@
 <?php
 
 use L5Swagger\Generator;
-use OpenApi\Analysers\AttributeAnnotationFactory;
-use OpenApi\Analysers\DocBlockAnnotationFactory;
-use OpenApi\Analysers\ReflectionAnalyser;
 use OpenApi\scan;
 
 return [
@@ -135,10 +132,15 @@ return [
              *
              * @see scan
              */
-            'analyser' => new ReflectionAnalyser([
-                new DocBlockAnnotationFactory,
-                new AttributeAnnotationFactory,
-            ]),
+            /*
+             * MUST stay null here. An instantiated analyser in the config array makes
+             * `php artisan config:cache` impossible: it serialises via var_export(),
+             * which needs __set_state(), and ReflectionAnalyser does not implement it.
+             * AppServiceProvider::register() injects the real analyser at runtime, which
+             * works cached or uncached because Generator reads it from the config
+             * repository at generation time (Generator.php:245).
+             */
+            'analyser' => null,
 
             /**
              * analysis: defaults to a new \OpenApi\Analysis .
