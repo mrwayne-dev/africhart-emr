@@ -30,6 +30,40 @@
     display: none !important;
 }
 
+/*
+ * Visible keyboard focus. The app previously had no focus styling at all and
+ * fell back to the UA default outline, which is inconsistent across browsers
+ * and near-invisible on our warm surfaces. :focus-visible (not :focus) so a
+ * mouse click never leaves a ring behind — only keyboard/AT navigation does.
+ * Global on purpose: it closes the gap logged as A3-13 in the platform spec.
+ */
+:focus-visible {
+    outline: 2px solid var(--color-ink);
+    outline-offset: 2px;
+}
+
+/* Inputs already signal focus by swapping background + border, so the extra
+   ring would double up. Keep their existing treatment as the focus signal. */
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+    outline: none;
+}
+
+/* Honour a reduced-motion preference: collapse every transition/animation
+   rather than removing them, so Alpine's x-transition still fires its
+   enter/leave hooks and elements don't get stuck mid-state. */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
 /* Print: strip the app chrome and show only the record being printed. */
 @media print {
     aside,
