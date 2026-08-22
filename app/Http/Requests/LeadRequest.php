@@ -39,7 +39,14 @@ class LeadRequest extends FormRequest
             'contact_name' => ['required', 'string', 'min:2', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255'],
             'phone' => ['required', 'string', 'max:30', 'regex:/^[0-9+\-\s()]{7,}$/'],
-            'city' => ['nullable', 'string', 'max:255'],
+            /*
+             * Required on sign-up. We only onboard clinics in Port Harcourt at
+             * the moment, so where the clinic is decides whether we can take it
+             * on at all — that is a qualifying answer, not a nice-to-have.
+             * Demo and Contact keep it optional: those are conversations, and
+             * the question can be asked in one.
+             */
+            'city' => [$this->is('signup') ? 'required' : 'nullable', 'string', 'max:255'],
             'doctors' => ['nullable', 'integer', 'min:0', 'max:999'],
             'message' => [$isContact ? 'required' : 'nullable', 'string', 'max:2000'],
 
@@ -73,6 +80,7 @@ class LeadRequest extends FormRequest
             'clinic_name.required' => 'Please tell us your clinic name.',
             'contact_name.required' => 'Please tell us your name.',
             'message.required' => 'Tell us what you need — a sentence is plenty.',
+            'city.required' => 'Which city is the clinic in?',
             'phone.regex' => 'Enter a reachable phone number, e.g. 0803 123 4567.',
             'doctors.integer' => 'Enter the number of doctors as a whole number.',
             'website.prohibited' => 'Something went wrong. Please try again.',

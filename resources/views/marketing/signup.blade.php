@@ -141,8 +141,9 @@
                             </div>
 
                             <div class="grid sm:grid-cols-2 gap-5">
-                                <x-marketing-field name="city" label="City" optional
-                                    placeholder="Port Harcourt" autocomplete="address-level2" />
+                                <x-marketing-field name="city" label="City"
+                                    placeholder="Port Harcourt" autocomplete="address-level2"
+                                    hint="We set clinics up in person, so we need to know where you are." />
                                 <x-marketing-field name="doctors" label="How many doctors" optional
                                     type="number" placeholder="3" inputmode="numeric" />
                             </div>
