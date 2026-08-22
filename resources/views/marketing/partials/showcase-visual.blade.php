@@ -81,6 +81,26 @@
             </div>
             @break
 
+        @case('prescriptions')
+            <p class="text-sm font-medium text-ink tracking-tight">Prescription</p>
+            <p class="text-xs text-muted mt-1">From your own drug list, at your own prices</p>
+            <div class="flex flex-col gap-2.5 mt-5">
+                @foreach ([
+                    ['Artemether/Lumefantrine', '20/120mg · 2x daily · 3 days', '1,500'],
+                    ['Paracetamol', '500mg · 3x daily · 5 days', '200'],
+                    ['Omeprazole', '20mg · once daily · 14 days', '900'],
+                ] as [$drug, $dose, $price])
+                    <div class="bg-warm border border-line rounded-card px-4 py-3 flex items-center justify-between gap-3">
+                        <div class="min-w-0">
+                            <p class="text-sm font-medium text-ink truncate">{{ $drug }}</p>
+                            <p class="text-xs text-muted mt-0.5 truncate">{{ $dose }}</p>
+                        </div>
+                        <span class="text-sm text-ink tabular-nums shrink-0">&#8358;{{ $price }}</span>
+                    </div>
+                @endforeach
+            </div>
+            @break
+
         @case('billing')
             <div class="flex items-center justify-between">
                 <p class="text-sm font-medium text-ink tracking-tight">Invoice</p>
