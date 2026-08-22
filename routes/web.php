@@ -7,6 +7,8 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EmailVerificationController;
 use App\Http\Controllers\ExportController;
 use App\Http\Controllers\InvoiceController;
+use App\Http\Controllers\LeadController;
+use App\Http\Controllers\MarketingController;
 use App\Http\Controllers\MedicationController;
 use App\Http\Controllers\PasswordResetController;
 use App\Http\Controllers\PatientController;
@@ -16,13 +18,36 @@ use App\Http\Controllers\RegisterController;
 use App\Http\Controllers\StaffController;
 use Illuminate\Support\Facades\Route;
 
-// --- Public ---
-Route::get('/', fn () => redirect()->route('login'));
+// --- Public marketing site (root domain) ---
+// These sit OUTSIDE the `guest` group on purpose: a logged-in staff member
+// should still be able to read the pricing or privacy pages. The nav swaps
+// "Sign in" for "Dashboard" based on auth state instead of redirecting.
+Route::controller(MarketingController::class)->group(function () {
+    Route::get('/', 'home')->name('home');
+    Route::get('/features', 'features')->name('features');
+    Route::get('/pricing', 'pricing')->name('pricing');
+    Route::get('/about', 'about')->name('about');
+    Route::get('/privacy', 'privacy')->name('legal.privacy');
+    Route::get('/terms', 'terms')->name('legal.terms');
+    Route::get('/data-processing', 'dataProcessing')->name('legal.dpa');
+});
+
+// Lead capture. `/signup` is a CLINIC requesting access — deliberately distinct
+// from `/register`, which is a staff member joining an existing clinic with an
+// invite code. Neither creates an account here; provisioning stays manual.
+Route::controller(LeadController::class)->group(function () {
+    Route::get('/demo', 'showDemo')->name('demo');
+    Route::post('/demo', 'storeDemo')->middleware('throttle:5,1');
+    Route::get('/signup', 'showSignup')->name('signup');
+    Route::post('/signup', 'storeSignup')->middleware('throttle:5,1');
+    Route::get('/contact', 'showContact')->name('contact');
+    Route::post('/contact', 'storeContact')->middleware('throttle:5,1');
+});
 
 // --- Guests only ---
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
-    Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1');
+    Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:login');
 
     Route::get('/register', [RegisterController::class, 'show'])->name('register');
     Route::post('/register', [RegisterController::class, 'store']);

@@ -240,7 +240,13 @@ return [
         'notifiable' => Notifiable::class,
 
         'mail' => [
-            'to' => env('BACKUP_NOTIFICATION_EMAIL', env('MAIL_FROM_ADDRESS', 'admin@africhartemr.com')),
+            /*
+             * env() returns '' (not null) for a variable that is present but blank,
+             * so a bare env() default does NOT fire for `BACKUP_NOTIFICATION_EMAIL=`.
+             * spatie validates this address at BOOT, so a blank value takes down every
+             * artisan command and every HTTP request. The ?: chain collapses '' too.
+             */
+            'to' => env('BACKUP_NOTIFICATION_EMAIL') ?: env('MAIL_FROM_ADDRESS') ?: 'admin@africhartemr.com',
 
             'from' => [
                 'address' => env('MAIL_FROM_ADDRESS', 'hello@example.com'),

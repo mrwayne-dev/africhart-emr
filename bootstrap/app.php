@@ -18,9 +18,14 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => RoleMiddleware::class,
         ]);
 
-        // Trust reverse proxies (ngrok tunnel, cPanel/Cloudflare in front of the app)
-        // so the HTTPS scheme and forwarded host are honoured when generating URLs.
-        $middleware->trustProxies(at: '*', headers: Request::HEADER_X_FORWARDED_FOR
+        // Trust ONLY known reverse proxies. `at: '*'` trusts every client, which lets
+        // anyone forge X-Forwarded-For and write a false IP into the audit log —
+        // verified reproducible on 2026-08-21. Set TRUSTED_PROXIES to the real proxy
+        // addresses (e.g. Cloudflare ranges) when one is actually in front of the app.
+        $middleware->trustProxies(at: array_values(array_filter(array_map(
+            'trim',
+            explode(',', (string) env('TRUSTED_PROXIES', '127.0.0.1,::1'))
+        ))), headers: Request::HEADER_X_FORWARDED_FOR
             | Request::HEADER_X_FORWARDED_HOST
             | Request::HEADER_X_FORWARDED_PORT
             | Request::HEADER_X_FORWARDED_PROTO);

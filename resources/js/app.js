@@ -319,4 +319,213 @@ Alpine.data('livePoll', (config = {}) => ({
     },
 }));
 
+/*
+ * Hero clock — Lagos time, ticking each second.
+ *
+ * Shows WAT rather than the visitor's local time on purpose: the point is
+ * "we are in your timezone", and a Nigerian clinic owner reading it should see
+ * their own clock. Intl handles the offset, so no manual maths and no DST bug.
+ */
+Alpine.data('lagosClock', () => ({
+    now: '',
+    timer: null,
+
+    init() {
+        this.tick();
+        this.timer = setInterval(() => this.tick(), 1000);
+    },
+
+    destroy() {
+        if (this.timer) clearInterval(this.timer);
+    },
+
+    tick() {
+        this.now = new Intl.DateTimeFormat('en-GB', {
+            hour: '2-digit', minute: '2-digit', second: '2-digit',
+            hour12: false, timeZone: 'Africa/Lagos',
+        }).format(new Date());
+    },
+}));
+
+/*
+ * Count-up for the honest product facts (4 roles, 5 steps, 1 database, 30 days).
+ *
+ * Two properties that decide whether this is safe:
+ *
+ * 1. No layout shift. The final value is rendered in the HTML, so with no JS
+ *    the real figure is already on screen; the count only starts once JS is
+ *    running. The numerals sit in equal-fraction grid cells with tabular-nums,
+ *    so a digit changing width cannot move anything.
+ *
+ * 2. Reduced motion short-circuits here, not only in CSS. The global guard
+ *    collapses durations, but a number mid-count would simply freeze at the
+ *    wrong value — so we leave the final figure untouched and never animate.
+ */
+Alpine.data('countUp', (target = 0, duration = 1400) => ({
+    display: target,
+
+    init() {
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+        if (! ('IntersectionObserver' in window)) return;
+
+        this.display = 0;
+
+        const observer = new IntersectionObserver(([entry]) => {
+            if (! entry.isIntersecting) return;
+            observer.disconnect();
+
+            const started = performance.now();
+            const step = (now) => {
+                const t = Math.min((now - started) / duration, 1);
+                // Same decelerate as the reveals, so the page has one motion feel.
+                this.display = Math.round(target * (1 - Math.pow(1 - t, 3)));
+                if (t < 1) requestAnimationFrame(step);
+                else this.display = target;
+            };
+            requestAnimationFrame(step);
+        }, { threshold: 0.5 });
+
+        observer.observe(this.$el);
+    },
+}));
+
+/*
+ * Feature showcase — a list on the left, a sticky visual on the right that
+ * swaps as the reader scrolls past each item.
+ *
+ * Picks the item whose midpoint is NEAREST the viewport centre, recomputed from
+ * all items on every frame-throttled scroll.
+ *
+ * The first version used an IntersectionObserver with a thin rootMargin band
+ * and took whichever entry the callback delivered last. On a fast scroll
+ * several items crossed that band between ticks, so "last delivered" was not
+ * "nearest the centre" and the panel flip-flopped. Measuring every item makes
+ * the result deterministic — there is no ordering to get wrong.
+ *
+ * Degrades honestly: `active` starts at 0, and below lg the markup renders each
+ * feature's visual inline, so with no JS the section is still a readable list.
+ */
+Alpine.data('featureShowcase', () => ({
+    active: 0,
+    items: [],
+    ticking: false,
+    onScroll: null,
+
+    init() {
+        this.items = Array.from(this.$el.querySelectorAll('[data-showcase-item]'));
+        if (! this.items.length) return;
+
+        this.onScroll = () => {
+            if (this.ticking) return;
+            this.ticking = true;
+            requestAnimationFrame(() => {
+                this.sync();
+                this.ticking = false;
+            });
+        };
+
+        window.addEventListener('scroll', this.onScroll, { passive: true });
+        window.addEventListener('resize', this.onScroll, { passive: true });
+        this.sync();
+    },
+
+    destroy() {
+        if (! this.onScroll) return;
+        window.removeEventListener('scroll', this.onScroll);
+        window.removeEventListener('resize', this.onScroll);
+    },
+
+    sync() {
+        const centre = window.innerHeight / 2;
+        let best = this.active;
+        let bestDistance = Infinity;
+
+        this.items.forEach((el, index) => {
+            const rect = el.getBoundingClientRect();
+            const distance = Math.abs((rect.top + rect.height / 2) - centre);
+            if (distance < bestDistance) {
+                bestDistance = distance;
+                best = index;
+            }
+        });
+
+        if (best !== this.active) this.active = best;
+    },
+}));
+
+
+/*
+ * Scroll reveal for the marketing pages.
+ *
+ * Deliberately NOT an Alpine plugin: @alpinejs/intersect isn't installed and a
+ * single observer doesn't justify the dependency.
+ *
+ * Two safety properties worth preserving if this is ever edited:
+ *
+ * 1. The hidden state is added HERE, by JS. Elements ship visible in the HTML,
+ *    so if this script fails, is blocked, or never runs, the page reads
+ *    normally instead of sitting blank behind an observer that never fired.
+ *
+ * 2. Reduced motion short-circuits in JS, not only in CSS. The global
+ *    prefers-reduced-motion rule in app.css collapses durations, but an element
+ *    already at opacity:0 would simply stay invisible — so here we skip hiding
+ *    altogether and leave the page static.
+ *
+ * Usage:  <div data-reveal>                  fade + rise once, on entry
+ *         <div data-reveal data-reveal-delay="80">   stagger within a group
+ */
+(function initScrollReveal() {
+    const start = () => {
+        const targets = document.querySelectorAll('[data-reveal]');
+        if (! targets.length) return;
+
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+        targets.forEach((el) => {
+            el.classList.add('reveal');
+            if (el.dataset.revealDelay) {
+                el.style.setProperty('--reveal-delay', `${el.dataset.revealDelay}ms`);
+            }
+        });
+
+        // Very old browsers: show everything rather than leave it hidden.
+        if (! ('IntersectionObserver' in window)) {
+            targets.forEach((el) => el.classList.add('is-visible'));
+            return;
+        }
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach((entry) => {
+                if (! entry.isIntersecting) return;
+                entry.target.classList.add('is-visible');
+                observer.unobserve(entry.target); // reveal once, never re-hide
+            });
+        }, {
+            // Fire a little before the element is fully in view so the motion
+            // finishes as it settles, rather than starting late.
+            rootMargin: '0px 0px -8% 0px',
+            threshold: 0.05,
+        });
+
+        /*
+         * Force the browser to paint the hidden state BEFORE anything can reveal
+         * it, then start observing on the next frame.
+         *
+         * Without this, elements already in the viewport at load go from
+         * opacity:0 to opacity:1 within a single frame — the transition has no
+         * start value and is skipped entirely. Below-the-fold elements were
+         * unaffected (they scroll in later), which made the hero look like it
+         * simply had no animation while the rest of the page worked.
+         */
+        void document.body.offsetHeight;
+        requestAnimationFrame(() => targets.forEach((el) => observer.observe(el)));
+    };
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', start);
+    } else {
+        start();
+    }
+})();
+
 Alpine.start();
