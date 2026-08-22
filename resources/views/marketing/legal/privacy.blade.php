@@ -12,7 +12,7 @@
             [
                 'heading' => 'Who we are',
                 'body' => [
-                    'AfriChart is operated by Lymora Tech, based in Port Harcourt, Rivers State, Nigeria. We build and run the AfriChart clinic-management platform.',
+                    'AfriChart is operated by AfriChart Technologies, based in Port Harcourt, Rivers State, Nigeria. We build and run the AfriChart clinic-management platform.',
                     'Under the Nigeria Data Protection Act 2023 (NDPA), the clinic using AfriChart is the data controller for its patient records — it decides what to collect and why. We are the data processor: we hold and process that data only on the clinic\'s instruction. For your clinic\'s own account and billing information, we are the controller.',
                 ],
             ],

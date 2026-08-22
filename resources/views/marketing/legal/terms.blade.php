@@ -12,7 +12,7 @@
             [
                 'heading' => 'The agreement',
                 'body' => [
-                    'This agreement is between Lymora Tech, of Port Harcourt, Rivers State, Nigeria, and the clinic that subscribes to AfriChart. By creating a clinic workspace or using the service, you accept these terms.',
+                    'This agreement is between AfriChart Technologies, of Port Harcourt, Rivers State, Nigeria, and the clinic that subscribes to AfriChart. By creating a clinic workspace or using the service, you accept these terms.',
                     'The person who signs up must be authorised to bind the clinic. If you are signing up on behalf of a practice you do not own, make sure whoever does own it has agreed.',
                 ],
             ],

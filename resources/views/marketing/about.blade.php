@@ -134,9 +134,9 @@
                     Who actually builds it
                 </h2>
                 <p class="text-base text-muted mt-4 leading-relaxed">
-                    AfriChart is developed by <span class="text-ink">Lymora Tech</span> in Port
-                    Harcourt, Rivers State. Small team, one product, and the same people who write
-                    the code answer the messages when something is wrong.
+                    AfriChart is built and run by <span class="text-ink">AfriChart Technologies</span>,
+                    in Port Harcourt, Rivers State. Small team, one product, and the same people who
+                    write the code answer the messages when something is wrong.
                 </p>
             </div>
 
@@ -166,7 +166,7 @@
          The inventory calls for a team section. It is driven by $people below,
          which is deliberately empty: naming a team on a medical product is a
          trust claim, and a stock photo with an invented title is the wrong kind
-         of one. With the array empty this renders as the Lymora Tech statement
+         of one. With the array empty this renders as the AfriChart Technologies statement
          alone — honest and complete — and fills in the moment real names,
          roles and (optionally) photos are supplied. No placeholders. --}}
     @php

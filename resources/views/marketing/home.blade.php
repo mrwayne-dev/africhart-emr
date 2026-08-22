@@ -118,8 +118,9 @@
     </x-marketing-section>
 
     {{-- ========================= STAT BAND ========================= --}}
-    {{-- A tight beat between two heavy sections, and the only place the third
-         surface tone is used — it breaks the page/warm flip-flop. --}}
+    {{-- A tight beat between two heavy sections. warm-alt is the third surface
+         tone, used only where a section sits between a page and a warm one and
+         needs to differ from both — here, and again at "Why AfriChart". --}}
     <x-marketing-section tone="warm-alt" size="tight">
         <x-stat-band :stats="[
             ['value' => 4, 'label' => 'Staff roles, each seeing only what they need'],
@@ -137,15 +138,15 @@
     --}}
     @php
         $showcase = [
-            ['key' => 'records', 'title' => 'Patient records', 'icon' => 'phosphor-clipboard-text',
+            ['key' => 'records', 'anchor' => 'patient-records', 'title' => 'Patient records', 'icon' => 'phosphor-clipboard-text',
              'text' => 'One record per patient with the full visit timeline. Nobody has to ask what happened last time.'],
-            ['key' => 'queue', 'title' => 'Live queue', 'icon' => 'phosphor-clock',
+            ['key' => 'queue', 'anchor' => 'live-queue', 'title' => 'Live queue', 'icon' => 'phosphor-clock',
              'text' => 'Who is waiting, who is being seen, and for how long. The board updates itself, so nobody walks to the front desk to ask.'],
-            ['key' => 'consult', 'title' => 'Consultations & vitals', 'icon' => 'phosphor-stethoscope',
+            ['key' => 'consult', 'anchor' => 'consultations', 'title' => 'Consultations & vitals', 'icon' => 'phosphor-stethoscope',
              'text' => 'Notes, diagnosis and plan, with the nurse\'s vitals already attached — and prescriptions from your own drug list, at your own prices.'],
-            ['key' => 'billing', 'title' => 'Billing & receipts', 'icon' => 'phosphor-receipt',
+            ['key' => 'billing', 'anchor' => 'billing', 'title' => 'Billing & receipts', 'icon' => 'phosphor-receipt',
              'text' => 'Invoices total themselves from the visit. PDF receipts, cash or transfer, nothing quietly missed.'],
-            ['key' => 'audit', 'title' => 'Audit & oversight', 'icon' => 'phosphor-chart-line',
+            ['key' => 'audit', 'anchor' => 'audit', 'title' => 'Audit & oversight', 'icon' => 'phosphor-chart-line',
              'text' => 'Every action attributed to a person, and a dashboard that shows the week at a glance.'],
         ];
     @endphp
@@ -156,6 +157,12 @@
                 eyebrow="What you get"
                 title="Everything a clinic actually does."
                 lead="Not a hospital suite bolted down to fit. The workflow a private clinic runs every day." />
+
+            <a href="{{ route('features') }}"
+                class="group/all inline-flex items-center gap-1.5 text-sm font-medium text-ink mt-6 rounded hover:underline">
+                View all features
+                <x-phosphor-arrow-right class="w-4 h-4 transition-transform group-hover/all:translate-x-0.5" aria-hidden="true" />
+            </a>
         </div>
 
         <div x-data="featureShowcase" class="lg:grid lg:grid-cols-2 lg:gap-16 xl:gap-24">
@@ -166,13 +173,25 @@
                     <div data-showcase-item="{{ $i }}"
                         class="py-8 lg:py-16 border-b border-line last:border-b-0">
 
+                        {{-- The heading links into this feature's own block on
+                             /features. Only the heading is wrapped, so the
+                             data-showcase-item element and its index — which
+                             featureShowcase measures against the viewport
+                             centre — are unchanged. --}}
                         <div class="flex items-center gap-3">
                             <x-dynamic-component :component="$item['icon']"
                                 class="w-5 h-5 shrink-0 transition-colors"
                                 ::class="active === {{ $i }} ? 'text-ink' : 'text-muted'" aria-hidden="true" />
-                            <h3 class="text-xl sm:text-2xl font-medium tracking-tight transition-colors"
-                                ::class="active === {{ $i }} ? 'text-ink' : 'text-muted'">
-                                {{ $item['title'] }}
+                            <h3 class="text-xl sm:text-2xl font-medium tracking-tight">
+                                <a href="{{ route('features') }}#{{ $item['anchor'] }}"
+                                    class="group/feat inline-flex items-center gap-2 transition-colors rounded"
+                                    ::class="active === {{ $i }} ? 'text-ink' : 'text-muted'">
+                                    {{ $item['title'] }}
+                                    <x-phosphor-arrow-right
+                                        class="w-4 h-4 opacity-0 -translate-x-1 transition-all duration-200
+                                            group-hover/feat:opacity-60 group-hover/feat:translate-x-0"
+                                        aria-hidden="true" />
+                                </a>
                             </h3>
                         </div>
 
@@ -256,6 +275,42 @@
                     </div>
                 @endforeach
             </div>
+        </div>
+    </x-marketing-section>
+
+    {{-- ========================= WHY US =========================
+         Sits between "Your data" and the price: it inherits the isolation claim
+         just made, and hands into what the thing costs.
+
+         Compares against a CATEGORY, never a named competitor — see the note in
+         components/comparison-panel. Every line here is checkable against us. --}}
+    <x-marketing-section tone="warm-alt">
+        <div class="max-w-3xl" data-reveal>
+            <p class="text-xs font-semibold text-muted uppercase tracking-wide mb-4">Why AfriChart</p>
+            <h2 class="text-3xl sm:text-5xl font-medium text-ink tracking-tight leading-[1.05]">
+                Most clinic software was not built for a clinic here.
+            </h2>
+            <p class="text-lg text-muted mt-6 leading-relaxed">
+                It was designed somewhere else, priced somewhere else, and supported from somewhere
+                else. That shows up in your invoice, in your morning, and in who picks up when the
+                front desk is stuck.
+            </p>
+        </div>
+
+        <div class="mt-14">
+            <x-comparison-panel
+                themLabel="Software built elsewhere"
+                usLabel="AfriChart"
+                :rows="[
+                    ['them' => 'Invoiced in dollars, at whatever the rate happens to be that month.',
+                     'us' => 'Priced in naira, and it stays in naira.'],
+                    ['them' => 'Support in a timezone that is asleep when your front desk is busiest.',
+                     'us' => 'Port Harcourt. The people who wrote the code answer the email.'],
+                    ['them' => 'Your clinic is a row in a shared table, told apart by a column.',
+                     'us' => 'One database per clinic — separation by construction, not by a filter.'],
+                    ['them' => 'Assumes the connection never drops, then fails quietly when it does.',
+                     'us' => 'A save that fails says so plainly, so nobody is left guessing.'],
+                ]" />
         </div>
     </x-marketing-section>
 

@@ -114,6 +114,10 @@
                  'answer' => 'Yes. Each clinic runs on its own database, so there is no query that could return records belonging to another clinic. That separation is structural rather than a setting someone could misconfigure.'],
                 ['question' => 'How do I pay?',
                  'answer' => 'In naira, by bank transfer or card. We arrange it with you when your clinic is provisioned — there is no card required to start the trial.'],
+                ['question' => 'Do I need my own server?',
+                 'answer' => 'No. AfriChart runs on our servers and your staff reach it in a browser at your clinic\'s own address. There is nothing to install, no machine in the back office to maintain, and no IT person to hire — a laptop or phone with a connection is the whole requirement.'],
+                ['question' => 'What kind of support do I get?',
+                 'answer' => 'Email, from Port Harcourt, answered by the people who build AfriChart rather than an overseas ticket queue. Starter includes email support; Clinic and Group get priority handling, and Group adds onboarding.'],
                 ['question' => 'What if I have more than one location?',
                  'answer' => 'That is the Group plan, priced per site. Each site keeps its own database and staff, and you get a consolidated dashboard across all of them. Talk to us and we will work out the arrangement.'],
             ]" />

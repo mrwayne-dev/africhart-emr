@@ -18,6 +18,14 @@
                 <p class="text-sm text-muted mt-4 max-w-[22rem]">
                     Clinic management software built in Port Harcourt, for Nigerian private clinics.
                 </p>
+
+                {{-- The same address published on the three legal pages as the
+                     contact for exercising data rights. Keep them identical. --}}
+                <a href="mailto:hello@africhartemr.com"
+                    class="inline-flex items-center gap-2 text-sm text-muted hover:text-ink transition-colors mt-4 rounded">
+                    <x-phosphor-envelope-simple class="w-4 h-4 shrink-0" aria-hidden="true" />
+                    hello@africhartemr.com
+                </a>
             </div>
 
             @foreach ([
@@ -60,7 +68,7 @@
             </p>
             <p class="text-xs text-muted">
                 Built by <a href="https://mgbah.dev" rel="noopener"
-                    class="text-ink hover:underline">Lymora Tech</a>
+                    class="text-ink hover:underline">Lymora Labs</a>
             </p>
         </div>
     </div>
