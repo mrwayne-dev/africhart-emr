@@ -28,6 +28,12 @@
     <link rel="icon" href="{{ asset('images/africhart-logo.svg') }}" type="image/svg+xml">
 
     {{-- Same single bundle as the app: tokens, General Sans and Alpine come free. --}}
+    {{-- Preload the weights actually used, so font-display: optional has the
+         file in hand before its window closes and text never reflows. --}}
+    <link rel="preload" href="{{ asset('fonts/general-sans-400.woff2') }}" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="{{ asset('fonts/general-sans-500.woff2') }}" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="{{ asset('fonts/general-sans-600.woff2') }}" as="font" type="font/woff2" crossorigin>
+
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="bg-page font-sans text-ink-body antialiased">

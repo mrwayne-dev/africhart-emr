@@ -1,9 +1,50 @@
-@import url('https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600&display=swap');
 @import 'tailwindcss';
 
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../vendor/codeat3/blade-phosphor-icons/resources/svg/*.svg';
 @source '../../storage/framework/views/*.php';
+
+/*
+ * General Sans, self-hosted.
+ *
+ * Was an @import from api.fontshare.com with display=swap, which meant a
+ * third-party DNS + TLS round trip before the font even started downloading,
+ * and a visible reflow when it arrived.
+ *
+ * font-display: optional is the deliberate choice. `swap` is what produced the
+ * flash: it paints the fallback, then re-paints in General Sans. `optional`
+ * gives the browser a short window and, if the font misses it, keeps the
+ * fallback for that page view and never swaps — so text never changes shape
+ * under the reader. Combined with the preload in the layouts and 23KB
+ * same-origin files, it lands inside that window in almost every case, and it
+ * is cached from then on.
+ *
+ * Paths are absolute (/fonts/...) so Vite leaves them alone and they resolve
+ * from public/ rather than being re-bundled.
+ */
+@font-face {
+    font-family: 'General Sans';
+    src: url('/fonts/general-sans-400.woff2') format('woff2');
+    font-weight: 400;
+    font-style: normal;
+    font-display: optional;
+}
+
+@font-face {
+    font-family: 'General Sans';
+    src: url('/fonts/general-sans-500.woff2') format('woff2');
+    font-weight: 500;
+    font-style: normal;
+    font-display: optional;
+}
+
+@font-face {
+    font-family: 'General Sans';
+    src: url('/fonts/general-sans-600.woff2') format('woff2');
+    font-weight: 600;
+    font-style: normal;
+    font-display: optional;
+}
 
 /*
  * AfriChart EMR — design tokens adapted from the Crestmark spec (light palette).
