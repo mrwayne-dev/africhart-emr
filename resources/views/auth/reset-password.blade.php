@@ -23,8 +23,12 @@
                 @enderror
             </div>
 
-            <x-password-input name="password" label="New Password" autocomplete="new-password" />
-            <x-password-input name="password_confirmation" label="Confirm New Password" autocomplete="new-password" />
+            <div>
+                <x-password-input name="password" label="New password" autocomplete="new-password" autofocus />
+                <x-password-strength for="password" />
+            </div>
+
+            <x-password-input name="password_confirmation" label="Confirm new password" autocomplete="new-password" />
 
             <x-submit-button loadingText="Resetting…"
                 class="w-full bg-ink text-white rounded-full px-4 py-3 text-sm font-medium hover:bg-ink/90">

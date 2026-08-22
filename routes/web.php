@@ -40,12 +40,14 @@ Route::controller(LeadController::class)->group(function () {
     Route::post('/demo', 'storeDemo')->middleware('throttle:5,1');
     Route::get('/signup', 'showSignup')->name('signup');
     Route::post('/signup', 'storeSignup')->middleware('throttle:5,1');
+    Route::get('/contact', 'showContact')->name('contact');
+    Route::post('/contact', 'storeContact')->middleware('throttle:5,1');
 });
 
 // --- Guests only ---
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
-    Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1');
+    Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:login');
 
     Route::get('/register', [RegisterController::class, 'show'])->name('register');
     Route::post('/register', [RegisterController::class, 'store']);

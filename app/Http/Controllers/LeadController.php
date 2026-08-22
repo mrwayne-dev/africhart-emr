@@ -46,6 +46,16 @@ class LeadController extends BaseController
         ]);
     }
 
+    public function showContact(): View
+    {
+        return view('marketing.contact');
+    }
+
+    public function storeContact(LeadRequest $request): RedirectResponse
+    {
+        return $this->store($request, 'contact', 'Thanks — your message is with us. We reply within one working day.');
+    }
+
     public function storeSignup(LeadRequest $request): RedirectResponse
     {
         return $this->store($request, 'signup', 'Thanks — we will set your clinic up and send login details shortly.');

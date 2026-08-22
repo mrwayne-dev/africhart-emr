@@ -9,6 +9,17 @@
             <p class="text-sm text-muted mt-1">Sign in to access the clinic dashboard.</p>
         </div>
 
+        {{-- Throttled at 5/min on the route. Laravel returns the lockout as a
+             validation error on `email`, which reads as "wrong password" unless
+             it is surfaced separately — so it gets its own notice above the
+             form rather than hiding under a field the user did not get wrong. --}}
+        @if ($errors->has('throttle'))
+            <div class="flex items-start gap-3 border border-line rounded-card p-4 mb-6" role="alert">
+                <x-phosphor-clock class="w-5 h-5 text-ink shrink-0 mt-0.5" aria-hidden="true" />
+                <p class="text-sm text-muted leading-relaxed">{{ $errors->first('throttle') }}</p>
+            </div>
+        @endif
+
         <form method="POST" action="{{ route('login') }}" class="space-y-5"
             x-data="{ loading: false }" @submit="loading = true">
             @csrf
@@ -44,9 +55,15 @@
             </x-submit-button>
         </form>
 
-        <p class="text-center text-sm text-muted mt-6">
-            Don't have an account?
-            <a href="{{ route('register') }}" class="text-ink font-medium hover:underline">Create one</a>
-        </p>
+        <div class="mt-6 pt-5 border-t border-line flex flex-col gap-2 text-center">
+            <p class="text-sm text-muted">
+                Joining a clinic already on AfriChart?
+                <a href="{{ route('register') }}" class="text-ink font-medium hover:underline">Use your invite code</a>
+            </p>
+            <p class="text-sm text-muted">
+                New clinic?
+                <a href="{{ route('signup') }}" class="text-ink font-medium hover:underline">Get started &rarr;</a>
+            </p>
+        </div>
     </div>
 @endsection

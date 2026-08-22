@@ -38,6 +38,7 @@
                 ],
                 'Company' => [
                     ['About', 'about'],
+                    ['Contact', 'contact'],
                     ['Sign in', 'login'],
                 ],
                 'Legal' => [

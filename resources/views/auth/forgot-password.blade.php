@@ -6,7 +6,10 @@
     <div class="bg-page border border-line rounded-card p-8">
         <div class="mb-6">
             <h1 class="text-xl font-medium text-ink tracking-tight">Forgot your password?</h1>
-            <p class="text-sm text-muted mt-1">Enter your email and we'll send you a reset link.</p>
+            <p class="text-sm text-muted mt-1">
+                Enter your email and we'll send a reset link. For security we send the same reply
+                whether or not the address is registered.
+            </p>
         </div>
 
         <form method="POST" action="{{ route('password.email') }}" class="space-y-5"

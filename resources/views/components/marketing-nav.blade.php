@@ -2,40 +2,33 @@
 
 @php
     /*
-     * Menu data lives here so the desktop dropdowns and the mobile accordion
-     * render from one source and can never drift apart.
+     * The four primary links, per the page inventory. One source for desktop
+     * and mobile so they cannot drift.
      *
-     * Product is a plain link to /features, not a dropdown. Company keeps one
-     * because its items go to four unrelated destinations; Product pointed at
-     * six anchors on a single page, which the page's own jump-pill row already
-     * does better and in context.
+     * There are no dropdowns any more. Product/Company panels were carrying six
+     * anchors onto one page and four unrelated destinations; four flat links is
+     * the scannable shape on mobile, and About is a trust page reached from the
+     * footer rather than a navigation destination. Contact takes its place,
+     * because being able to reach a person is a primary need for this audience.
      */
-    $menus = [
-        'Company' => [
-            'items' => [
-                ['label' => 'About', 'desc' => 'Built in Port Harcourt', 'icon' => 'phosphor-users-three', 'href' => route('about')],
-                ['label' => 'Book a demo', 'desc' => 'See it on your workflow', 'icon' => 'phosphor-envelope-simple', 'href' => route('demo')],
-                ['label' => 'Privacy', 'desc' => 'How we handle data', 'icon' => 'phosphor-lock-key', 'href' => route('legal.privacy')],
-                ['label' => 'Terms', 'desc' => 'Terms of service', 'icon' => 'phosphor-shield-check', 'href' => route('legal.terms')],
-            ],
-            'footer' => null,
-        ],
+    $links = [
+        ['label' => 'Home', 'route' => 'home'],
+        ['label' => 'Features', 'route' => 'features'],
+        ['label' => 'Pricing', 'route' => 'pricing'],
+        ['label' => 'Contact', 'route' => 'contact'],
     ];
 @endphp
 
 {{--
     Public marketing navigation.
 
-    Structure from the customer.io reference: brand left, menus centred, CTAs
-    right — in our palette, so a plain ink pill rather than a glowing green one.
+    Brand left, four links centred, actions right: Sign in (quiet text), Book a
+    demo (ghost), Get started (solid).
 
-    Only two CTAs: signing in is reachable from the Get started page and from
-    the footer, so the bar stays uncluttered.
-
-    Accessibility note: hover alone would lock out keyboard and touch users, so
-    each trigger is a real <button> that also opens on focus and Enter/Space,
-    closes on Escape, and the panel is reachable by Tab. The close is delayed
-    ~150ms so the pointer can cross the gap into the panel without losing it.
+    Get started stays ink rather than brand red. The inventory calls it "the
+    accent button", but red currently earns attention on this site precisely
+    because it appears about three times a page — spending it on the single most
+    repeated element would flatten that everywhere else.
 --}}
 {{--
     `overlay` lets a page with a dark hero start the bar transparent. It turns
@@ -48,26 +41,16 @@
 --}}
 <header
     x-data="{
-        menu: null,
-        closeTimer: null,
-        open(name) { clearTimeout(this.closeTimer); this.menu = name },
-        scheduleClose() { this.closeTimer = setTimeout(() => (this.menu = null), 150) },
-        closeNow() { clearTimeout(this.closeTimer); this.menu = null },
         mobile: false,
-        mobileGroup: null,
 
         solid: {{ $overlay ? 'false' : 'true' }},
 
         /*
-         * The single source of truth for the bar's colour scheme.
-         *
-         * The bar goes solid whenever a menu is open — otherwise a white
-         * dropdown panel would hang off a transparent bar. Previously only the
-         * BACKGROUND accounted for that, while every text binding checked
-         * `solid` alone, so opening a dropdown over the hero left white text on
-         * a white bar. Everything now reads this one getter.
+         * The single source of truth for the bar's colour scheme. The mobile
+         * drawer forces the solid scheme, because a white drawer hanging off a
+         * transparent bar leaves white text on white.
          */
-        get onHero() { return ! this.solid && ! this.menu && ! this.mobile },
+        get onHero() { return ! this.solid && ! this.mobile },
 
         init() {
             @if ($overlay)
@@ -83,24 +66,13 @@
             @endif
         },
     }"
-    @keydown.escape.window="closeNow(); mobile = false"
+    @keydown.escape.window="mobile = false"
     {{-- -mb-16 in overlay mode pulls the following section up by the bar's own
          height, so the hero starts at the top of the viewport and the sticky bar
          floats OVER it. Without this the bar sits above the hero in normal flow,
          and going transparent just exposes the white page behind it. --}}
     @class(['sticky top-0 z-50', '-mb-16' => $overlay])
 >
-    {{-- Backdrop. Sits under the bar and panel but over the page, so the content
-         behind a open menu blurs back and the panel reads clearly. --}}
-    <div x-show="menu" x-cloak
-        x-transition:enter="transition ease-out duration-300"
-        x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
-        x-transition:leave="transition ease-in duration-200"
-        x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
-        @click="closeNow()"
-        class="fixed inset-0 top-16 -z-10 bg-ink/20 backdrop-blur-sm"
-        aria-hidden="true"></div>
-
     <div class="transition-colors duration-500"
         :class="onHero
             ? 'bg-transparent border-b border-transparent nav-overlay'
@@ -116,46 +88,22 @@
                         :class="onHero ? 'text-white' : 'text-ink'">AfriChart</span>
                 </a>
 
-                {{-- Menus (desktop) --}}
-                <div class="hidden md:flex items-center gap-1" @mouseleave="scheduleClose()">
-                    <a href="{{ route('features') }}"
-                        @mouseenter="scheduleClose()"
-                        class="px-3 py-2 text-sm font-medium transition-colors rounded-card"
-                        :class="onHero
-                            ? '{{ request()->routeIs('features') ? 'text-white' : 'text-white/70 hover:text-white' }}'
-                            : '{{ request()->routeIs('features') ? 'text-ink' : 'text-muted hover:text-ink' }}'">
-                        Product
-                    </a>
-
-                    @foreach ($menus as $name => $menu)
-                        <div class="relative" @mouseenter="open('{{ $name }}')">
-                            <button type="button"
-                                @click="menu === '{{ $name }}' ? closeNow() : open('{{ $name }}')"
-                                @focus="open('{{ $name }}')"
-                                :aria-expanded="menu === '{{ $name }}' ? 'true' : 'false'"
-                                aria-haspopup="true"
-                                class="inline-flex items-center gap-1 px-3 py-2 text-sm font-medium transition-colors rounded-card"
-                                :class="onHero
-                                    ? (menu === '{{ $name }}' ? 'text-white' : 'text-white/70 hover:text-white')
-                                    : (menu === '{{ $name }}' ? 'text-ink' : 'text-muted hover:text-ink')">
-                                {{ $name }}
-                                <x-phosphor-caret-down class="w-3.5 h-3.5 transition-transform duration-300"
-                                    ::class="menu === '{{ $name }}' && 'rotate-180'" />
-                            </button>
-                        </div>
+                {{-- The four links (desktop) --}}
+                <div class="hidden md:flex items-center gap-1">
+                    @foreach ($links as $link)
+                        @php $current = request()->routeIs($link['route']); @endphp
+                        <a href="{{ route($link['route']) }}"
+                            @if ($current) aria-current="page" @endif
+                            class="px-3 py-2 text-sm font-medium transition-colors rounded-card"
+                            :class="onHero
+                                ? '{{ $current ? 'text-white' : 'text-white/70 hover:text-white' }}'
+                                : '{{ $current ? 'text-ink' : 'text-muted hover:text-ink' }}'">
+                            {{ $link['label'] }}
+                        </a>
                     @endforeach
-
-                    <a href="{{ route('pricing') }}"
-                        @mouseenter="scheduleClose()"
-                        class="px-3 py-2 text-sm font-medium transition-colors rounded-card"
-                        :class="onHero
-                            ? '{{ request()->routeIs('pricing') ? 'text-white' : 'text-white/70 hover:text-white' }}'
-                            : '{{ request()->routeIs('pricing') ? 'text-ink' : 'text-muted hover:text-ink' }}'">
-                        Pricing
-                    </a>
                 </div>
 
-                {{-- CTAs (desktop) --}}
+                {{-- Actions (desktop) --}}
                 <div class="hidden md:flex items-center gap-3">
                     @auth
                         <a href="{{ route('dashboard') }}"
@@ -163,6 +111,11 @@
                             Dashboard
                         </a>
                     @else
+                        <a href="{{ route('login') }}"
+                            class="px-3 py-2 text-sm font-medium transition-colors rounded-card"
+                            :class="onHero ? 'text-white/70 hover:text-white' : 'text-muted hover:text-ink'">
+                            Sign in
+                        </a>
                         <a href="{{ route('demo') }}"
                             class="inline-flex items-center border rounded-full px-4 py-2 text-sm font-medium transition-colors"
                             :class="onHero
@@ -192,48 +145,9 @@
             </div>
         </nav>
 
-        {{-- Dropdown panels. Rendered outside the flex row so they can span the
-             full container width without affecting the bar's layout. --}}
-        @foreach ($menus as $name => $menu)
-            <div x-show="menu === '{{ $name }}'" x-cloak
-                @mouseenter="open('{{ $name }}')" @mouseleave="scheduleClose()"
-                x-transition:enter="transition ease-out duration-300"
-                x-transition:enter-start="opacity-0 -translate-y-1"
-                x-transition:enter-end="opacity-100 translate-y-0"
-                x-transition:leave="transition ease-in duration-200"
-                x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
-                class="hidden md:block absolute inset-x-0 top-16 bg-page border-b border-line">
-
-                <div class="max-w-7xl mx-auto px-6 sm:px-8 py-8">
-                    <div class="grid grid-cols-2 lg:grid-cols-3 gap-2">
-                        @foreach ($menu['items'] as $item)
-                            <a href="{{ $item['href'] }}" @click="closeNow()"
-                                class="group flex items-start gap-3 p-3 rounded-card hover:bg-warm transition-colors">
-                                <span class="bg-warm border border-line rounded-card p-2 shrink-0 transition-colors group-hover:bg-page">
-                                    <x-dynamic-component :component="$item['icon']" class="w-5 h-5 text-ink" aria-hidden="true" />
-                                </span>
-                                <span class="min-w-0">
-                                    <span class="block text-sm font-medium text-ink">{{ $item['label'] }}</span>
-                                    <span class="block text-xs text-muted mt-0.5">{{ $item['desc'] }}</span>
-                                </span>
-                            </a>
-                        @endforeach
-                    </div>
-
-                    @if ($menu['footer'])
-                        <div class="mt-6 pt-5 border-t border-line">
-                            <a href="{{ $menu['footer']['href'] }}" @click="closeNow()"
-                                class="group inline-flex items-center gap-1.5 text-sm font-medium text-ink hover:underline">
-                                {{ $menu['footer']['label'] }}
-                                <x-phosphor-arrow-right class="w-4 h-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
-                            </a>
-                        </div>
-                    @endif
-                </div>
-            </div>
-        @endforeach
-
-        {{-- Mobile panel: the same menus as collapsible groups. No hover here. --}}
+        {{-- Mobile drawer: the same four links, then the actions. Get started is
+             a full-width button at the bottom, per the inventory — it is the one
+             action worth a thumb-sized target at the end of the list. --}}
         <div id="marketing-mobile-nav" x-show="mobile" x-cloak
             x-transition:enter="transition ease-out duration-300"
             x-transition:enter-start="opacity-0 -translate-y-2"
@@ -242,50 +156,34 @@
             x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
             class="md:hidden border-t border-line bg-page px-6 py-4 max-h-[calc(100svh-4rem)] overflow-y-auto">
 
-            <a href="{{ route('features') }}" @click="mobile = false"
-                class="block py-3 border-b border-line text-sm font-medium text-ink">Product</a>
-
-            @foreach ($menus as $name => $menu)
-                <div class="border-b border-line py-1">
-                    <button type="button"
-                        @click="mobileGroup = (mobileGroup === '{{ $name }}' ? null : '{{ $name }}')"
-                        :aria-expanded="mobileGroup === '{{ $name }}' ? 'true' : 'false'"
-                        aria-controls="mobile-group-{{ Str::slug($name) }}"
-                        class="w-full flex items-center justify-between py-2.5 text-sm font-medium text-ink">
-                        {{ $name }}
-                        <x-phosphor-caret-down class="w-4 h-4 text-muted transition-transform duration-300"
-                            ::class="mobileGroup === '{{ $name }}' && 'rotate-180'" />
-                    </button>
-
-                    <div id="mobile-group-{{ Str::slug($name) }}" x-show="mobileGroup === '{{ $name }}'" x-cloak
-                        class="flex flex-col gap-1 pb-2">
-                        @foreach ($menu['items'] as $item)
-                            <a href="{{ $item['href'] }}" @click="mobile = false"
-                                class="px-3 py-2.5 rounded-card text-sm text-muted hover:bg-warm hover:text-ink transition-colors">
-                                {{ $item['label'] }}
-                            </a>
-                        @endforeach
-                    </div>
-                </div>
+            @foreach ($links as $link)
+                <a href="{{ route($link['route']) }}" @click="mobile = false"
+                    @if (request()->routeIs($link['route'])) aria-current="page" @endif
+                    @class([
+                        'block py-3 border-b border-line text-sm font-medium',
+                        'text-ink' => request()->routeIs($link['route']),
+                        'text-muted' => ! request()->routeIs($link['route']),
+                    ])>{{ $link['label'] }}</a>
             @endforeach
 
-            <a href="{{ route('pricing') }}" @click="mobile = false"
-                class="block py-3 border-b border-line text-sm font-medium text-ink">Pricing</a>
-
-            <div class="flex flex-col gap-3 mt-4">
+            <div class="flex flex-col gap-3 mt-5">
                 @auth
                     <a href="{{ route('dashboard') }}"
-                        class="bg-ink text-white rounded-full px-5 py-2.5 text-sm font-medium hover:bg-ink/90 transition-colors text-center">
+                        class="bg-ink text-white rounded-full px-5 py-3 text-sm font-medium hover:bg-ink/90 transition-colors text-center">
                         Dashboard
                     </a>
                 @else
-                    <a href="{{ route('signup') }}"
-                        class="bg-ink text-white rounded-full px-5 py-2.5 text-sm font-medium hover:bg-ink/90 transition-colors text-center">
-                        Get started
+                    <a href="{{ route('login') }}" @click="mobile = false"
+                        class="text-sm font-medium text-muted hover:text-ink transition-colors text-center py-1">
+                        Sign in
                     </a>
-                    <a href="{{ route('demo') }}"
-                        class="border border-line text-ink rounded-full px-4 py-2.5 text-sm font-medium hover:bg-warm transition-colors text-center">
+                    <a href="{{ route('demo') }}" @click="mobile = false"
+                        class="border border-line text-ink rounded-full px-4 py-3 text-sm font-medium hover:bg-warm transition-colors text-center">
                         Book a demo
+                    </a>
+                    <a href="{{ route('signup') }}" @click="mobile = false"
+                        class="bg-ink text-white rounded-full px-5 py-3 text-sm font-medium hover:bg-ink/90 transition-colors text-center">
+                        Get started
                     </a>
                 @endauth
             </div>

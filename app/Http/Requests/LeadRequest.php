@@ -6,11 +6,13 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 /**
- * Shared validation for both lead forms (Book a Demo, Get Started).
+ * Shared validation for the three lead forms (Contact, Book a Demo, Get Started).
  *
  * Public and unauthenticated, so it carries a honeypot alongside the route's
  * throttle:5,1. Nigerian numbers are accepted in the shapes people actually
  * type them — 0803…, +234803…, with spaces or dashes.
+ *
+ * The POST routes are unnamed, so the per-form rules key off the path.
  */
 class LeadRequest extends FormRequest
 {
@@ -24,14 +26,22 @@ class LeadRequest extends FormRequest
      */
     public function rules(): array
     {
+        /*
+         * Contact is a general enquiry, so it inverts two rules: the sender may
+         * not belong to a clinic at all (clinic name optional), and the message
+         * IS the enquiry (required). On the other two forms the message is a
+         * nice-to-have and the clinic is the whole point.
+         */
+        $isContact = $this->is('contact');
+
         return [
-            'clinic_name' => ['required', 'string', 'min:2', 'max:255'],
+            'clinic_name' => [$isContact ? 'nullable' : 'required', 'string', 'min:2', 'max:255'],
             'contact_name' => ['required', 'string', 'min:2', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255'],
             'phone' => ['required', 'string', 'max:30', 'regex:/^[0-9+\-\s()]{7,}$/'],
             'city' => ['nullable', 'string', 'max:255'],
             'doctors' => ['nullable', 'integer', 'min:0', 'max:999'],
-            'message' => ['nullable', 'string', 'max:2000'],
+            'message' => [$isContact ? 'required' : 'nullable', 'string', 'max:2000'],
 
             // Demo only. Free-text would be a scheduling guessing game, so both
             // are constrained to the options the form actually offers.
@@ -43,11 +53,9 @@ class LeadRequest extends FormRequest
             'plan' => ['nullable', 'string', Rule::in(['starter', 'clinic', 'group'])],
 
             /*
-             * Consent, sign-up only. The POST routes are unnamed, so this keys
-             * off the path rather than the route name. Not a column — the
-             * controller strips it before create(); what is stored is the
-             * timestamped row itself, which is the record that consent was
-             * given at that moment.
+             * Consent, sign-up only. Not a column — the controller strips it
+             * before create(); what is stored is the timestamped row itself,
+             * which is the record that consent was given at that moment.
              */
             'terms' => [$this->is('signup') ? 'accepted' : 'nullable'],
 
@@ -64,6 +72,7 @@ class LeadRequest extends FormRequest
         return [
             'clinic_name.required' => 'Please tell us your clinic name.',
             'contact_name.required' => 'Please tell us your name.',
+            'message.required' => 'Tell us what you need — a sentence is plenty.',
             'phone.regex' => 'Enter a reachable phone number, e.g. 0803 123 4567.',
             'doctors.integer' => 'Enter the number of doctors as a whole number.',
             'website.prohibited' => 'Something went wrong. Please try again.',
