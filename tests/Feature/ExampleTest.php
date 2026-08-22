@@ -2,18 +2,23 @@
 
 namespace Tests\Feature;
 
-// use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class ExampleTest extends TestCase
 {
     /**
-     * The root path redirects unauthenticated visitors to the login screen.
+     * The root path serves the public marketing home page.
+     *
+     * This previously asserted a redirect to login, which was true when the
+     * root domain was the login-gated EMR. Since the marketing site shipped
+     * (B3) the root domain is a public page and the assertion has been failing.
+     * A red baseline hides real failures, and the A1 isolation suite is about
+     * to depend on that signal being clean.
      */
-    public function test_the_application_returns_a_successful_response(): void
+    public function test_the_root_path_serves_the_marketing_home_page(): void
     {
-        $response = $this->get('/');
-
-        $response->assertRedirect(route('login'));
+        $this->get('/')
+            ->assertOk()
+            ->assertSee('AfriChart', escape: false);
     }
 }
