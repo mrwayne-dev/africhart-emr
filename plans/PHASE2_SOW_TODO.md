@@ -2,7 +2,7 @@
 
 **Source:** SCOPE OF WORK — AfriChart EMR SaaS Platform (Phase 2), Ref `ACT-DEV-006`
 **Architecture:** *AfriChart EMR — SaaS Scaling Architecture & Roadmap* (see [§7 reconciliation](#7-architecture-doc--what-is-now-out-of-date) — parts of it are now out of date)
-**Updated:** 2026-08-21 · **Sprint 0 complete**
+**Updated:** 2026-08-22 · **Sprint 0 complete · B3 complete**
 **Companions:** `plans/africhart-platform-spec-public-ui-plans.md` · `~/Documents/wayne/vps/wayneVPS-SETUP.md` · `~/Documents/wayne/vps/africhart-smoke-deploy.md`
 
 Legend: ✅ done · 🟡 partial · ⬜ not started · ⚠️ decision needed
@@ -38,11 +38,11 @@ Legend: ✅ done · 🟡 partial · ⬜ not started · ⚠️ decision needed
 | **A6** | Tenant #1 | ⬜ | Now a fresh stand-up, not a migration |
 | **B1** | Subscription & billing `[NEW]` | ⬜ | Architecture to be designed (§6) |
 | **B2** | Plans, gating & metering `[NEW]` | ⬜ | Tiers designed, nothing built |
-| **B3** | Public marketing site `[NEW]` | ⬜ | Page map exists; no views |
+| **B3** | Public marketing site `[NEW]` | ✅ | **Complete 2026-08-22** — 10 pages + 3 legal docs. See `PHASE2_PROGRESS_2026-08-22.md` |
 | **B4** | In-clinic account surfaces `[NEW]` | 🟡 | Two seams shipped; wizard + Settings hub absent |
 | **B5** | Super-admin panel `[NEW]` | ⬜ | Depends on A1 |
 | **B6** | Product telemetry `[NEW]` | ⬜ | Not started |
-| **B7** | Compliance | ⬜ | DPA template + isolation guarantee not written |
+| **B7** | Compliance | 🟡 | DPA template + Privacy + Terms written 2026-08-22 (pending legal review); isolation guarantee + breach plan not |
 
 ---
 
@@ -304,12 +304,17 @@ mode that looks exactly like success.
 - [ ] ⚠️ Confirm pricing: SOW Appendix 1 is blank; the platform spec proposes
       Starter ₦25k / Clinic ₦50k / Group ₦40k-per-site
 
-#### B3. Public marketing site `[NEW]` ⬜
-Root domain is reassigned at project end (settled). Build behind that.
-- [ ] Home · Features · Pricing · About · Demo/Contact · Login entry
-- [ ] Legal: Privacy, Terms, Data-Processing
-- [ ] Design language from the platform spec (General Sans; warm off-white + near-black;
-      8px radii; no shadows)
+#### B3. Public marketing site `[NEW]` ✅ — COMPLETE 2026-08-22
+Root domain is reassigned at project end (settled). Built behind that.
+- [x] Home · Features · Pricing · About · **Contact** · Demo · Get started · Login entry
+- [x] Legal: Privacy, Terms, Data-Processing (each carries a "pending legal review" notice)
+- [x] Design language from the platform spec (General Sans self-hosted; warm off-white +
+      near-black; 8px radii; no shadows) plus a motion scale and reduced-motion guard
+- [x] Tier-2 auth pages restyled onto a shared shell; login lockout feedback fixed
+- [ ] ⚠️ **Confirm the published prices.** SOW Appendix 1 is blank and `/pricing` is live with
+      the platform-spec proposal (₦25k / ₦50k / ₦40k-per-site)
+- [ ] Deferred to A1/A2: find-your-clinic (needs the registry) · `/invite/{token}` (needs
+      per-clinic single-use tokens)
 
 #### B4. In-clinic account surfaces `[NEW]` ⬜🟡
 - [ ] First-run setup wizard (profile → fee → catalogue → invite staff → first patient)
@@ -428,10 +433,12 @@ proxy spoofing closed.
 
 **Two housekeeping notes:**
 
-1. Branch `fix/sprint-0-hardening` (`10721b2`) is **committed locally but not pushed**.
-   The four changed PHP files were copied to the server directly to verify them, so the
-   server checkout shows 4 modified files. Pushing the branch and pulling on the server
-   reconciles that.
+1. ~~Branch `fix/sprint-0-hardening` is committed locally but not pushed.~~
+   **Resolved 2026-08-22** — `9a52dd1` is an ancestor of `feature/marketing-site` (`5a7000a`),
+   which is on GitHub. Sprint 0 is safe.
+   **Still outstanding:** the four changed PHP files were copied to the server directly to verify
+   them, so the server checkout remains unreconciled with git. Pull on the server before the next
+   deploy.
 2. `git config core.fileMode false` was set on the server checkout. The permissions pass
    flipped modes on `artisan` and eleven `.gitignore` files, which would otherwise bury
    every future `git pull` in mode noise. (Minor repo hygiene: those `.gitignore` files
@@ -452,8 +459,8 @@ Per-tenant config → off-site backups → provisioning command
 Tenant #1 fresh → second clinic → prove isolation → per-tenant backups + restore →
 tear down the smoke deploy
 
-**Sprint 4 — B3 + B4** (the §6.1 ₦200,000 line item)
-Marketing site → setup wizard → Settings hub
+**Sprint 4 — B4 + the last two Tier-2 pages** (the §6.1 ₦200,000 line item; B3 half already done)
+Setup wizard → Settings hub → find-your-clinic + invite acceptance (buildable once A1/A2 land)
 
 **Sprint 5 — B1 + B2**
 Paystack architecture agreed (§6) → subscriptions → webhooks → dunning → gating + metering
