@@ -12,16 +12,16 @@
          breathe, short enough that the cards are already in view.
     --}}
     <x-marketing-section tone="page">
-        <div class="max-w-3xl">
+        <div>
             <p class="font-mono text-xs text-muted uppercase tracking-[0.2em] mb-6" data-reveal>
                 <span class="text-accent">[</span> Pricing <span class="text-accent">]</span>
             </p>
 
             <h1 class="text-4xl sm:text-6xl font-medium text-ink tracking-tight leading-[1.03]" data-reveal data-reveal-delay="80">
-                Naira pricing,<br class="hidden sm:block"> stated plainly.
+                Naira pricing, stated plainly.
             </h1>
 
-            <p class="text-lg text-muted mt-6 leading-relaxed" data-reveal data-reveal-delay="160">
+            <p class="text-lg text-muted mt-6 leading-relaxed max-w-2xl" data-reveal data-reveal-delay="160">
                 No dollar invoices, no surprise conversion, and the one-time setup fee shown next to
                 every plan rather than mentioned after you commit.
             </p>

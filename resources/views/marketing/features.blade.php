@@ -25,14 +25,14 @@
         <div class="flex-1 flex items-center">
             <div class="max-w-7xl mx-auto px-6 sm:px-8 w-full py-16 sm:py-20">
 
-                <div class="max-w-3xl">
+                <div>
                     <p class="font-mono text-xs text-muted uppercase tracking-[0.2em] mb-6" data-reveal>
                         <span class="text-accent">[</span> Features <span class="text-accent">]</span>
                     </p>
 
                     <h1 class="text-4xl sm:text-6xl lg:text-7xl font-medium text-ink tracking-tight leading-[1.02]"
                         data-reveal data-reveal-delay="80">
-                        The whole visit,<br class="hidden sm:block"> end to end.
+                        The whole visit, end to end.
                     </h1>
 
                     <p class="text-lg text-muted mt-7 leading-relaxed max-w-2xl" data-reveal data-reveal-delay="160">
