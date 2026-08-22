@@ -51,6 +51,18 @@ textarea:focus-visible {
 }
 
 /*
+ * Motion timing scale. Three tiers, used everywhere — the marketing surface
+ * previously mixed 150/200/300/500/600/1400ms with no system behind it.
+ * Tailwind's duration-* utilities in markup mirror these values.
+ */
+:root {
+    --ease-out-soft: cubic-bezier(0.16, 1, 0.3, 1);
+    --dur-micro: 200ms;  /* hover, colour, icon rotation */
+    --dur-reveal: 400ms; /* scroll reveals, panel crossfade */
+    --dur-panel: 500ms;  /* height easing (FAQ, pricing expand) */
+}
+
+/*
  * Scroll-reveal (marketing pages). The .reveal class is applied by JS, never in
  * markup — see initScrollReveal() in resources/js/app.js — so content is
  * readable when JS doesn't run. Easing is a soft decelerate so sections settle
@@ -58,10 +70,10 @@ textarea:focus-visible {
  */
 .reveal {
     opacity: 0;
-    transform: translateY(12px);
+    transform: translateY(10px);
     transition:
-        opacity 600ms cubic-bezier(0.16, 1, 0.3, 1),
-        transform 600ms cubic-bezier(0.16, 1, 0.3, 1);
+        opacity var(--dur-reveal) var(--ease-out-soft),
+        transform var(--dur-reveal) var(--ease-out-soft);
     transition-delay: var(--reveal-delay, 0ms);
 }
 
@@ -82,7 +94,9 @@ textarea:focus-visible {
 }
 
 .hero-settle {
-    animation: hero-settle 1400ms cubic-bezier(0.16, 1, 0.3, 1) both;
+    /* 1400ms held a 2560px composite layer alive far longer than it earned;
+       800ms still reads as a settle without dominating the load. */
+    animation: hero-settle 800ms var(--ease-out-soft) both;
 }
 
 /* Honour a reduced-motion preference: collapse every transition/animation

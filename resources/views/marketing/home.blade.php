@@ -39,8 +39,10 @@
 
         <div class="relative max-w-7xl mx-auto px-6 sm:px-8 w-full pt-28 pb-8">
 
+            {{-- Accent 1 of 3: the brackets only. First impression, brand
+                 signal, and it spends almost no attention to do it. --}}
             <p class="font-mono text-xs text-white/60 uppercase tracking-[0.2em] mb-6" data-reveal>
-                [ For Nigerian clinics ]
+                <span class="text-accent">[</span> For Nigerian clinics <span class="text-accent">]</span>
             </p>
 
             <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-10 lg:gap-16">
@@ -113,6 +115,18 @@
         </div>
     </x-marketing-section>
 
+    {{-- ========================= STAT BAND ========================= --}}
+    {{-- A tight beat between two heavy sections, and the only place the third
+         surface tone is used — it breaks the page/warm flip-flop. --}}
+    <x-marketing-section tone="warm-alt" size="tight">
+        <x-stat-band :stats="[
+            ['value' => 4, 'label' => 'Staff roles, each seeing only what they need'],
+            ['value' => 5, 'label' => 'Steps from front desk to the owner\'s phone'],
+            ['value' => 1, 'label' => 'Database per clinic — isolation by construction'],
+            ['value' => 30, 'label' => 'Days free, no card required'],
+        ]" />
+    </x-marketing-section>
+
     {{-- ========================= WHAT YOU GET (STICKY SHOWCASE) ========================= --}}
     {{--
         Feature list left, sticky visual right that swaps as you scroll.
@@ -134,7 +148,7 @@
         ];
     @endphp
 
-    <x-marketing-section tone="warm">
+    <x-marketing-section tone="warm" size="tall">
         <div data-reveal>
             <x-marketing-heading
                 eyebrow="What you get"
@@ -164,7 +178,9 @@
 
                         {{-- Progress rule — marks the active item on desktop. --}}
                         <div class="hidden lg:block h-px bg-line mt-6 overflow-hidden">
-                            <div class="h-full bg-ink origin-left transition-transform duration-500 ease-out"
+                            {{-- Accent 3 of 3: the only element that moves as you scroll, so
+                                 accent makes "you are here" legible at a glance. --}}
+                            <div class="h-full bg-accent origin-left transition-transform duration-500 ease-out"
                                 ::class="active === {{ $i }} ? 'scale-x-100' : 'scale-x-0'"></div>
                         </div>
 
@@ -247,7 +263,7 @@
         competing for attention — the recommendation reads as a recommendation,
         not as the middle column of three.
     --}}
-    <x-marketing-section tone="warm">
+    <x-marketing-section tone="warm" size="tall">
         <div data-reveal>
             <x-marketing-heading
                 align="center"
@@ -319,7 +335,7 @@
     </x-marketing-section>
 
     {{-- ========================= CLOSING CTA ========================= --}}
-    <x-marketing-section tone="warm">
+    <x-marketing-section tone="warm" size="tight">
         <div data-reveal>
             <x-cta-band />
         </div>

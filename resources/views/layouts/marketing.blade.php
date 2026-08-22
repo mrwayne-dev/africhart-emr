@@ -1,5 +1,8 @@
 <!DOCTYPE html>
-<html lang="en">
+{{-- scroll-smooth lives here, not in app.css: that stylesheet is shared with
+     the EMR, and easing the scroll of a long patient table would be worse,
+     not better. The reduced-motion guard in app.css already resets it. --}}
+<html lang="en" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">

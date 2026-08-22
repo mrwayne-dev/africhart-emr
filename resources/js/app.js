@@ -348,6 +348,56 @@ Alpine.data('lagosClock', () => ({
 }));
 
 /*
+ * Count-up for the stat band.
+ *
+ * The markup renders the TRUE value; this counts up TO it from a lower number.
+ * That ordering is deliberate — with no JS, a slow connection, or reduced
+ * motion, the correct figure is already on screen. A component that counted
+ * from zero upward in the markup would show a wrong number to exactly the
+ * users least able to wait for the script.
+ *
+ * Guarded twice: the CSS reduced-motion rule collapses durations, but that
+ * would leave a JS-driven counter frozen mid-count, so the preference is
+ * checked here too and the animation skipped entirely.
+ */
+Alpine.data('countUp', (target = 0, duration = 900) => ({
+    display: target,
+
+    init() {
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+        if (! ('IntersectionObserver' in window)) return;
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach((entry) => {
+                if (! entry.isIntersecting) return;
+                observer.unobserve(entry.target);
+                this.run();
+            });
+        }, { threshold: 0.6 });
+
+        observer.observe(this.$el);
+    },
+
+    run() {
+        // Small numbers (our stats are 1-30) look wrong ticking from zero at a
+        // fixed rate, so ease the value and start close enough to feel alive.
+        const from = 0;
+        const start = performance.now();
+
+        const frame = (now) => {
+            const t = Math.min((now - start) / duration, 1);
+            const eased = 1 - Math.pow(1 - t, 3); // cubic ease-out
+            this.display = Math.round(from + (target - from) * eased);
+            if (t < 1) requestAnimationFrame(frame);
+            else this.display = target;
+        };
+
+        this.display = from;
+        requestAnimationFrame(frame);
+    },
+}));
+
+/*
  * Feature showcase — a list on the left, a sticky visual on the right that
  * swaps as the reader scrolls past each item.
  *

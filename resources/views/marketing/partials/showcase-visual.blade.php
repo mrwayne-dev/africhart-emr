@@ -32,10 +32,12 @@
             <div class="flex items-center justify-between mb-5">
                 <p class="text-sm font-medium text-ink tracking-tight">Today's queue</p>
                 <span class="inline-flex items-center gap-1.5 text-xs text-muted">
-                    <span class="relative flex h-2 w-2">
-                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-ink opacity-60"></span>
-                        <span class="relative inline-flex rounded-full h-2 w-2 bg-ink"></span>
-                    </span>
+                    {{-- Static dot. The pulsing version animated forever, on
+                         default easing, inside an aria-hidden decorative mock —
+                         the "Live" label beside it already carries the meaning,
+                         and an infinite animation costs CPU on low-end phones
+                         for nothing. This is the one thing removed this pass. --}}
+                    <span class="inline-flex rounded-full h-2 w-2 bg-ink"></span>
                     Live
                 </span>
             </div>

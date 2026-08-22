@@ -18,7 +18,7 @@
 --}}
 <div @class([
     'group bg-page rounded-card transition-all duration-200',
-    'border-2 border-ink p-6 sm:p-10' => $tier['featured'],
+    'border-2 border-accent p-6 sm:p-10' => $tier['featured'],
     'border border-line hover:border-muted/30 hover:-translate-y-0.5 p-6 sm:p-7' => ! $tier['featured'],
 ])>
     <div @class(['grid lg:grid-cols-2 lg:gap-12 items-start' => $lg])>
@@ -28,7 +28,7 @@
             <div class="flex items-center justify-between gap-3 min-h-[1.75rem]">
                 <h3 class="text-sm font-medium text-muted">{{ $tier['name'] }}</h3>
                 @if ($tier['featured'])
-                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-ink text-white">
+                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-accent text-white">
                         Most popular
                     </span>
                 @endif
