@@ -68,6 +68,17 @@
 
         solid: {{ $overlay ? 'false' : 'true' }},
 
+        /*
+         * The single source of truth for the bar's colour scheme.
+         *
+         * The bar goes solid whenever a menu is open — otherwise a white
+         * dropdown panel would hang off a transparent bar. Previously only the
+         * BACKGROUND accounted for that, while every text binding checked
+         * `solid` alone, so opening a dropdown over the hero left white text on
+         * a white bar. Everything now reads this one getter.
+         */
+        get onHero() { return ! this.solid && ! this.menu && ! this.mobile },
+
         init() {
             @if ($overlay)
                 const hero = document.querySelector('[data-nav-overlay-anchor]');
@@ -101,18 +112,18 @@
         aria-hidden="true"></div>
 
     <div class="transition-colors duration-300"
-        :class="solid || menu || mobile
-            ? 'bg-page/95 backdrop-blur border-b border-line'
-            : 'bg-transparent border-b border-transparent nav-overlay'">
+        :class="onHero
+            ? 'bg-transparent border-b border-transparent nav-overlay'
+            : 'bg-page/95 backdrop-blur border-b border-line'">
         <nav class="max-w-7xl mx-auto px-6 sm:px-8" aria-label="Main">
             <div class="flex items-center justify-between h-16">
 
                 {{-- Brand --}}
                 <a href="{{ route('home') }}" class="flex items-center gap-2.5 shrink-0 rounded-card">
                     <img src="{{ asset('images/africhart-logo.svg') }}" alt=""
-                        class="w-8 h-8 transition-[filter] duration-300" :class="solid || 'invert'">
+                        class="w-8 h-8 transition-[filter] duration-300" :class="onHero && 'invert'">
                     <span class="text-lg font-medium tracking-tight transition-colors duration-300"
-                        :class="solid ? 'text-ink' : 'text-white'">AfriChart</span>
+                        :class="onHero ? 'text-white' : 'text-ink'">AfriChart</span>
                 </a>
 
                 {{-- Menus (desktop) --}}
@@ -125,9 +136,9 @@
                                 :aria-expanded="menu === '{{ $name }}' ? 'true' : 'false'"
                                 aria-haspopup="true"
                                 class="inline-flex items-center gap-1 px-3 py-2 text-sm font-medium transition-colors rounded-card"
-                                :class="solid
-                                    ? (menu === '{{ $name }}' ? 'text-ink' : 'text-muted hover:text-ink')
-                                    : (menu === '{{ $name }}' ? 'text-white' : 'text-white/70 hover:text-white')">
+                                :class="onHero
+                                    ? (menu === '{{ $name }}' ? 'text-white' : 'text-white/70 hover:text-white')
+                                    : (menu === '{{ $name }}' ? 'text-ink' : 'text-muted hover:text-ink')">
                                 {{ $name }}
                                 <x-phosphor-caret-down class="w-3.5 h-3.5 transition-transform duration-200"
                                     ::class="menu === '{{ $name }}' && 'rotate-180'" />
@@ -138,8 +149,9 @@
                     <a href="{{ route('pricing') }}"
                         @mouseenter="scheduleClose()"
                         class="px-3 py-2 text-sm font-medium transition-colors rounded-card"
-                        :class="solid ? '{{ request()->routeIs('pricing') ? 'text-ink' : 'text-muted hover:text-ink' }}'
-                                      : '{{ request()->routeIs('pricing') ? 'text-white' : 'text-white/70 hover:text-white' }}'">
+                        :class="onHero
+                            ? '{{ request()->routeIs('pricing') ? 'text-white' : 'text-white/70 hover:text-white' }}'
+                            : '{{ request()->routeIs('pricing') ? 'text-ink' : 'text-muted hover:text-ink' }}'">
                         Pricing
                     </a>
                 </div>
@@ -154,13 +166,14 @@
                     @else
                         <a href="{{ route('demo') }}"
                             class="inline-flex items-center border rounded-full px-4 py-2 text-sm font-medium transition-colors"
-                            :class="solid ? 'border-line text-ink hover:bg-warm hover:border-muted/30'
-                                          : 'border-white/30 text-white hover:bg-white/10 hover:border-white/50'">
+                            :class="onHero
+                                ? 'border-white/30 text-white hover:bg-white/10 hover:border-white/50'
+                                : 'border-line text-ink hover:bg-warm hover:border-muted/30'">
                             Book a demo
                         </a>
                         <a href="{{ route('signup') }}"
                             class="group inline-flex items-center gap-1.5 rounded-full px-5 py-2.5 text-sm font-medium transition-colors"
-                            :class="solid ? 'bg-ink text-white hover:bg-ink/90' : 'bg-page text-ink hover:bg-warm'">
+                            :class="onHero ? 'bg-page text-ink hover:bg-warm' : 'bg-ink text-white hover:bg-ink/90'">
                             Get started
                             <x-phosphor-arrow-right class="w-4 h-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
                         </a>
@@ -170,7 +183,7 @@
                 {{-- Hamburger --}}
                 <button type="button" @click="mobile = ! mobile"
                     class="md:hidden transition-colors -mr-1"
-                    :class="solid ? 'text-muted hover:text-ink' : 'text-white/80 hover:text-white'"
+                    :class="onHero ? 'text-white/80 hover:text-white' : 'text-muted hover:text-ink'"
                     :aria-expanded="mobile ? 'true' : 'false'"
                     aria-controls="marketing-mobile-nav">
                     <span class="sr-only">Toggle navigation</span>
