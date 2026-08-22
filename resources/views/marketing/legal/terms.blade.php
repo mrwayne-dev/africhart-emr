@@ -90,7 +90,7 @@
                 'body' => [
                     'We may update these terms. Material changes are emailed to your registered address at least 30 days before they take effect; continuing to use the service after that date means you accept them.',
                     'This agreement is governed by the laws of the Federal Republic of Nigeria, and the courts of Rivers State have jurisdiction. We would far rather resolve a disagreement by talking about it first.',
-                    'Questions about these terms: hello@africhartemr.com.',
+                    'Questions about these terms: legal@africhartemr.com.',
                 ],
             ],
         ]" />

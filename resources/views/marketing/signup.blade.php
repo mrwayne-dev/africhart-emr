@@ -31,11 +31,11 @@
                 </p>
 
                 <h1 class="text-4xl sm:text-5xl font-medium text-ink tracking-tight leading-[1.03]"
-                    data-reveal data-reveal-delay="80">
+                    data-reveal data-reveal-delay="110">
                     Thirty days free.<br class="hidden sm:block"> No card.
                 </h1>
 
-                <p class="text-lg text-muted mt-6 leading-relaxed" data-reveal data-reveal-delay="160">
+                <p class="text-lg text-muted mt-6 leading-relaxed" data-reveal data-reveal-delay="220">
                     Tell us about your clinic and we set it up for you — we do not hand you an
                     empty system and wish you luck.
                 </p>
@@ -48,7 +48,7 @@
                         ['You run 30 days free', 'If your staff are not using it daily by day 30, the setup fee is refunded.'],
                     ] as $i => [$title, $body])
                         <li class="flex items-start gap-4 py-5 border-b border-line"
-                            data-reveal data-reveal-delay="{{ 240 + $i * 70 }}">
+                            data-reveal data-reveal-delay="{{ 340 + $i * 100 }}">
                             <span class="font-mono text-xs text-muted tracking-widest pt-1 shrink-0">
                                 0{{ $i + 1 }}
                             </span>
@@ -62,7 +62,7 @@
             </div>
 
             {{-- Form --}}
-            <div class="lg:col-span-7" data-reveal data-reveal-delay="120">
+            <div class="lg:col-span-7" data-reveal data-reveal-delay="170">
                 <div class="bg-page border border-line rounded-card p-6 sm:p-8">
                     <form method="POST" action="{{ route('signup') }}" class="space-y-5"
                         x-data="{ loading: false }" @submit="loading = true">

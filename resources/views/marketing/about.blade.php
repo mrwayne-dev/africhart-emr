@@ -19,11 +19,11 @@
                 </p>
 
                 <h1 class="text-4xl sm:text-6xl lg:text-7xl font-medium text-ink tracking-tight leading-[1.02] max-w-5xl"
-                    data-reveal data-reveal-delay="80">
+                    data-reveal data-reveal-delay="110">
                     Built in Port Harcourt,<br class="hidden sm:block"> for clinics like yours.
                 </h1>
 
-                <p class="text-lg text-muted mt-8 leading-relaxed max-w-2xl" data-reveal data-reveal-delay="160">
+                <p class="text-lg text-muted mt-8 leading-relaxed max-w-2xl" data-reveal data-reveal-delay="220">
                     Most clinic software sold in Nigeria was designed somewhere else, priced in
                     dollars, and supported from a timezone that is asleep when your front desk is
                     busiest. AfriChart was not.
@@ -42,7 +42,7 @@
                     ] as $i => [$value, $label])
                         <div class="py-7 sm:py-9 sm:px-8 sm:first:pl-0 sm:last:pr-0
                                 {{ $i % 2 ? 'pl-6' : 'pr-6' }} sm:border-l sm:border-line sm:first:border-l-0"
-                            data-reveal data-reveal-delay="{{ 240 + $i * 70 }}">
+                            data-reveal data-reveal-delay="{{ 340 + $i * 100 }}">
                             <dt @class([
                                 'font-medium text-ink tracking-tight',
                                 'text-4xl sm:text-5xl tabular-nums' => is_numeric($value),
@@ -64,7 +64,7 @@
             </div>
 
             <div class="lg:col-span-8 max-w-2xl">
-                <div class="text-lg text-ink-body leading-relaxed space-y-6" data-reveal data-reveal-delay="80">
+                <div class="text-lg text-ink-body leading-relaxed space-y-6" data-reveal data-reveal-delay="110">
                     <p>
                         AfriChart started as one clinic's system. Not a product looking for a market
                         — a real front desk, a real queue, and a real owner who could not tell you
@@ -83,7 +83,7 @@
                     </p>
                 </div>
 
-                <blockquote class="border-l-2 border-ink pl-6 mt-12" data-reveal data-reveal-delay="160">
+                <blockquote class="border-l-2 border-ink pl-6 mt-12" data-reveal data-reveal-delay="220">
                     <p class="text-xl sm:text-2xl font-medium text-ink tracking-tight leading-snug">
                         The goal was never to digitise a clinic. It was to make the digital version
                         faster than the paper one — because otherwise the paper wins.
@@ -115,7 +115,7 @@
             ] as $i => [$title, $body])
                 <div class="grid sm:grid-cols-12 gap-3 sm:gap-10 py-8 border-b border-line
                         transition-colors hover:bg-warm/60 -mx-4 px-4"
-                    data-reveal data-reveal-delay="{{ $i * 70 }}">
+                    data-reveal data-reveal-delay="{{ $i * 100 }}">
                     <span class="sm:col-span-1 font-mono text-xs text-muted tracking-widest pt-1.5">
                         [ 0{{ $i + 1 }} ]
                     </span>
@@ -140,7 +140,7 @@
                 </p>
             </div>
 
-            <div class="flex flex-col gap-5" data-reveal data-reveal-delay="80">
+            <div class="flex flex-col gap-5" data-reveal data-reveal-delay="110">
                 @foreach ([
                     ['icon' => 'phosphor-envelope-simple', 'title' => 'Email that a person reads',
                      'body' => 'Not an overseas ticket queue that replies after you have sent the patient home.'],
@@ -148,7 +148,7 @@
                      'body' => 'Configuration, drug catalogue and staff onboarding are done with you, not left as homework.'],
                 ] as $item)
                     <div class="flex items-start gap-4 bg-page border border-line rounded-card p-5
-                            transition-all duration-200 hover:-translate-y-0.5 hover:border-muted/30">
+                            transition-all duration-300 hover:-translate-y-0.5 hover:border-muted/30">
                         <span class="bg-warm border border-line rounded-card p-2.5 shrink-0">
                             <x-dynamic-component :component="$item['icon']" class="w-5 h-5 text-ink" aria-hidden="true" />
                         </span>
@@ -195,8 +195,8 @@
             <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
                 @foreach ($people as $i => $person)
                     <div class="bg-page border border-line rounded-card p-6 flex flex-col
-                            transition-all duration-200 hover:-translate-y-0.5 hover:border-muted/30"
-                        data-reveal data-reveal-delay="{{ min($i, 5) * 70 }}">
+                            transition-all duration-300 hover:-translate-y-0.5 hover:border-muted/30"
+                        data-reveal data-reveal-delay="{{ min($i, 5) * 100 }}">
 
                         @if (! empty($person['photo']))
                             <img src="{{ asset($person['photo']) }}" alt=""

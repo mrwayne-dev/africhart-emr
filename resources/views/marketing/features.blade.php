@@ -31,17 +31,17 @@
                     </p>
 
                     <h1 class="text-4xl sm:text-6xl lg:text-7xl font-medium text-ink tracking-tight leading-[1.02]"
-                        data-reveal data-reveal-delay="80">
+                        data-reveal data-reveal-delay="110">
                         The whole visit,<br class="hidden sm:block"> end to end.
                     </h1>
 
-                    <p class="text-lg text-muted mt-7 leading-relaxed max-w-2xl" data-reveal data-reveal-delay="160">
+                    <p class="text-lg text-muted mt-7 leading-relaxed max-w-2xl" data-reveal data-reveal-delay="220">
                         Six things a private clinic does every day. Each one hands cleanly to the
                         next, so nobody re-types what someone else already recorded — and the owner
                         can see all of it without standing in the building.
                     </p>
 
-                    <div class="flex flex-col sm:flex-row gap-3 mt-9" data-reveal data-reveal-delay="240">
+                    <div class="flex flex-col sm:flex-row gap-3 mt-9" data-reveal data-reveal-delay="340">
                         <a href="{{ route('signup') }}"
                             class="group inline-flex items-center justify-center gap-2 bg-ink text-white rounded-full px-6 py-3 text-sm font-medium hover:bg-ink/90 transition-colors">
                             Get started
@@ -67,11 +67,11 @@
                         ['#reporting', 'Reporting & exports'],
                     ] as $i => [$href, $label])
                         <a href="{{ $href }}"
-                            data-reveal data-reveal-delay="{{ 340 + $i * 60 }}"
+                            data-reveal data-reveal-delay="{{ 480 + $i * 80 }}"
                             class="group inline-flex items-center gap-1.5 border border-line rounded-full pl-4 pr-3 py-2
                                 text-sm text-muted transition-colors hover:bg-warm hover:text-ink hover:border-muted/30">
                             {{ $label }}
-                            <x-phosphor-arrow-down class="w-3.5 h-3.5 opacity-50 transition-transform duration-200 group-hover:translate-y-0.5" aria-hidden="true" />
+                            <x-phosphor-arrow-down class="w-3.5 h-3.5 opacity-50 transition-transform duration-300 group-hover:translate-y-0.5" aria-hidden="true" />
                         </a>
                     @endforeach
                 </nav>
@@ -91,7 +91,7 @@
                     ] as $i => [$value, $label])
                         <div class="py-7 sm:py-9 sm:px-8 sm:first:pl-0 sm:last:pr-0
                                 {{ $i % 2 ? 'pl-6' : 'pr-6' }} sm:border-l sm:border-line sm:first:border-l-0"
-                            data-reveal data-reveal-delay="{{ $i * 70 }}">
+                            data-reveal data-reveal-delay="{{ $i * 100 }}">
                             {{-- Final value is in the HTML, so with no JS the real
                                  figure is already on screen; countUp only takes over
                                  once Alpine is running. --}}

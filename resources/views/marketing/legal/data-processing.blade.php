@@ -118,7 +118,7 @@
             [
                 'heading' => 'Contact',
                 'body' => [
-                    'For anything under this agreement, including a request for a countersigned copy, email hello@africhartemr.com.',
+                    'For anything under this agreement, including a request for a countersigned copy, email legal@africhartemr.com.',
                 ],
             ],
         ]" />

@@ -15,7 +15,7 @@
 --}}
 <div {{ $attributes->merge([
     'class' => 'group bg-page border border-line rounded-card flex flex-col
-        transition-all duration-200 hover:-translate-y-0.5 hover:border-muted/30 '
+        transition-all duration-300 hover:-translate-y-0.5 hover:border-muted/30 '
         .($tall ? 'p-6 sm:p-8' : 'p-6 sm:p-7'),
 ]) }}>
     <span class="bg-warm border border-line rounded-card p-2.5 w-fit transition-colors group-hover:bg-page">

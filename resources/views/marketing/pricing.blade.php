@@ -17,11 +17,11 @@
                 <span class="text-accent">[</span> Pricing <span class="text-accent">]</span>
             </p>
 
-            <h1 class="text-4xl sm:text-6xl font-medium text-ink tracking-tight leading-[1.03]" data-reveal data-reveal-delay="80">
+            <h1 class="text-4xl sm:text-6xl font-medium text-ink tracking-tight leading-[1.03]" data-reveal data-reveal-delay="110">
                 Naira pricing, stated plainly.
             </h1>
 
-            <p class="text-lg text-muted mt-6 leading-relaxed max-w-2xl" data-reveal data-reveal-delay="160">
+            <p class="text-lg text-muted mt-6 leading-relaxed max-w-2xl" data-reveal data-reveal-delay="220">
                 No dollar invoices, no surprise conversion, and the one-time setup fee shown next to
                 every plan rather than mentioned after you commit.
             </p>
@@ -29,7 +29,7 @@
             <ul class="flex flex-wrap items-center gap-x-6 gap-y-2 mt-8">
                 @foreach (['30-day trial', 'No card to start', 'Cancel anytime'] as $i => $point)
                     <li class="inline-flex items-center gap-1.5 text-sm text-muted"
-                        data-reveal data-reveal-delay="{{ 260 + $i * 70 }}">
+                        data-reveal data-reveal-delay="{{ 360 + $i * 100 }}">
                         <x-phosphor-check-circle class="w-4 h-4 text-ink" aria-hidden="true" />
                         {{ $point }}
                     </li>
@@ -41,7 +41,7 @@
              toggle because it is a teaser; here the comparison IS the page. --}}
         <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mt-16">
             @foreach ($tiers as $i => $tier)
-                <div data-reveal data-reveal-delay="{{ 480 + $i * 90 }}">
+                <div data-reveal data-reveal-delay="{{ 670 + $i * 130 }}">
                     <x-pricing-tier :tier="$tier" />
                 </div>
             @endforeach
@@ -75,7 +75,7 @@
                     ['We load your drug catalogue', 'Your medications at your prices, so invoices are right from the first patient.'],
                     ['We onboard your staff', 'Accounts for each role, and a walkthrough of their first working day.'],
                 ] as $i => [$title, $body])
-                    <div class="py-5 border-b border-line" data-reveal data-reveal-delay="{{ $i * 70 }}">
+                    <div class="py-5 border-b border-line" data-reveal data-reveal-delay="{{ $i * 100 }}">
                         <h3 class="text-sm font-medium text-ink">{{ $title }}</h3>
                         <p class="text-sm text-muted mt-1.5 leading-relaxed">{{ $body }}</p>
                     </div>

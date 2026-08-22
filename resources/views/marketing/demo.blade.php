@@ -23,11 +23,11 @@
                 </p>
 
                 <h1 class="text-4xl sm:text-5xl font-medium text-ink tracking-tight leading-[1.03]"
-                    data-reveal data-reveal-delay="80">
+                    data-reveal data-reveal-delay="110">
                     Fifteen minutes,<br class="hidden sm:block"> on your workflow.
                 </h1>
 
-                <p class="text-lg text-muted mt-6 leading-relaxed" data-reveal data-reveal-delay="160">
+                <p class="text-lg text-muted mt-6 leading-relaxed" data-reveal data-reveal-delay="220">
                     Not a slide deck. We walk your actual clinic day — check-in, vitals,
                     consultation, invoice — and you decide whether it beats what you do now.
                 </p>
@@ -40,7 +40,7 @@
                         ['phosphor-currency-ngn', 'No cost, and no obligation afterwards'],
                     ] as $i => [$icon, $text])
                         <div class="flex items-center gap-3 py-4 border-b border-line"
-                            data-reveal data-reveal-delay="{{ 240 + $i * 70 }}">
+                            data-reveal data-reveal-delay="{{ 340 + $i * 100 }}">
                             <x-dynamic-component :component="$icon" class="w-5 h-5 text-ink shrink-0" aria-hidden="true" />
                             <span class="text-sm text-muted">{{ $text }}</span>
                         </div>
@@ -49,7 +49,7 @@
 
                 {{-- Already decided? Say so, rather than making them find /pricing
                      from a page that deliberately has no nav. --}}
-                <p class="text-sm text-muted mt-8" data-reveal data-reveal-delay="520">
+                <p class="text-sm text-muted mt-8" data-reveal data-reveal-delay="730">
                     Already know you want it?
                     <a href="{{ route('signup') }}" class="text-ink font-medium hover:underline">Get started instead</a>
                     and skip the call.
@@ -57,7 +57,7 @@
             </div>
 
             {{-- Form --}}
-            <div class="lg:col-span-7" data-reveal data-reveal-delay="120">
+            <div class="lg:col-span-7" data-reveal data-reveal-delay="170">
                 <div class="bg-page border border-line rounded-card p-6 sm:p-8">
                     <form method="POST" action="{{ route('demo') }}" class="space-y-5"
                         x-data="{ loading: false }" @submit="loading = true">

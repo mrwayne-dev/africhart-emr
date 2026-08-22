@@ -17,8 +17,8 @@
     <div class="grid md:grid-cols-2 gap-5">
         @foreach ($cards as $i => $card)
             <div class="bg-warm border border-line rounded-card p-6 sm:p-8 flex flex-col
-                    transition-all duration-200 hover:-translate-y-0.5 hover:border-muted/30"
-                data-reveal data-reveal-delay="{{ $i * 80 }}">
+                    transition-all duration-300 hover:-translate-y-0.5 hover:border-muted/30"
+                data-reveal data-reveal-delay="{{ $i * 110 }}">
                 <div class="mb-8">
                     @include('marketing.partials.showcase-visual', ['key' => $card['visual']])
                 </div>

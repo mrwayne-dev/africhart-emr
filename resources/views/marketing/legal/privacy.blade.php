@@ -90,7 +90,7 @@
                 'heading' => 'Changes and contact',
                 'body' => [
                     'If we change this policy in a way that materially affects how your data is handled, we will email the clinic\'s registered address before the change takes effect, not after.',
-                    'For anything in this document, or to exercise a right, email hello@africhartemr.com.',
+                    'For anything in this document, or to exercise a right, email legal@africhartemr.com.',
                 ],
             ],
         ]" />

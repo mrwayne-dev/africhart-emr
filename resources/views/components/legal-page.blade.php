@@ -15,16 +15,16 @@
         </p>
 
         <h1 class="text-4xl sm:text-5xl font-medium text-ink tracking-tight leading-[1.03]"
-            data-reveal data-reveal-delay="80">{{ $title }}</h1>
+            data-reveal data-reveal-delay="110">{{ $title }}</h1>
 
-        <p class="text-lg text-muted mt-6 leading-relaxed" data-reveal data-reveal-delay="160">{{ $summary }}</p>
+        <p class="text-lg text-muted mt-6 leading-relaxed" data-reveal data-reveal-delay="220">{{ $summary }}</p>
 
-        <p class="font-mono text-xs text-muted uppercase tracking-wide mt-8" data-reveal data-reveal-delay="200">
+        <p class="font-mono text-xs text-muted uppercase tracking-wide mt-8" data-reveal data-reveal-delay="280">
             Last updated {{ $updated }}
         </p>
 
         <div class="border border-line rounded-card p-5 mt-8 flex items-start gap-3.5"
-            data-reveal data-reveal-delay="240" role="note">
+            data-reveal data-reveal-delay="340" role="note">
             <x-phosphor-info class="w-5 h-5 text-ink shrink-0 mt-0.5" aria-hidden="true" />
             <p class="text-sm text-muted leading-relaxed">
                 <span class="text-ink font-medium">Pending professional legal review.</span>
@@ -60,7 +60,7 @@
             @foreach ($sections as $i => $section)
                 <section id="{{ Str::slug($section['heading']) }}"
                     class="scroll-mt-24 py-8 first:pt-0 border-b border-line last:border-b-0"
-                    data-reveal data-reveal-delay="{{ min($i, 4) * 60 }}">
+                    data-reveal data-reveal-delay="{{ min($i, 4) * 80 }}">
 
                     <h2 class="text-xl font-medium text-ink tracking-tight">
                         <span class="font-mono text-xs text-muted mr-2">{{ str_pad((string) ($i + 1), 2, '0', STR_PAD_LEFT) }}</span>
@@ -89,7 +89,7 @@
             <div class="pt-10">
                 <p class="text-sm text-muted">
                     Questions about this document? Email
-                    <a href="mailto:hello@africhartemr.com" class="text-ink hover:underline">hello@africhartemr.com</a>.
+                    <a href="mailto:legal@africhartemr.com" class="text-ink hover:underline">legal@africhartemr.com</a>.
                 </p>
             </div>
         </div>

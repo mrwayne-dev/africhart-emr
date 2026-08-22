@@ -19,12 +19,13 @@
                     Clinic management software built in Port Harcourt, for Nigerian private clinics.
                 </p>
 
-                {{-- The same address published on the three legal pages as the
-                     contact for exercising data rights. Keep them identical. --}}
-                <a href="mailto:hello@africhartemr.com"
+                {{-- General support contact. Deliberately NOT the address on the
+                     three legal pages — those publish legal@ as the contact for
+                     exercising data rights. Keep the two separate. --}}
+                <a href="mailto:support@africhartemr.com"
                     class="inline-flex items-center gap-2 text-sm text-muted hover:text-ink transition-colors mt-4 rounded">
                     <x-phosphor-envelope-simple class="w-4 h-4 shrink-0" aria-hidden="true" />
-                    hello@africhartemr.com
+                    support@africhartemr.com
                 </a>
             </div>
 

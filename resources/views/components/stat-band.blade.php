@@ -19,7 +19,7 @@
 --}}
 <div class="grid grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-10">
     @foreach ($stats as $i => $stat)
-        <div data-reveal data-reveal-delay="{{ $i * 60 }}">
+        <div data-reveal data-reveal-delay="{{ $i * 80 }}">
             {{-- tabular-nums so the glyphs are fixed-width: the box cannot
                  resize as digits change, so counting causes no layout shift. --}}
             <p class="text-5xl sm:text-6xl font-medium text-ink tracking-tight tabular-nums"

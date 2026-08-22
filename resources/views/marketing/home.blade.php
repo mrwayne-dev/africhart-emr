@@ -50,18 +50,18 @@
             <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-10 lg:gap-16">
                 <h1 class="font-medium text-white tracking-tight leading-[0.95] max-w-4xl
                         text-[clamp(2.25rem,6.5vw,5.5rem)]"
-                    data-reveal data-reveal-delay="100">
+                    data-reveal data-reveal-delay="140">
                     See everything<br>your clinic does.
                 </h1>
 
                 <p class="text-base text-white/70 leading-relaxed max-w-sm lg:text-right lg:pb-3"
-                    data-reveal data-reveal-delay="220">
+                    data-reveal data-reveal-delay="310">
                     Front desk, consulting room and billing in one place — so the queue moves,
                     nothing goes unbilled, and you can check on the clinic from anywhere.
                 </p>
             </div>
 
-            <div class="flex flex-col sm:flex-row gap-3 mt-10" data-reveal data-reveal-delay="320">
+            <div class="flex flex-col sm:flex-row gap-3 mt-10" data-reveal data-reveal-delay="450">
                 <a href="{{ route('signup') }}"
                     class="group inline-flex items-center justify-center gap-2 bg-page text-ink rounded-full px-7 py-3.5 text-sm font-medium hover:bg-warm transition-colors">
                     Get started
@@ -77,7 +77,7 @@
                  is "we're in your timezone", so a clinic owner sees their own. --}}
             <div class="flex flex-wrap items-center gap-x-8 gap-y-3 mt-12 pt-5 border-t border-white/15
                     font-mono text-xs text-white/60 uppercase tracking-[0.15em]"
-                data-reveal data-reveal-delay="420">
+                data-reveal data-reveal-delay="590">
                 <span>4 staff roles</span>
                 <span>Port Harcourt built</span>
                 <span>Naira pricing</span>
@@ -108,7 +108,7 @@
             ] as $i => $step)
                 <div class="flex flex-col sm:flex-row sm:items-baseline gap-2 sm:gap-10 py-7 border-b border-line
                         transition-colors hover:bg-warm/60 -mx-4 px-4"
-                    data-reveal data-reveal-delay="{{ $i * 70 }}">
+                    data-reveal data-reveal-delay="{{ $i * 100 }}">
                     <span class="font-mono text-xs text-muted shrink-0 sm:w-16 tracking-widest">[ 0{{ $i + 1 }} ]</span>
                     <h3 class="text-xl sm:text-2xl font-medium text-ink tracking-tight shrink-0 sm:w-56">{{ $step['role'] }}</h3>
                     <p class="text-base text-muted leading-relaxed max-w-2xl">{{ $step['text'] }}</p>
@@ -188,7 +188,7 @@
                                     ::class="active === {{ $i }} ? 'text-ink' : 'text-muted'">
                                     {{ $item['title'] }}
                                     <x-phosphor-arrow-right
-                                        class="w-4 h-4 opacity-0 -translate-x-1 transition-all duration-200
+                                        class="w-4 h-4 opacity-0 -translate-x-1 transition-all duration-300
                                             group-hover/feat:opacity-60 group-hover/feat:translate-x-0"
                                         aria-hidden="true" />
                                 </a>
@@ -226,7 +226,7 @@
             <div class="hidden lg:block">
                 <div class="sticky top-28 grid">
                     @foreach ($showcase as $i => $item)
-                        <div class="[grid-area:1/1] transition-opacity duration-300 ease-out"
+                        <div class="[grid-area:1/1] transition-opacity duration-[400ms] ease-out"
                             ::class="active === {{ $i }} ? 'opacity-100' : 'opacity-0 pointer-events-none'"
                             ::aria-hidden="active === {{ $i }} ? 'false' : 'true'">
                             @include('marketing.partials.showcase-visual', ['key' => $item['key']])
@@ -269,7 +269,7 @@
                     ['title' => 'Encrypted, tested backups', 'text' => 'Daily backups, AES-256 encrypted, stored off the server — with a restore we have actually rehearsed rather than assumed.'],
                     ['title' => 'Built for the NDPA', 'text' => 'A documented data-isolation guarantee and a per-clinic data-processing agreement, so your compliance paperwork has something to point at.'],
                 ] as $i => $item)
-                    <div class="py-6 border-b border-line" data-reveal data-reveal-delay="{{ $i * 80 }}">
+                    <div class="py-6 border-b border-line" data-reveal data-reveal-delay="{{ $i * 110 }}">
                         <h3 class="text-base font-medium text-ink tracking-tight">{{ $item['title'] }}</h3>
                         <p class="text-sm text-muted mt-2 leading-relaxed max-w-xl">{{ $item['text'] }}</p>
                     </div>
@@ -341,14 +341,17 @@
                     aria-controls="other-plans"
                     class="group inline-flex items-center gap-2 border border-line bg-page text-ink rounded-full px-5 py-2.5 text-sm font-medium hover:bg-warm hover:border-muted/30 transition-colors">
                     <span x-text="others ? 'Hide other plans' : 'See other plans'">See other plans</span>
-                    <x-phosphor-caret-down class="w-4 h-4 text-muted transition-transform duration-300"
+                    <x-phosphor-caret-down class="w-4 h-4 text-muted transition-transform duration-500"
                         ::class="others && 'rotate-180'" />
                 </button>
             </div>
 
-            {{-- Same grid-rows height technique as the FAQ. --}}
+            {{-- Same grid-rows height technique as the FAQ, but longer: this
+                 panel opens two full pricing cards where an FAQ answer is a
+                 paragraph, and the larger the travel the longer it needs to
+                 read as easing rather than snapping. --}}
             <div id="other-plans"
-                class="grid transition-[grid-template-rows] duration-500 ease-out"
+                class="grid transition-[grid-template-rows] duration-700 ease-out"
                 :class="others ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'">
                 <div class="overflow-hidden">
                     <div class="grid md:grid-cols-2 gap-5 pt-8">

@@ -29,14 +29,14 @@
                         {{ $item['question'] }}
                     </span>
                     <span class="shrink-0 text-muted group-hover:text-ink transition-colors mt-0.5">
-                        <x-phosphor-plus class="w-4 h-4 transition-transform duration-300 ease-out"
+                        <x-phosphor-plus class="w-4 h-4 transition-transform duration-500 ease-out"
                             ::class="open === {{ $i }} && 'rotate-45'" />
                     </span>
                 </button>
             </h3>
 
             <div id="faq-panel-{{ $i }}"
-                class="grid transition-[grid-template-rows] duration-300 ease-out"
+                class="grid transition-[grid-template-rows] duration-500 ease-out"
                 :class="open === {{ $i }} ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'">
                 <div class="overflow-hidden">
                     <p class="text-sm text-muted leading-relaxed pb-5 pr-10">{{ $item['answer'] }}</p>

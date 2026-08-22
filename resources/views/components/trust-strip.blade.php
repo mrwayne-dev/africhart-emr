@@ -15,7 +15,7 @@
 <div class="flex flex-col sm:flex-row sm:flex-wrap border-t border-b border-line divide-y sm:divide-y-0 sm:divide-x divide-line">
     @foreach ($items as $i => $item)
         <div class="flex items-center gap-3 py-5 sm:px-6 sm:first:pl-0 sm:last:pr-0 flex-1 min-w-[13rem]"
-            data-reveal data-reveal-delay="{{ $i * 70 }}">
+            data-reveal data-reveal-delay="{{ $i * 100 }}">
             <x-dynamic-component :component="$item['icon']" class="w-5 h-5 text-ink shrink-0" aria-hidden="true" />
             <div class="min-w-0">
                 <p class="text-sm font-medium text-ink leading-tight">{{ $item['name'] }}</p>

@@ -34,7 +34,7 @@
         </ul>
     </div>
 
-    <div @class(['lg:order-1' => $flip]) data-reveal data-reveal-delay="80">
+    <div @class(['lg:order-1' => $flip]) data-reveal data-reveal-delay="110">
         @include('marketing.partials.showcase-visual', ['key' => $visual])
     </div>
 </div>

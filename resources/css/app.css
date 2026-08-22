@@ -102,12 +102,19 @@ textarea:focus-visible {
  * Motion timing scale. Three tiers, used everywhere — the marketing surface
  * previously mixed 150/200/300/500/600/1400ms with no system behind it.
  * Tailwind's duration-* utilities in markup mirror these values.
+ *
+ * The curve matters more than the numbers. This was cubic-bezier(0.16,1,0.3,1)
+ * — essentially easeOutExpo, which covers ~70% of the distance in the first
+ * fifth of its duration. A "400ms" reveal therefore read as a ~90ms pop
+ * followed by a long invisible settle, which is what made the site feel
+ * rushed. easeOutCubic still decelerates, but spreads the movement across the
+ * whole duration instead of dumping it at the start.
  */
 :root {
-    --ease-out-soft: cubic-bezier(0.16, 1, 0.3, 1);
-    --dur-micro: 200ms;  /* hover, colour, icon rotation */
-    --dur-reveal: 400ms; /* scroll reveals, panel crossfade */
-    --dur-panel: 500ms;  /* height easing (FAQ, pricing expand) */
+    --ease-out-soft: cubic-bezier(0.33, 1, 0.68, 1);
+    --dur-micro: 300ms;  /* hover, colour, icon rotation */
+    --dur-reveal: 700ms; /* scroll reveals, panel crossfade */
+    --dur-panel: 650ms;  /* height easing (FAQ, pricing expand) */
 }
 
 /*
@@ -118,7 +125,10 @@ textarea:focus-visible {
  */
 .reveal {
     opacity: 0;
-    transform: translateY(10px);
+    /* 10px was too short to read as movement — perceived speed is distance over
+       time, so a tiny travel at any duration registers as a pop rather than a
+       rise. 18px gives the eye something to follow. */
+    transform: translateY(18px);
     transition:
         opacity var(--dur-reveal) var(--ease-out-soft),
         transform var(--dur-reveal) var(--ease-out-soft);
@@ -142,9 +152,10 @@ textarea:focus-visible {
 }
 
 .hero-settle {
-    /* 1400ms held a 2560px composite layer alive far longer than it earned;
-       800ms still reads as a settle without dominating the load. */
-    animation: hero-settle 800ms var(--ease-out-soft) both;
+    /* 1400ms held a 2560px composite layer alive far longer than it earned.
+       1200ms with the softer curve reads as a settle rather than a zoom, and
+       still releases the layer well before the reader has finished the h1. */
+    animation: hero-settle 1200ms var(--ease-out-soft) both;
 }
 
 /* Honour a reduced-motion preference: collapse every transition/animation

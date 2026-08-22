@@ -29,11 +29,11 @@
          'cta' => 'Get started', 'delay' => 0],
         ['href' => route('demo'), 'icon' => 'phosphor-envelope-simple', 'title' => 'See it first',
          'body' => 'Fifteen minutes on your own workflow, with someone in Port Harcourt.',
-         'cta' => 'Book a demo', 'delay' => 80],
+         'cta' => 'Book a demo', 'delay' => 110],
     ] as $card)
         <a href="{{ $card['href'] }}"
             class="group bg-ink rounded-card p-8 flex flex-col justify-between min-h-[15rem] text-left
-                transition-all duration-200 hover:-translate-y-0.5 hover:bg-ink-body"
+                transition-all duration-300 hover:-translate-y-0.5 hover:bg-ink-body"
             data-reveal data-reveal-delay="{{ $card['delay'] }}">
             <span class="bg-page/10 rounded-card p-2.5 w-fit">
                 <x-dynamic-component :component="$card['icon']" class="w-5 h-5 text-white" aria-hidden="true" />

@@ -17,7 +17,7 @@
     featured tier marked by an ink border (we have no dark surface to lighten).
 --}}
 <div @class([
-    'group bg-page rounded-card transition-all duration-200',
+    'group bg-page rounded-card transition-all duration-300',
     'border-2 border-ink p-6 sm:p-10' => $tier['featured'],
     'border border-line hover:border-muted/30 hover:-translate-y-0.5 p-6 sm:p-7' => ! $tier['featured'],
 ])>

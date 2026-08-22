@@ -93,15 +93,15 @@
     {{-- Backdrop. Sits under the bar and panel but over the page, so the content
          behind a open menu blurs back and the panel reads clearly. --}}
     <div x-show="menu" x-cloak
-        x-transition:enter="transition ease-out duration-200"
+        x-transition:enter="transition ease-out duration-300"
         x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
-        x-transition:leave="transition ease-in duration-150"
+        x-transition:leave="transition ease-in duration-200"
         x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
         @click="closeNow()"
         class="fixed inset-0 top-16 -z-10 bg-ink/20 backdrop-blur-sm"
         aria-hidden="true"></div>
 
-    <div class="transition-colors duration-300"
+    <div class="transition-colors duration-500"
         :class="onHero
             ? 'bg-transparent border-b border-transparent nav-overlay'
             : 'bg-page/95 backdrop-blur border-b border-line'">
@@ -111,8 +111,8 @@
                 {{-- Brand --}}
                 <a href="{{ route('home') }}" class="flex items-center gap-2.5 shrink-0 rounded-card">
                     <img src="{{ asset('images/africhart-logo.svg') }}" alt=""
-                        class="w-8 h-8 transition-[filter] duration-300" :class="onHero && 'invert'">
-                    <span class="text-lg font-medium tracking-tight transition-colors duration-300"
+                        class="w-8 h-8 transition-[filter] duration-500" :class="onHero && 'invert'">
+                    <span class="text-lg font-medium tracking-tight transition-colors duration-500"
                         :class="onHero ? 'text-white' : 'text-ink'">AfriChart</span>
                 </a>
 
@@ -139,7 +139,7 @@
                                     ? (menu === '{{ $name }}' ? 'text-white' : 'text-white/70 hover:text-white')
                                     : (menu === '{{ $name }}' ? 'text-ink' : 'text-muted hover:text-ink')">
                                 {{ $name }}
-                                <x-phosphor-caret-down class="w-3.5 h-3.5 transition-transform duration-200"
+                                <x-phosphor-caret-down class="w-3.5 h-3.5 transition-transform duration-300"
                                     ::class="menu === '{{ $name }}' && 'rotate-180'" />
                             </button>
                         </div>
@@ -197,10 +197,10 @@
         @foreach ($menus as $name => $menu)
             <div x-show="menu === '{{ $name }}'" x-cloak
                 @mouseenter="open('{{ $name }}')" @mouseleave="scheduleClose()"
-                x-transition:enter="transition ease-out duration-200"
+                x-transition:enter="transition ease-out duration-300"
                 x-transition:enter-start="opacity-0 -translate-y-1"
                 x-transition:enter-end="opacity-100 translate-y-0"
-                x-transition:leave="transition ease-in duration-150"
+                x-transition:leave="transition ease-in duration-200"
                 x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
                 class="hidden md:block absolute inset-x-0 top-16 bg-page border-b border-line">
 
@@ -235,10 +235,10 @@
 
         {{-- Mobile panel: the same menus as collapsible groups. No hover here. --}}
         <div id="marketing-mobile-nav" x-show="mobile" x-cloak
-            x-transition:enter="transition ease-out duration-200"
+            x-transition:enter="transition ease-out duration-300"
             x-transition:enter-start="opacity-0 -translate-y-2"
             x-transition:enter-end="opacity-100 translate-y-0"
-            x-transition:leave="transition ease-in duration-150"
+            x-transition:leave="transition ease-in duration-200"
             x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
             class="md:hidden border-t border-line bg-page px-6 py-4 max-h-[calc(100svh-4rem)] overflow-y-auto">
 
@@ -253,7 +253,7 @@
                         aria-controls="mobile-group-{{ Str::slug($name) }}"
                         class="w-full flex items-center justify-between py-2.5 text-sm font-medium text-ink">
                         {{ $name }}
-                        <x-phosphor-caret-down class="w-4 h-4 text-muted transition-transform duration-200"
+                        <x-phosphor-caret-down class="w-4 h-4 text-muted transition-transform duration-300"
                             ::class="mobileGroup === '{{ $name }}' && 'rotate-180'" />
                     </button>
 
