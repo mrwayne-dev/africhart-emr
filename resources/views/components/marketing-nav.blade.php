@@ -5,22 +5,12 @@
      * Menu data lives here so the desktop dropdowns and the mobile accordion
      * render from one source and can never drift apart.
      *
-     * The /features anchors don't exist yet — that page is still a placeholder.
-     * They resolve to the page itself rather than a 404, and the ids get added
-     * when Features is built.
+     * Product is a plain link to /features, not a dropdown. Company keeps one
+     * because its items go to four unrelated destinations; Product pointed at
+     * six anchors on a single page, which the page's own jump-pill row already
+     * does better and in context.
      */
     $menus = [
-        'Product' => [
-            'items' => [
-                ['label' => 'Patient records', 'desc' => 'One record, full visit history', 'icon' => 'phosphor-clipboard-text', 'href' => route('features').'#patient-records'],
-                ['label' => 'Live queue', 'desc' => 'Who is waiting, right now', 'icon' => 'phosphor-clock', 'href' => route('features').'#live-queue'],
-                ['label' => 'Consultations & vitals', 'desc' => 'Notes, diagnosis, plan', 'icon' => 'phosphor-stethoscope', 'href' => route('features').'#consultations'],
-                ['label' => 'Prescriptions', 'desc' => 'Your drug list, your prices', 'icon' => 'phosphor-first-aid-kit', 'href' => route('features').'#prescriptions'],
-                ['label' => 'Billing & receipts', 'desc' => 'Invoices that total themselves', 'icon' => 'phosphor-receipt', 'href' => route('features').'#billing'],
-                ['label' => 'Audit & oversight', 'desc' => 'Every action, attributed', 'icon' => 'phosphor-chart-line', 'href' => route('features').'#audit'],
-            ],
-            'footer' => ['label' => 'See pricing', 'href' => route('pricing')],
-        ],
         'Company' => [
             'items' => [
                 ['label' => 'About', 'desc' => 'Built in Port Harcourt', 'icon' => 'phosphor-users-three', 'href' => route('about')],
@@ -128,6 +118,15 @@
 
                 {{-- Menus (desktop) --}}
                 <div class="hidden md:flex items-center gap-1" @mouseleave="scheduleClose()">
+                    <a href="{{ route('features') }}"
+                        @mouseenter="scheduleClose()"
+                        class="px-3 py-2 text-sm font-medium transition-colors rounded-card"
+                        :class="onHero
+                            ? '{{ request()->routeIs('features') ? 'text-white' : 'text-white/70 hover:text-white' }}'
+                            : '{{ request()->routeIs('features') ? 'text-ink' : 'text-muted hover:text-ink' }}'">
+                        Product
+                    </a>
+
                     @foreach ($menus as $name => $menu)
                         <div class="relative" @mouseenter="open('{{ $name }}')">
                             <button type="button"
@@ -242,6 +241,9 @@
             x-transition:leave="transition ease-in duration-150"
             x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
             class="md:hidden border-t border-line bg-page px-6 py-4 max-h-[calc(100svh-4rem)] overflow-y-auto">
+
+            <a href="{{ route('features') }}" @click="mobile = false"
+                class="block py-3 border-b border-line text-sm font-medium text-ink">Product</a>
 
             @foreach ($menus as $name => $menu)
                 <div class="border-b border-line py-1">
