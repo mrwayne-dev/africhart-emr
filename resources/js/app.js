@@ -351,37 +351,66 @@ Alpine.data('lagosClock', () => ({
  * Feature showcase — a list on the left, a sticky visual on the right that
  * swaps as the reader scrolls past each item.
  *
- * The observer band is a thin slice through the middle of the viewport
- * (rootMargin -45%/-45%), so an item becomes active as it crosses the centre
- * rather than the moment it peeks in at the bottom.
+ * Picks the item whose midpoint is NEAREST the viewport centre, recomputed from
+ * all items on every frame-throttled scroll.
  *
- * Degrades honestly: `active` starts at 0, and the markup renders every item's
- * copy and its own inline visual on small screens, so with no JS (or no
- * IntersectionObserver) the section is still a readable list.
+ * The first version used an IntersectionObserver with a thin rootMargin band
+ * and took whichever entry the callback delivered last. On a fast scroll
+ * several items crossed that band between ticks, so "last delivered" was not
+ * "nearest the centre" and the panel flip-flopped. Measuring every item makes
+ * the result deterministic — there is no ordering to get wrong.
+ *
+ * Degrades honestly: `active` starts at 0, and below lg the markup renders each
+ * feature's visual inline, so with no JS the section is still a readable list.
  */
 Alpine.data('featureShowcase', () => ({
     active: 0,
-    observer: null,
+    items: [],
+    ticking: false,
+    onScroll: null,
 
     init() {
-        if (! ('IntersectionObserver' in window)) return;
+        this.items = Array.from(this.$el.querySelectorAll('[data-showcase-item]'));
+        if (! this.items.length) return;
 
-        this.observer = new IntersectionObserver((entries) => {
-            entries.forEach((entry) => {
-                if (! entry.isIntersecting) return;
-                const index = Number(entry.target.dataset.showcaseItem);
-                if (! Number.isNaN(index)) this.active = index;
+        this.onScroll = () => {
+            if (this.ticking) return;
+            this.ticking = true;
+            requestAnimationFrame(() => {
+                this.sync();
+                this.ticking = false;
             });
-        }, { rootMargin: '-45% 0px -45% 0px', threshold: 0 });
+        };
 
-        this.$el.querySelectorAll('[data-showcase-item]')
-            .forEach((el) => this.observer.observe(el));
+        window.addEventListener('scroll', this.onScroll, { passive: true });
+        window.addEventListener('resize', this.onScroll, { passive: true });
+        this.sync();
     },
 
     destroy() {
-        if (this.observer) this.observer.disconnect();
+        if (! this.onScroll) return;
+        window.removeEventListener('scroll', this.onScroll);
+        window.removeEventListener('resize', this.onScroll);
+    },
+
+    sync() {
+        const centre = window.innerHeight / 2;
+        let best = this.active;
+        let bestDistance = Infinity;
+
+        this.items.forEach((el, index) => {
+            const rect = el.getBoundingClientRect();
+            const distance = Math.abs((rect.top + rect.height / 2) - centre);
+            if (distance < bestDistance) {
+                bestDistance = distance;
+                best = index;
+            }
+        });
+
+        if (best !== this.active) this.active = best;
     },
 }));
+
 
 /*
  * Scroll reveal for the marketing pages.

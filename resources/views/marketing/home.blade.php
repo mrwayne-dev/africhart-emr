@@ -44,7 +44,7 @@
             </p>
 
             <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-10 lg:gap-16">
-                <h1 class="font-medium text-white uppercase tracking-tight leading-[0.95] max-w-4xl
+                <h1 class="font-medium text-white tracking-tight leading-[0.95] max-w-4xl
                         text-[clamp(2.25rem,6.5vw,5.5rem)]"
                     data-reveal data-reveal-delay="100">
                     See everything<br>your clinic does.
@@ -176,16 +176,22 @@
                 @endforeach
             </div>
 
-            {{-- Sticky visual (desktop only) --}}
+            {{-- Sticky visual (desktop only).
+
+                 All five panels are stacked in a SINGLE grid cell and toggled by
+                 opacity, never by display. Previously they were siblings in normal
+                 flow with x-show: during a swap the leaving panel still occupied
+                 space for its 150ms leave transition while the entering one was
+                 already inserted, so the sticky box's height doubled and then
+                 collapsed — a visible jump on every change. Keeping every panel
+                 rendered means the grid row is always sized to the tallest one, so
+                 the height never moves and the swap is a clean crossfade. --}}
             <div class="hidden lg:block">
-                <div class="sticky top-28">
+                <div class="sticky top-28 grid">
                     @foreach ($showcase as $i => $item)
-                        <div x-show="active === {{ $i }}" x-cloak
-                            x-transition:enter="transition ease-out duration-300"
-                            x-transition:enter-start="opacity-0 translate-y-2"
-                            x-transition:enter-end="opacity-100 translate-y-0"
-                            x-transition:leave="transition ease-in duration-150"
-                            x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
+                        <div class="[grid-area:1/1] transition-opacity duration-300 ease-out"
+                            ::class="active === {{ $i }} ? 'opacity-100' : 'opacity-0 pointer-events-none'"
+                            ::aria-hidden="active === {{ $i }} ? 'false' : 'true'">
                             @include('marketing.partials.showcase-visual', ['key' => $item['key']])
                         </div>
                     @endforeach
