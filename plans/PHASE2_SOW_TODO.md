@@ -2,7 +2,7 @@
 
 **Source:** SCOPE OF WORK — AfriChart EMR SaaS Platform (Phase 2), Ref `ACT-DEV-006`
 **Architecture:** *AfriChart EMR — SaaS Scaling Architecture & Roadmap* (see [§7 reconciliation](#7-architecture-doc--what-is-now-out-of-date) — parts of it are now out of date)
-**Updated:** 2026-08-22 · **Sprint 0 complete · B3 complete**
+**Updated:** 2026-08-23 · **Sprint 0 complete · B3 complete · A1 design locked**
 **Companions:** `plans/africhart-platform-spec-public-ui-plans.md` · `~/Documents/wayne/vps/wayneVPS-SETUP.md` · `~/Documents/wayne/vps/africhart-smoke-deploy.md`
 
 Legend: ✅ done · 🟡 partial · ⬜ not started · ⚠️ decision needed
@@ -30,7 +30,7 @@ Legend: ✅ done · 🟡 partial · ⬜ not started · ⚠️ decision needed
 
 | SOW item | | Status | Where it stands |
 |---|---|---|---|
-| **A1** | Tenancy architecture `[NEW]` | ⬜ | Zero tenancy packages in the repo |
+| **A1** | Tenancy architecture `[NEW]` | 🟡 | **Design locked** in `ARCHITECTURE.md`. Zero tenancy packages in the repo — build not started |
 | **A2** | Per-tenant configuration | 🟡 | Drug catalogue DB-backed; prefix/fee/invites still global |
 | **A3** | VPS infrastructure `[NEW]` | 🟡 **~90%** | Only off-site object storage outstanding |
 | **A4** | Provisioning command `[NEW]` | ⬜ | Depends on A1 |
@@ -196,9 +196,12 @@ Also note a wildcard certificate covers **one label only** —
 `clinica.africhartemr.com` ✅ but `a.b.africhartemr.com` ❌. Fine for the current
 design; constrains any future per-clinic sub-subdomains.
 
-- [ ] Add "session does not cross subdomains" to the A1 isolation tests
-- [ ] Decide unknown-subdomain UX: `444` is right for junk, but an unprovisioned
-      *clinic* subdomain should probably get a friendly "no such clinic" page
+- [x] ~~Add "session does not cross subdomains" to the A1 isolation tests~~ — specified in
+      [`ARCHITECTURE.md`](ARCHITECTURE.md) §6.2, including an assertion that `SESSION_DOMAIN`
+      is unset. Still to be *written*, but no longer at risk of being forgotten
+- [x] ~~Decide unknown-subdomain UX~~ — **settled** in [`ARCHITECTURE.md`](ARCHITECTURE.md) §3.2:
+      `444` stays for junk hostnames; an unrecognised *clinic* subdomain gets a friendly
+      "no such clinic" page
 
 ---
 
@@ -241,17 +244,29 @@ mode that looks exactly like success.
 
 ### PHASE A
 
-#### A1. Tenancy architecture `[NEW]` ⬜
-- [ ] Adopt `stancl/tenancy` (the architecture doc's recommendation — still sound)
-- [ ] **Rewrite the architecture doc** — see §7; several sections are stale
+#### A1. Tenancy architecture `[NEW]` 🟡 — design locked, build not started
+- [x] **Architecture doc rewritten** → [`ARCHITECTURE.md`](ARCHITECTURE.md) (2026-08-23).
+      Five decisions locked there: `database` drivers for cache/sessions/queue (Redis deferred to
+      Stage 4) · stancl in **multi-database** mode · central domains excluded from tenant
+      resolution + a reserved-subdomain blocklist · central registry schema · `users` → `staff`
+      with platform operators separate in central `platform_admins`
+- [ ] Adopt `stancl/tenancy` **in multi-database mode** (ARCHITECTURE.md §1 D2)
 - [ ] Central DB: clinic registry (name, subdomain, tenant DB, status) + platform admins + plans
 - [ ] Subdomain tenant identification + per-request connection switching
 - [ ] Split migrations into central vs tenant sets
 - [ ] Per-tenant DB creation + migration commands
-- [ ] ⚠️ **Decide cache/session/queue drivers under tenancy** — see §7
-- [ ] **Isolation test suite** — must prove: clinic A cannot read clinic B's data;
-      sessions do not cross subdomains; cache keys do not collide; queued jobs run
-      against the right tenant
+- [x] ~~⚠️ Decide cache/session/queue drivers under tenancy~~ **Settled: `database` for all three**
+      (ARCHITECTURE.md D1). Isolation becomes structural — each tenant's cache, sessions and jobs
+      live in that tenant's own DB. Redis deferred to Stage 4
+- [ ] **`users` → `staff` rename** — full: table, model, `UserRole` enum, factory, seeder, auth
+      guard/provider, 8 FK constraints, 8 relationships, 22 referencing files. One commit;
+      a half-renamed auth layer is worse than either state (ARCHITECTURE.md §5, §8.1)
+- [ ] ⚠️ **Sanctum morph map before the rename** — `personal_access_tokens.tokenable_type` stores
+      the literal string `App\Models\User`, so renaming silently invalidates every API token
+      (ARCHITECTURE.md §8.3)
+- [ ] **Isolation test suite** — four guarantees, each phrased as *attempt a cross-tenant leak and
+      assert it fails*, against two real provisioned tenants: data · session · cache · queued job.
+      Includes an assertion that `SESSION_DOMAIN` is unset (ARCHITECTURE.md §6)
 
 #### A2. Per-tenant configuration ⬜🟡
 - [ ] ID prefix `ACH-` — hardcoded in `PatientService.php:115`,
@@ -404,7 +419,7 @@ hold.** What has drifted:
 | §4 stack | "Object storage (Contabo S3-compatible)" | Not configured — needs Client credentials |
 | §7 debt | "deployment becomes a real pipeline (git → composer → build → tenant migrate)" | Proven manually on 2026-08-21; not yet scripted |
 
-### ⚠️ The Redis-vs-database decision the doc assumes away
+### ✅ The Redis-vs-database decision — SETTLED 2026-08-23
 
 The architecture doc specifies Redis for cache, sessions and queue. The current deploy
 uses the `database` driver for all three. That is **not simply a mistake to correct** —
@@ -418,12 +433,14 @@ it changes the tenancy design:
   the package's bootstrappers. Faster, and Stage 4 horizontal scaling assumes
   "sessions already in Redis". A prefixing bug is a cross-tenant data leak.
 
-Recommendation: **stay on `database` through Stage 1–2**, where correctness and a clean
-isolation story matter more than throughput, and revisit Redis when load justifies it.
-Either way this needs to be a recorded decision, because Stage 4 is written assuming Redis.
+**Decided: `database` for cache, sessions and queue.** Recorded as decision **D1** in
+[`ARCHITECTURE.md`](ARCHITECTURE.md) §1, which is now the authoritative statement. Redis is
+**deferred to Stage 4**, not rejected — and when it is revisited, the tenancy bootstrappers'
+key-prefixing must be audited as a *security* change, not a performance one.
 
-- [ ] Rewrite the architecture doc against current reality and commit it to `plans/`
-      (A1 depends on it; the platform spec references it throughout and it isn't in the repo)
+- [x] ~~Rewrite the architecture doc against current reality and commit it to `plans/`~~
+      **Done 2026-08-23** → [`ARCHITECTURE.md`](ARCHITECTURE.md). §10 of that doc records what
+      drifted; the Redis-vs-database question below is settled there as decision **D1**
 
 ---
 
