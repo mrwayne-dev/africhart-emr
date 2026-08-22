@@ -30,10 +30,19 @@ class LeadController extends BaseController
 
     public function showSignup(Request $request): View
     {
-        // Home's address finder submits here with ?clinic=..., so the visitor
-        // does not retype what they just typed.
+        /*
+         * Two things arrive by query string:
+         *  - ?clinic= from Home's address finder, so the visitor does not
+         *    retype what they just typed;
+         *  - ?plan= from the chosen tier's CTA on /pricing. Validated against
+         *    the real tier slugs here rather than trusted, since it is
+         *    reflected back into the page and stored on the lead.
+         */
+        $plan = $request->query('plan');
+
         return view('marketing.signup', [
             'clinic' => $request->query('clinic'),
+            'plan' => in_array($plan, ['starter', 'clinic', 'group'], true) ? $plan : null,
         ]);
     }
 
@@ -45,7 +54,8 @@ class LeadController extends BaseController
     private function store(LeadRequest $request, string $type, string $message): RedirectResponse
     {
         MarketingLead::create([
-            ...$request->safe()->except('website'),
+            // `terms` is consent, not data: the row's own timestamp records it.
+            ...$request->safe()->except(['website', 'terms']),
             'type' => $type,
         ]);
 

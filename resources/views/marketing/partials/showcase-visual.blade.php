@@ -162,5 +162,57 @@
             </div>
             @break
 
+        @case('roles')
+            <p class="text-sm font-medium text-ink tracking-tight">Permissions</p>
+            <div class="mt-5 border-t border-line">
+                @foreach ([
+                    ['Receptionist', 'Register · Queue · Invoice', 2],
+                    ['Nurse', 'Queue · Vitals', 1],
+                    ['Doctor', 'Consult · Prescribe · Lab', 3],
+                    ['Administrator', 'Everything, plus the audit log', 4],
+                ] as [$role, $scope, $filled])
+                    <div class="flex items-center justify-between gap-4 py-3 border-b border-line">
+                        <div class="min-w-0">
+                            <p class="text-sm text-ink truncate">{{ $role }}</p>
+                            <p class="text-xs text-muted mt-0.5 truncate">{{ $scope }}</p>
+                        </div>
+                        {{-- Four pips, filled to the role's reach. A visual scale of
+                             access, not a claim about a specific permission count. --}}
+                        <div class="flex items-center gap-1 shrink-0" aria-hidden="true">
+                            @for ($p = 1; $p <= 4; $p++)
+                                <span @class([
+                                    'w-1.5 h-1.5 rounded-full',
+                                    'bg-ink' => $p <= $filled,
+                                    'bg-line' => $p > $filled,
+                                ])></span>
+                            @endfor
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+            @break
+
+        @case('exports')
+            <p class="text-sm font-medium text-ink tracking-tight">This month</p>
+            <div class="grid grid-cols-2 gap-px bg-line mt-5 rounded overflow-hidden">
+                @foreach ([
+                    ['Patients seen', '412'],
+                    ['Consultations', '389'],
+                    ['Collected', '&#8358;1.84m'],
+                    ['Outstanding', '&#8358;236k'],
+                ] as [$label, $value])
+                    <div class="bg-page p-4">
+                        <p class="text-xs text-muted">{{ $label }}</p>
+                        <p class="text-xl font-medium text-ink tracking-tight tabular-nums mt-1">{!! $value !!}</p>
+                    </div>
+                @endforeach
+            </div>
+            <div class="flex items-center gap-2 mt-5">
+                @foreach (['CSV', 'PDF', 'Print'] as $format)
+                    <span class="border border-line rounded-full px-3 py-1 text-xs text-muted">{{ $format }}</span>
+                @endforeach
+            </div>
+            @break
+
     @endswitch
 </div>

@@ -70,7 +70,7 @@
                     @foreach ($tiers as $tier)
                         @php $isClinic = $tier['name'] === 'Clinic'; @endphp
                         <td @class(['px-6 py-6 align-top', 'bg-warm' => $isClinic])>
-                            <a href="{{ $tier['cta'] === 'Talk to us' ? route('demo') : route('signup') }}"
+                            <a href="{{ $tier['cta'] === 'Talk to us' ? route('demo') : route('signup', ['plan' => $tier['slug']]) }}"
                                 @class([
                                     'inline-flex items-center justify-center gap-1.5 w-full rounded-full px-4 py-2.5 text-sm font-medium transition-colors',
                                     'bg-ink text-white hover:bg-ink/90' => $isClinic,

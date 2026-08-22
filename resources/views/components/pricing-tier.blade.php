@@ -47,7 +47,7 @@
                 {{ $tier['blurb'] }}
             </p>
 
-            <a href="{{ $tier['cta'] === 'Talk to us' ? route('demo') : route('signup') }}"
+            <a href="{{ $tier['cta'] === 'Talk to us' ? route('demo') : route('signup', ['plan' => $tier['slug']]) }}"
                 @class([
                     'group/cta inline-flex items-center justify-center gap-1.5 w-full rounded-full text-sm font-medium transition-colors mt-6',
                     'px-6 py-3.5' => $lg,

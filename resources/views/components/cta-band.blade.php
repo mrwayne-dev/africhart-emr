@@ -27,7 +27,7 @@
         ['href' => route('signup'), 'icon' => 'phosphor-first-aid-kit', 'title' => 'Start free',
          'body' => 'Thirty days, no card. We set your clinic up and walk your staff through day one.',
          'cta' => 'Get started', 'delay' => 0],
-        ['href' => route('demo'), 'icon' => 'phosphor-whatsapp-logo', 'title' => 'See it first',
+        ['href' => route('demo'), 'icon' => 'phosphor-envelope-simple', 'title' => 'See it first',
          'body' => 'Fifteen minutes on your own workflow, with someone in Port Harcourt.',
          'cta' => 'Book a demo', 'delay' => 80],
     ] as $card)

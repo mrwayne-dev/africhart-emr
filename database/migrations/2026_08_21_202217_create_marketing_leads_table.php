@@ -21,7 +21,7 @@ return new class extends Migration
             $table->string('clinic_name');
             $table->string('contact_name');
             $table->string('email');
-            $table->string('phone', 30);             // WhatsApp-reachable
+            $table->string('phone', 30);
             $table->string('city')->nullable();
             $table->unsignedSmallInteger('doctors')->nullable();
             $table->text('message')->nullable();

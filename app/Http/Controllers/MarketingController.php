@@ -93,7 +93,7 @@ class MarketingController extends BaseController
                 ['label' => 'REST API access', 'starter' => false, 'clinic' => false, 'group' => true],
             ],
             'Support' => [
-                ['label' => 'Channel', 'starter' => 'Email', 'clinic' => 'WhatsApp', 'group' => 'Priority WhatsApp'],
+                ['label' => 'Channel', 'starter' => 'Email', 'clinic' => 'Priority email', 'group' => 'Priority email'],
                 ['label' => 'Onboarding & setup', 'starter' => true, 'clinic' => true, 'group' => true],
                 ['label' => 'Dedicated onboarding session', 'starter' => false, 'clinic' => false, 'group' => true],
             ],
@@ -112,6 +112,7 @@ class MarketingController extends BaseController
         return [
             [
                 'name' => 'Starter',
+                'slug' => 'starter',
                 'price' => '25,000',
                 'setup' => '50,000',
                 'blurb' => 'For a single clinic finding its feet.',
@@ -130,6 +131,7 @@ class MarketingController extends BaseController
             ],
             [
                 'name' => 'Clinic',
+                'slug' => 'clinic',
                 'price' => '50,000',
                 'setup' => '75,000',
                 'blurb' => 'For an owner who wants to see everything.',
@@ -143,11 +145,12 @@ class MarketingController extends BaseController
                     ['label' => 'Invoicing & receipts', 'included' => true],
                     ['label' => 'Audit log & oversight dashboard', 'included' => true],
                     ['label' => 'PDF receipts & CSV export', 'included' => true],
-                    ['label' => 'WhatsApp support', 'included' => true],
+                    ['label' => 'Priority email support', 'included' => true],
                 ],
             ],
             [
                 'name' => 'Group',
+                'slug' => 'group',
                 'price' => '40,000',
                 'setup' => '100,000',
                 'blurb' => 'Per site, for two or more locations.',
@@ -159,7 +162,7 @@ class MarketingController extends BaseController
                     ['label' => 'Everything in Clinic', 'included' => true],
                     ['label' => 'Consolidated owner dashboard', 'included' => true],
                     ['label' => 'REST API access', 'included' => true],
-                    ['label' => 'Priority support & onboarding', 'included' => true],
+                    ['label' => 'Priority email & onboarding', 'included' => true],
                 ],
             ],
         ];

@@ -142,8 +142,8 @@
 
             <div class="flex flex-col gap-5" data-reveal data-reveal-delay="80">
                 @foreach ([
-                    ['icon' => 'phosphor-whatsapp-logo', 'title' => 'WhatsApp, not a ticket portal',
-                     'body' => 'Because that is where Nigerian clinics already work.'],
+                    ['icon' => 'phosphor-envelope-simple', 'title' => 'Email that a person reads',
+                     'body' => 'Not an overseas ticket queue that replies after you have sent the patient home.'],
                     ['icon' => 'phosphor-users-three', 'title' => 'We set your clinic up ourselves',
                      'body' => 'Configuration, drug catalogue and staff onboarding are done with you, not left as homework.'],
                 ] as $item)
@@ -161,6 +161,63 @@
             </div>
         </div>
     </x-marketing-section>
+
+    {{-- ========================= TEAM =========================
+         The inventory calls for a team section. It is driven by $people below,
+         which is deliberately empty: naming a team on a medical product is a
+         trust claim, and a stock photo with an invented title is the wrong kind
+         of one. With the array empty this renders as the Lymora Tech statement
+         alone — honest and complete — and fills in the moment real names,
+         roles and (optionally) photos are supplied. No placeholders. --}}
+    @php
+        /*
+         * ['name' => …, 'role' => …, 'bio' => …, 'photo' => 'images/team/x.jpg' (optional)]
+         * Photo is optional; without one the card shows the person's initials.
+         */
+        $people = [];
+    @endphp
+
+    @if (filled($people))
+        <x-marketing-section tone="warm-alt">
+            <div class="max-w-2xl mb-14" data-reveal>
+                <p class="font-mono text-xs text-muted uppercase tracking-[0.2em] mb-5">
+                    <span class="text-accent">[</span> The team <span class="text-accent">]</span>
+                </p>
+                <h2 class="text-3xl sm:text-4xl font-medium text-ink tracking-tight leading-[1.05]">
+                    The people you will be dealing with
+                </h2>
+                <p class="text-lg text-muted mt-5 leading-relaxed">
+                    Not a support tier. These are the people who write the code and answer the
+                    email when your clinic is mid-consultation and something is wrong.
+                </p>
+            </div>
+
+            <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                @foreach ($people as $i => $person)
+                    <div class="bg-page border border-line rounded-card p-6 flex flex-col
+                            transition-all duration-200 hover:-translate-y-0.5 hover:border-muted/30"
+                        data-reveal data-reveal-delay="{{ min($i, 5) * 70 }}">
+
+                        @if (! empty($person['photo']))
+                            <img src="{{ asset($person['photo']) }}" alt=""
+                                class="w-14 h-14 rounded-full object-cover bg-warm" loading="lazy">
+                        @else
+                            <span class="w-14 h-14 rounded-full bg-warm border border-line
+                                    flex items-center justify-center text-sm font-medium text-ink"
+                                aria-hidden="true">{{ Str::of($person['name'])->explode(' ')->take(2)->map(fn ($w) => Str::substr($w, 0, 1))->implode('') }}</span>
+                        @endif
+
+                        <h3 class="text-base font-medium text-ink tracking-tight mt-5">{{ $person['name'] }}</h3>
+                        <p class="text-sm text-muted mt-1">{{ $person['role'] }}</p>
+
+                        @if (! empty($person['bio']))
+                            <p class="text-sm text-muted mt-4 leading-relaxed">{{ $person['bio'] }}</p>
+                        @endif
+                    </div>
+                @endforeach
+            </div>
+        </x-marketing-section>
+    @endif
 
     {{-- ========================= CLOSING CTA ========================= --}}
     <x-marketing-section tone="page">

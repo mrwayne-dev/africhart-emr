@@ -1,12 +1,18 @@
-@extends('layouts.marketing')
+@extends('layouts.focus')
 
 @section('title', 'Book a demo — AfriChart')
 @section('description', 'Fifteen minutes on your own clinic workflow, with someone in Port Harcourt. No slide deck.')
 
 @section('content')
 
-    {{-- Compact hero, like Pricing: on a page whose job is a form, pushing the
-         form a full screen down works against it. --}}
+    {{--
+        Focused layout: no nav menu, no footer, no closing CTA band. Everything
+        that is not the form or a reason to complete it has been removed.
+
+        Two columns, reassurance on the left rather than stacked above the form
+        — the pattern the Clearbit/TwentyThree/Albacross references all settle
+        on, and it keeps the first field above the fold on a laptop.
+    --}}
     <x-marketing-section tone="page">
         <div class="grid lg:grid-cols-12 gap-12 lg:gap-16">
 
@@ -29,8 +35,9 @@
                 <div class="border-t border-line mt-10">
                     @foreach ([
                         ['phosphor-clock', 'We reply within one working day'],
-                        ['phosphor-whatsapp-logo', 'On WhatsApp or a call, whichever suits you'],
+                        ['phosphor-envelope-simple', 'By email first, then a call at a time that suits you'],
                         ['phosphor-users-three', 'Bring whoever runs your front desk'],
+                        ['phosphor-currency-ngn', 'No cost, and no obligation afterwards'],
                     ] as $i => [$icon, $text])
                         <div class="flex items-center gap-3 py-4 border-b border-line"
                             data-reveal data-reveal-delay="{{ 240 + $i * 70 }}">
@@ -39,6 +46,14 @@
                         </div>
                     @endforeach
                 </div>
+
+                {{-- Already decided? Say so, rather than making them find /pricing
+                     from a page that deliberately has no nav. --}}
+                <p class="text-sm text-muted mt-8" data-reveal data-reveal-delay="520">
+                    Already know you want it?
+                    <a href="{{ route('signup') }}" class="text-ink font-medium hover:underline">Get started instead</a>
+                    and skip the call.
+                </p>
             </div>
 
             {{-- Form --}}
@@ -65,7 +80,7 @@
                         <div class="grid sm:grid-cols-2 gap-5">
                             <x-marketing-field name="email" label="Email" type="email"
                                 placeholder="you@clinic.com" autocomplete="email" />
-                            <x-marketing-field name="phone" label="Phone (WhatsApp)" type="tel"
+                            <x-marketing-field name="phone" label="Phone" type="tel"
                                 placeholder="0803 123 4567" autocomplete="tel" inputmode="tel" />
                         </div>
 
@@ -76,6 +91,28 @@
                                 type="number" placeholder="3" inputmode="numeric" />
                         </div>
 
+                        {{-- Qualifying fields. In the form, not a follow-up call:
+                             the references are unanimous that asking here costs
+                             one dropdown and saves an exchange of emails. --}}
+                        <div class="grid sm:grid-cols-2 gap-5">
+                            <x-marketing-field name="preferred_time" label="Best time to reach you" optional
+                                placeholder="Any time"
+                                :options="[
+                                    'morning' => 'Morning (8am – 12pm)',
+                                    'afternoon' => 'Afternoon (12pm – 4pm)',
+                                    'evening' => 'Evening (4pm – 7pm)',
+                                ]" />
+                            <x-marketing-field name="heard_from" label="How did you hear about us" optional
+                                placeholder="Select…"
+                                :options="[
+                                    'search' => 'Search',
+                                    'referral' => 'Another clinic or colleague',
+                                    'social' => 'Social media',
+                                    'event' => 'A conference or event',
+                                    'other' => 'Somewhere else',
+                                ]" />
+                        </div>
+
                         <x-marketing-field name="message" label="Anything we should know" optional
                             rows="4" placeholder="What you use today, and what is not working about it." />
 
@@ -84,17 +121,14 @@
                             Request a demo
                         </x-submit-button>
 
-                        <p class="text-xs text-muted text-center">
+                        <p class="text-xs text-muted text-center leading-relaxed">
                             We use these details to contact you about AfriChart. Nothing else.
+                            See our <a href="{{ route('legal.privacy') }}" class="text-ink hover:underline">privacy policy</a>.
                         </p>
                     </form>
                 </div>
             </div>
         </div>
-    </x-marketing-section>
-
-    <x-marketing-section tone="warm">
-        <x-cta-band />
     </x-marketing-section>
 
 @endsection

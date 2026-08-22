@@ -63,6 +63,8 @@
                         ['#prescriptions', 'Prescriptions'],
                         ['#billing', 'Billing & receipts'],
                         ['#audit', 'Audit & oversight'],
+                        ['#roles', 'Roles & permissions'],
+                        ['#reporting', 'Reporting & exports'],
                     ] as $i => [$href, $label])
                         <a href="{{ $href }}"
                             data-reveal data-reveal-delay="{{ 340 + $i * 60 }}"
@@ -103,11 +105,11 @@
         </div>
     </section>
 
-    {{-- ========================= THE SIX =========================
+    {{-- ========================= THE EIGHT =========================
          Three different architectures, deliberately mixed: split · panel ·
-         split · duo · panel · split. Six identical rows is the exact failure
-         diagnosed on Home's original grid, and layout variation solves it more
-         convincingly than alternating a background colour. --}}
+         split · duo · panel · split · duo · split. Eight identical rows is the
+         exact failure diagnosed on Home's original grid, and layout variation
+         solves it more convincingly than alternating a background colour. --}}
 
     <x-marketing-section tone="warm">
         <x-feature-split id="patient-records" :index="1" title="Patient records" visual="records"
@@ -191,26 +193,34 @@
         </x-feature-split>
     </x-marketing-section>
 
-    {{-- ========================= ROLES + API ========================= --}}
-    <x-marketing-section tone="warm-alt" size="tight">
-        <div class="grid md:grid-cols-2 gap-10 lg:gap-16">
-            <div data-reveal>
-                <h2 class="text-2xl font-medium text-ink tracking-tight">Four roles, each seeing only their work</h2>
-                <p class="text-base text-muted mt-3 leading-relaxed">
-                    Receptionist, nurse, doctor and administrator. Permissions are enforced on the
-                    server, not just hidden in the interface — a nurse cannot reach billing by
-                    guessing a URL.
-                </p>
-            </div>
-            <div data-reveal data-reveal-delay="80">
-                <h2 class="text-2xl font-medium text-ink tracking-tight">A REST API when you need it</h2>
-                <p class="text-base text-muted mt-3 leading-relaxed">
-                    Token-authenticated endpoints for patients, consultations, prescriptions,
-                    invoices and the queue, with interactive documentation. Available on the Group
-                    plan for clinics that want to integrate.
-                </p>
-            </div>
-        </div>
+    {{-- ========================= 07 · ROLES ========================= --}}
+    <x-marketing-section tone="warm">
+        <x-feature-duo id="roles" :index="7" title="Roles &amp; permissions"
+            :cards="[
+                ['visual' => 'roles', 'icon' => 'phosphor-users-three', 'title' => 'Four roles, four views',
+                 'body' => 'Receptionist, nurse, doctor and administrator. Each signs in to the work they actually do, not a menu of everything with most of it greyed out.'],
+                ['visual' => 'audit', 'icon' => 'phosphor-lock-key', 'title' => 'Enforced on the server',
+                 'body' => 'Permissions are checked on every request, not hidden in the interface — a nurse cannot reach billing by guessing a URL, and every attempt is logged.'],
+            ]">
+            Who can see what is a clinical and a financial question, so it is decided once and
+            enforced everywhere.
+        </x-feature-duo>
+    </x-marketing-section>
+
+    {{-- ========================= 08 · REPORTING ========================= --}}
+    <x-marketing-section tone="page">
+        <x-feature-split id="reporting" :index="8" title="Reporting &amp; exports" visual="exports" flip
+            :items="[
+                ['icon' => 'phosphor-chart-line', 'title' => 'The month, without adding it up',
+                 'body' => 'Patients seen, consultations completed, revenue collected and what is still outstanding — calculated from the records as they are entered.'],
+                ['icon' => 'phosphor-download-simple', 'title' => 'Yours to take away',
+                 'body' => 'Export to CSV for your accountant, or print a clean PDF. Your data is never locked inside the system.'],
+                ['icon' => 'phosphor-plugs-connected', 'title' => 'A REST API when you need it',
+                 'body' => 'Token-authenticated endpoints for patients, consultations, prescriptions, invoices and the queue, with interactive documentation. Group plan.'],
+            ]">
+            Numbers a clinic owner can act on, and a way to get them out of AfriChart and into
+            whatever else you use.
+        </x-feature-split>
     </x-marketing-section>
 
     {{-- ========================= CLOSING CTA ========================= --}}

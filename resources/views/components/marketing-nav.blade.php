@@ -14,7 +14,7 @@
         'Company' => [
             'items' => [
                 ['label' => 'About', 'desc' => 'Built in Port Harcourt', 'icon' => 'phosphor-users-three', 'href' => route('about')],
-                ['label' => 'Book a demo', 'desc' => 'See it on your workflow', 'icon' => 'phosphor-whatsapp-logo', 'href' => route('demo')],
+                ['label' => 'Book a demo', 'desc' => 'See it on your workflow', 'icon' => 'phosphor-envelope-simple', 'href' => route('demo')],
                 ['label' => 'Privacy', 'desc' => 'How we handle data', 'icon' => 'phosphor-lock-key', 'href' => route('legal.privacy')],
                 ['label' => 'Terms', 'desc' => 'Terms of service', 'icon' => 'phosphor-shield-check', 'href' => route('legal.terms')],
             ],

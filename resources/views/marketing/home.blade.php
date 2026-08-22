@@ -331,7 +331,7 @@
                 ['question' => 'Is there a setup fee?',
                  'answer' => 'Yes, once, and it is shown next to each plan. It covers configuring your clinic, loading your drug list and prices, and onboarding your staff.'],
                 ['question' => 'Who do I call when something breaks?',
-                 'answer' => 'Us, in Port Harcourt. Not an overseas ticket queue. Clinic and Group plans include WhatsApp support.'],
+                 'answer' => 'Us, in Port Harcourt. Not an overseas ticket queue. Clinic and Group plans get priority email support.'],
             ]" />
         </div>
     </x-marketing-section>
