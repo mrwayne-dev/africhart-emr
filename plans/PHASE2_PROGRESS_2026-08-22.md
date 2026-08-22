@@ -80,10 +80,18 @@ Ten Tier-1 pages, built to the page inventory:
 | Book a demo | Focus layout, 2-step form, process strip, agenda, trust row, objection FAQ |
 | Get started | Focus layout, 3-step form, plan carried from Pricing, live subdomain preview, consent |
 | Privacy · Terms · Data-processing | Structured NDPA documents, not filler |
+| *(shared)* Navigation | Features · Company (dropdown) · Pricing · Contact, plus Sign in, Book a demo and Get started |
 
 Supporting work: General Sans self-hosted (ending a visible load-time font swap), a three-tier
 motion scale with a reduced-motion guard, `marketing_leads` capture with honeypot and throttling,
 and a shared `<head>` partial now used by all three layouts.
+
+**Mobile navigation** was rebuilt as a fixed full-screen overlay with a blurred backdrop, links
+left-aligned and the two CTAs separated at the foot of the screen. The previous drawer was an
+in-flow block, so opening it pushed the whole page down and closing it snapped everything back;
+`position: fixed` takes it out of flow so nothing beneath moves. The body is scroll-locked while it
+is open. On Home the hero meta bar (staff roles, location, naira, Lagos clock) is now desktop-only —
+on a phone it wrapped to three or four lines of small caps and pushed the buttons off screen.
 
 ### 3.3 Tier 2 — auth pages (2026-08-22, `5a7000a`)
 

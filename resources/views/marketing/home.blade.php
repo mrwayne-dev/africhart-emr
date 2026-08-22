@@ -74,8 +74,14 @@
             </div>
 
             {{-- Meta bar. The clock is Lagos time, not the visitor's — the point
-                 is "we're in your timezone", so a clinic owner sees their own. --}}
-            <div class="flex flex-wrap items-center gap-x-8 gap-y-3 mt-12 pt-5 border-t border-white/15
+                 is "we're in your timezone", so a clinic owner sees their own.
+
+                 Desktop only. On a phone these four items wrap into three or
+                 four lines of small caps under an already-tall hero, pushing the
+                 buttons off screen to say things the page says better further
+                 down. The clock in particular is a flourish, and a flourish is
+                 the first thing that should go on a small screen. --}}
+            <div class="hidden sm:flex flex-wrap items-center gap-x-8 gap-y-3 mt-12 pt-5 border-t border-white/15
                     font-mono text-xs text-white/60 uppercase tracking-[0.15em]"
                 data-reveal data-reveal-delay="590">
                 <span>4 staff roles</span>

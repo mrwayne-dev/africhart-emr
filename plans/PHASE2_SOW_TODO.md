@@ -311,6 +311,8 @@ Root domain is reassigned at project end (settled). Built behind that.
 - [x] Design language from the platform spec (General Sans self-hosted; warm off-white +
       near-black; 8px radii; no shadows) plus a motion scale and reduced-motion guard
 - [x] Tier-2 auth pages restyled onto a shared shell; login lockout feedback fixed
+- [x] Navigation: Features · Company (dropdown) · Pricing · Contact, with a fixed full-screen
+      mobile menu (blurred backdrop, CTAs footed, body scroll-locked, no page-push)
 - [ ] ⚠️ **Confirm the published prices.** SOW Appendix 1 is blank and `/pricing` is live with
       the platform-spec proposal (₦25k / ₦50k / ₦40k-per-site)
 - [ ] Deferred to A1/A2: find-your-clinic (needs the registry) · `/invite/{token}` (needs
