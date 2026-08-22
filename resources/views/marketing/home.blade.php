@@ -1,6 +1,7 @@
 @extends('layouts.marketing')
 
 @section('title', 'AfriChart — Clinic management software for Nigerian clinics')
+@section('nav_overlay', true)
 @section('description', 'See every patient, every prescription and every naira in your clinic — from anywhere. Built in Port Harcourt for Nigerian private clinics.')
 
 @php
@@ -26,7 +27,8 @@
         than centred. `svh` not `vh` so mobile browser chrome can't clip it;
         `min-h` not `h` so a short viewport grows instead of cropping.
     --}}
-    <section class="relative min-h-[calc(100svh-4rem)] flex flex-col justify-end overflow-hidden bg-ink-body">
+    <section data-nav-overlay-anchor
+        class="relative min-h-[calc(100svh-4rem)] flex flex-col justify-end overflow-hidden bg-ink-body">
 
         @if ($heroImage)
             <img src="{{ asset($heroImage) }}" alt=""

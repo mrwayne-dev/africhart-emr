@@ -1,3 +1,5 @@
+@props(['overlay' => false])
+
 @php
     /*
      * Menu data lives here so the desktop dropdowns and the mobile accordion
@@ -45,6 +47,15 @@
     closes on Escape, and the panel is reachable by Tab. The close is delayed
     ~150ms so the pointer can cross the gap into the panel without losing it.
 --}}
+{{--
+    `overlay` lets a page with a dark hero start the bar transparent. It turns
+    solid once the hero has scrolled past — a solid white bar clamped on top of
+    a full-bleed dark image reads as a hard stripe.
+
+    Detected with an IntersectionObserver on the hero rather than a scroll
+    listener: no per-frame work, and it re-measures on resize for free. Pages
+    without a dark hero pass overlay=false and the bar is solid from the start.
+--}}
 <header
     x-data="{
         menu: null,
@@ -54,6 +65,22 @@
         closeNow() { clearTimeout(this.closeTimer); this.menu = null },
         mobile: false,
         mobileGroup: null,
+
+        solid: {{ $overlay ? 'false' : 'true' }},
+
+        init() {
+            @if ($overlay)
+                const hero = document.querySelector('[data-nav-overlay-anchor]');
+                if (! hero || ! ('IntersectionObserver' in window)) { this.solid = true; return; }
+
+                // While the hero still crosses the area below the 4rem bar we are
+                // over it, so stay transparent.
+                new IntersectionObserver(
+                    ([entry]) => { this.solid = ! entry.isIntersecting },
+                    { rootMargin: '-64px 0px 0px 0px', threshold: 0 }
+                ).observe(hero);
+            @endif
+        },
     }"
     @keydown.escape.window="closeNow(); mobile = false"
     class="sticky top-0 z-50"
@@ -69,14 +96,19 @@
         class="fixed inset-0 top-16 -z-10 bg-ink/20 backdrop-blur-sm"
         aria-hidden="true"></div>
 
-    <div class="bg-page/95 backdrop-blur border-b border-line">
+    <div class="transition-colors duration-300"
+        :class="solid || menu || mobile
+            ? 'bg-page/95 backdrop-blur border-b border-line'
+            : 'bg-transparent border-b border-transparent nav-overlay'">
         <nav class="max-w-7xl mx-auto px-6 sm:px-8" aria-label="Main">
             <div class="flex items-center justify-between h-16">
 
                 {{-- Brand --}}
                 <a href="{{ route('home') }}" class="flex items-center gap-2.5 shrink-0 rounded-card">
-                    <img src="{{ asset('images/africhart-logo.svg') }}" alt="" class="w-8 h-8">
-                    <span class="text-lg font-medium text-ink tracking-tight">AfriChart</span>
+                    <img src="{{ asset('images/africhart-logo.svg') }}" alt=""
+                        class="w-8 h-8 transition-[filter] duration-300" :class="solid || 'invert'">
+                    <span class="text-lg font-medium tracking-tight transition-colors duration-300"
+                        :class="solid ? 'text-ink' : 'text-white'">AfriChart</span>
                 </a>
 
                 {{-- Menus (desktop) --}}
@@ -89,7 +121,9 @@
                                 :aria-expanded="menu === '{{ $name }}' ? 'true' : 'false'"
                                 aria-haspopup="true"
                                 class="inline-flex items-center gap-1 px-3 py-2 text-sm font-medium transition-colors rounded-card"
-                                :class="menu === '{{ $name }}' ? 'text-ink' : 'text-muted hover:text-ink'">
+                                :class="solid
+                                    ? (menu === '{{ $name }}' ? 'text-ink' : 'text-muted hover:text-ink')
+                                    : (menu === '{{ $name }}' ? 'text-white' : 'text-white/70 hover:text-white')">
                                 {{ $name }}
                                 <x-phosphor-caret-down class="w-3.5 h-3.5 transition-transform duration-200"
                                     ::class="menu === '{{ $name }}' && 'rotate-180'" />
@@ -99,11 +133,9 @@
 
                     <a href="{{ route('pricing') }}"
                         @mouseenter="scheduleClose()"
-                        @class([
-                            'px-3 py-2 text-sm font-medium transition-colors rounded-card',
-                            'text-ink' => request()->routeIs('pricing'),
-                            'text-muted hover:text-ink' => ! request()->routeIs('pricing'),
-                        ])>
+                        class="px-3 py-2 text-sm font-medium transition-colors rounded-card"
+                        :class="solid ? '{{ request()->routeIs('pricing') ? 'text-ink' : 'text-muted hover:text-ink' }}'
+                                      : '{{ request()->routeIs('pricing') ? 'text-white' : 'text-white/70 hover:text-white' }}'">
                         Pricing
                     </a>
                 </div>
@@ -117,11 +149,14 @@
                         </a>
                     @else
                         <a href="{{ route('demo') }}"
-                            class="inline-flex items-center border border-line text-ink rounded-full px-4 py-2 text-sm font-medium hover:bg-warm hover:border-muted/30 transition-colors">
+                            class="inline-flex items-center border rounded-full px-4 py-2 text-sm font-medium transition-colors"
+                            :class="solid ? 'border-line text-ink hover:bg-warm hover:border-muted/30'
+                                          : 'border-white/30 text-white hover:bg-white/10 hover:border-white/50'">
                             Book a demo
                         </a>
                         <a href="{{ route('signup') }}"
-                            class="group inline-flex items-center gap-1.5 bg-ink text-white rounded-full px-5 py-2.5 text-sm font-medium hover:bg-ink/90 transition-colors">
+                            class="group inline-flex items-center gap-1.5 rounded-full px-5 py-2.5 text-sm font-medium transition-colors"
+                            :class="solid ? 'bg-ink text-white hover:bg-ink/90' : 'bg-page text-ink hover:bg-warm'">
                             Get started
                             <x-phosphor-arrow-right class="w-4 h-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
                         </a>
@@ -130,7 +165,8 @@
 
                 {{-- Hamburger --}}
                 <button type="button" @click="mobile = ! mobile"
-                    class="md:hidden text-muted hover:text-ink transition-colors -mr-1"
+                    class="md:hidden transition-colors -mr-1"
+                    :class="solid ? 'text-muted hover:text-ink' : 'text-white/80 hover:text-white'"
                     :aria-expanded="mobile ? 'true' : 'false'"
                     aria-controls="marketing-mobile-nav">
                     <span class="sr-only">Toggle navigation</span>

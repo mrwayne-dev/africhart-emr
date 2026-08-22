@@ -42,6 +42,13 @@
     outline-offset: 2px;
 }
 
+/* The marketing nav sits transparently over a dark hero until you scroll past
+   it. An ink focus ring is invisible against that, so light it up while the bar
+   is in overlay mode. */
+.nav-overlay :focus-visible {
+    outline-color: var(--color-page);
+}
+
 /* Inputs already signal focus by swapping background + border, so the extra
    ring would double up. Keep their existing treatment as the focus signal. */
 input:focus-visible,

@@ -39,7 +39,9 @@
         Skip to content
     </a>
 
-    <x-marketing-nav />
+    {{-- Pages with a dark hero opt in via @section('nav_overlay'); everything
+         else gets the solid bar from the first pixel. --}}
+    <x-marketing-nav :overlay="View::hasSection('nav_overlay')" />
 
     <main id="main">
         @yield('content')
