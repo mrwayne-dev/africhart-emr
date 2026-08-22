@@ -25,8 +25,13 @@
 {{--
     Public marketing navigation.
 
-    Brand left, four items centred, actions right: Sign in (quiet text), Book a
-    demo (ghost), Get started (solid).
+    Brand left, four items centred, two actions right: Book a demo (ghost) and
+    Get started (solid).
+
+    No Sign in link. Two actions is what keeps the bar readable, and signing in
+    is not what this page is for — a returning user reaches it from the footer,
+    from the Get started page, or by going straight to their own clinic's
+    subdomain, which is where their login actually lives.
 
     Get started stays ink rather than brand red. Red earns attention on this site
     precisely because it appears about three times a page — spending it on the
@@ -176,11 +181,6 @@
                             Dashboard
                         </a>
                     @else
-                        <a href="{{ route('login') }}"
-                            class="px-3 py-2 text-sm font-medium transition-colors rounded-card"
-                            :class="onHero ? 'text-white/70 hover:text-white' : 'text-muted hover:text-ink'">
-                            Sign in
-                        </a>
                         <a href="{{ route('demo') }}"
                             class="inline-flex items-center border rounded-full px-4 py-2 text-sm font-medium transition-colors"
                             :class="onHero
@@ -335,12 +335,6 @@
                             Book a demo
                         </a>
                     </div>
-
-                    <p class="text-center text-sm text-muted mt-5">
-                        Already have an account?
-                        <a href="{{ route('login') }}" @click="closeMobile()"
-                            class="text-ink font-medium hover:underline">Sign in</a>
-                    </p>
                 @endauth
             </div>
         </div>
