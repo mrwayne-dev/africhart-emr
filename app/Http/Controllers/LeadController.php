@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\LeadRequest;
 use App\Models\MarketingLead;
+use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
@@ -27,9 +28,13 @@ class LeadController extends BaseController
         return $this->store($request, 'demo', 'Thanks — we have your details and will be in touch within one working day.');
     }
 
-    public function showSignup(): View
+    public function showSignup(Request $request): View
     {
-        return view('marketing.signup');
+        // Home's address finder submits here with ?clinic=..., so the visitor
+        // does not retype what they just typed.
+        return view('marketing.signup', [
+            'clinic' => $request->query('clinic'),
+        ]);
     }
 
     public function storeSignup(LeadRequest $request): RedirectResponse
