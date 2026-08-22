@@ -5,38 +5,98 @@
 
 @section('content')
 
-    {{-- ========================= INTRO ========================= --}}
-    {{-- Compact opener, not a second full-viewport hero: that treatment is
-         Home's signature and repeating it would dilute it. --}}
-    <x-marketing-section tone="page">
-        <div class="max-w-3xl">
-            <p class="font-mono text-xs text-muted uppercase tracking-[0.2em] mb-6" data-reveal>
-                <span class="text-accent">[</span> Features <span class="text-accent">]</span>
-            </p>
+    {{-- ========================= HERO =========================
+         Full viewport and LIGHT on purpose. Home owns the dark image treatment;
+         repeating it here would flatten the contrast between the two pages.
 
-            <h1 class="text-4xl sm:text-6xl font-medium text-ink tracking-tight leading-[1.03]" data-reveal data-reveal-delay="80">
-                The whole visit, end to end.
-            </h1>
+         Composition adapted from the surge and Spendflo references — centred
+         editorial heading, then the page's own contents as pills, then a row of
+         facts — rendered in our tokens rather than theirs.
 
-            <p class="text-lg text-muted mt-6 leading-relaxed" data-reveal data-reveal-delay="160">
-                Six things a private clinic does every day. Each one hands cleanly to the next,
-                so nobody re-types what someone else already recorded — and the owner can see
-                all of it without standing in the building.
-            </p>
+         min-h is calc(100svh-4rem) because this page's nav is solid and sits in
+         normal flow above the hero, unlike Home where it overlays.
 
-            <div class="flex flex-col sm:flex-row gap-3 mt-9" data-reveal data-reveal-delay="240">
-                <a href="{{ route('signup') }}"
-                    class="group inline-flex items-center justify-center gap-2 bg-ink text-white rounded-full px-6 py-3 text-sm font-medium hover:bg-ink/90 transition-colors">
-                    Get started
-                    <x-phosphor-arrow-right class="w-4 h-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
-                </a>
-                <a href="{{ route('demo') }}"
-                    class="inline-flex items-center justify-center border border-line text-ink rounded-full px-6 py-3 text-sm font-medium hover:bg-warm hover:border-muted/30 transition-colors">
-                    Book a demo
-                </a>
+         The pills do real work: each is an anchor into the section it names, so
+         the hero previews the page AND navigates it. scroll-smooth is already on
+         <html> in the marketing layout, so they glide rather than jump.
+    --}}
+    <section class="relative min-h-[calc(100svh-4rem)] flex flex-col bg-page">
+
+        <div class="flex-1 flex items-center">
+            <div class="max-w-7xl mx-auto px-6 sm:px-8 w-full py-16 sm:py-20">
+
+                <div class="max-w-3xl">
+                    <p class="font-mono text-xs text-muted uppercase tracking-[0.2em] mb-6" data-reveal>
+                        <span class="text-accent">[</span> Features <span class="text-accent">]</span>
+                    </p>
+
+                    <h1 class="text-4xl sm:text-6xl lg:text-7xl font-medium text-ink tracking-tight leading-[1.02]"
+                        data-reveal data-reveal-delay="80">
+                        The whole visit,<br class="hidden sm:block"> end to end.
+                    </h1>
+
+                    <p class="text-lg text-muted mt-7 leading-relaxed max-w-2xl" data-reveal data-reveal-delay="160">
+                        Six things a private clinic does every day. Each one hands cleanly to the
+                        next, so nobody re-types what someone else already recorded — and the owner
+                        can see all of it without standing in the building.
+                    </p>
+
+                    <div class="flex flex-col sm:flex-row gap-3 mt-9" data-reveal data-reveal-delay="240">
+                        <a href="{{ route('signup') }}"
+                            class="group inline-flex items-center justify-center gap-2 bg-ink text-white rounded-full px-6 py-3 text-sm font-medium hover:bg-ink/90 transition-colors">
+                            Get started
+                            <x-phosphor-arrow-right class="w-4 h-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
+                        </a>
+                        <a href="{{ route('demo') }}"
+                            class="inline-flex items-center justify-center border border-line text-ink rounded-full px-6 py-3 text-sm font-medium hover:bg-warm hover:border-muted/30 transition-colors">
+                            Book a demo
+                        </a>
+                    </div>
+                </div>
+
+                {{-- The six, as jump links --}}
+                <nav aria-label="Jump to a feature" class="flex flex-wrap gap-2 mt-14" data-reveal data-reveal-delay="320">
+                    @foreach ([
+                        ['#patient-records', 'Patient records'],
+                        ['#live-queue', 'Live queue'],
+                        ['#consultations', 'Consultations & vitals'],
+                        ['#prescriptions', 'Prescriptions'],
+                        ['#billing', 'Billing & receipts'],
+                        ['#audit', 'Audit & oversight'],
+                    ] as [$href, $label])
+                        <a href="{{ $href }}"
+                            class="group inline-flex items-center gap-1.5 border border-line rounded-full pl-4 pr-3 py-2
+                                text-sm text-muted transition-colors hover:bg-warm hover:text-ink hover:border-muted/30">
+                            {{ $label }}
+                            <x-phosphor-arrow-down class="w-3.5 h-3.5 opacity-50 transition-transform duration-200 group-hover:translate-y-0.5" aria-hidden="true" />
+                        </a>
+                    @endforeach
+                </nav>
             </div>
         </div>
-    </x-marketing-section>
+
+        {{-- Facts, pinned to the foot of the viewport. True and checkable — no
+             clinic counts or uptime figures, because there are none yet. --}}
+        <div class="border-t border-line">
+            <div class="max-w-7xl mx-auto px-6 sm:px-8">
+                <dl class="grid grid-cols-2 sm:grid-cols-4">
+                    @foreach ([
+                        ['4', 'Staff roles, each scoped to its own work'],
+                        ['5', 'Steps from front desk to owner'],
+                        ['1', 'Database per clinic, never shared'],
+                        ['30', 'Days free, no card required'],
+                    ] as $i => [$value, $label])
+                        <div class="py-7 sm:py-9 sm:px-8 sm:first:pl-0 sm:last:pr-0
+                                {{ $i % 2 ? 'pl-6' : 'pr-6' }} sm:border-l sm:border-line sm:first:border-l-0"
+                            data-reveal data-reveal-delay="{{ $i * 70 }}">
+                            <dt class="text-4xl sm:text-5xl font-medium text-ink tracking-tight tabular-nums">{{ $value }}</dt>
+                            <dd class="text-sm text-muted mt-2 leading-snug">{{ $label }}</dd>
+                        </div>
+                    @endforeach
+                </dl>
+            </div>
+        </div>
+    </section>
 
     {{-- ========================= THE SIX =========================
          Three different architectures, deliberately mixed: split · panel ·
