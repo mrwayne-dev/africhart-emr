@@ -28,7 +28,7 @@
         `min-h` not `h` so a short viewport grows instead of cropping.
     --}}
     <section data-nav-overlay-anchor
-        class="relative min-h-[calc(100svh-4rem)] flex flex-col justify-end overflow-hidden bg-ink-body">
+        class="relative min-h-[100svh] flex flex-col justify-end overflow-hidden bg-ink-body">
 
         @if ($heroImage)
             <img src="{{ asset($heroImage) }}" alt=""

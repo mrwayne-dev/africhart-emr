@@ -83,7 +83,11 @@
         },
     }"
     @keydown.escape.window="closeNow(); mobile = false"
-    class="sticky top-0 z-50"
+    {{-- -mb-16 in overlay mode pulls the following section up by the bar's own
+         height, so the hero starts at the top of the viewport and the sticky bar
+         floats OVER it. Without this the bar sits above the hero in normal flow,
+         and going transparent just exposes the white page behind it. --}}
+    @class(['sticky top-0 z-50', '-mb-16' => $overlay])
 >
     {{-- Backdrop. Sits under the bar and panel but over the page, so the content
          behind a open menu blurs back and the panel reads clearly. --}}
