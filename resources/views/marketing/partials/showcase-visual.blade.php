@@ -101,6 +101,27 @@
             </div>
             @break
 
+        @case('catalogue')
+            <p class="text-sm font-medium text-ink tracking-tight">Drug catalogue</p>
+            <p class="text-xs text-muted mt-1">Your list, your prices</p>
+            <div class="mt-5 divide-y divide-line border-t border-line">
+                @foreach ([
+                    ['Paracetamol', '500mg, 1000mg', '200'],
+                    ['Amoxicillin', '250mg, 500mg', '800'],
+                    ['Metformin', '500mg, 850mg', '600'],
+                    ['Amlodipine', '5mg, 10mg', '700'],
+                ] as [$name, $doses, $price])
+                    <div class="flex items-center justify-between gap-3 py-2.5">
+                        <div class="min-w-0">
+                            <p class="text-sm text-ink truncate">{{ $name }}</p>
+                            <p class="text-xs text-muted mt-0.5 truncate">{{ $doses }}</p>
+                        </div>
+                        <span class="text-sm text-ink tabular-nums shrink-0">&#8358;{{ $price }}</span>
+                    </div>
+                @endforeach
+            </div>
+            @break
+
         @case('billing')
             <div class="flex items-center justify-between">
                 <p class="text-sm font-medium text-ink tracking-tight">Invoice</p>

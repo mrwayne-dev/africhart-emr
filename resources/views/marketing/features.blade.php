@@ -6,8 +6,8 @@
 @section('content')
 
     {{-- ========================= INTRO ========================= --}}
-    {{-- Not a full-viewport hero: that treatment is Home's signature, and
-         repeating it here would dilute it. A compact opener instead. --}}
+    {{-- Compact opener, not a second full-viewport hero: that treatment is
+         Home's signature and repeating it would dilute it. --}}
     <x-marketing-section tone="page">
         <div class="max-w-3xl">
             <p class="font-mono text-xs text-muted uppercase tracking-[0.2em] mb-6" data-reveal>
@@ -38,86 +38,92 @@
         </div>
     </x-marketing-section>
 
-    {{-- ========================= THE SIX ========================= --}}
-    {{-- Tone alternates and the visual side flips on every row, so six features
-         read as a rhythm instead of six identical slabs. The two that sell
-         hardest — the queue and billing — run tall. --}}
+    {{-- ========================= THE SIX =========================
+         Three different architectures, deliberately mixed: split · panel ·
+         split · duo · panel · split. Six identical rows is the exact failure
+         diagnosed on Home's original grid, and layout variation solves it more
+         convincingly than alternating a background colour. --}}
 
     <x-marketing-section tone="warm">
-        <x-feature-row id="patient-records" :index="1" title="Patient records" visual="records"
-            :points="[
-                'One record per patient, with the full visit timeline attached',
-                'Age, blood group and allergies surfaced before the doctor opens anything',
-                'Archived rather than deleted — medical history is never destroyed',
+        <x-feature-split id="patient-records" :index="1" title="Patient records" visual="records"
+            :items="[
+                ['icon' => 'phosphor-clipboard-text', 'title' => 'One timeline per patient',
+                 'body' => 'Every visit, diagnosis and prescription in order, on one screen.'],
+                ['icon' => 'phosphor-heartbeat', 'title' => 'Allergies surfaced first',
+                 'body' => 'Blood group and known allergies sit at the top, before anyone prescribes.'],
+                ['icon' => 'phosphor-arrow-counter-clockwise', 'title' => 'Archived, never deleted',
+                 'body' => 'Removing a patient hides them from the list and keeps the history intact.'],
             ]">
-            Every visit, diagnosis and prescription sits on one timeline. Nobody has to ask the
-            patient what happened last time, and nothing depends on finding the right paper file.
-        </x-feature-row>
-    </x-marketing-section>
-
-    <x-marketing-section tone="page" size="tall">
-        <x-feature-row id="live-queue" :index="2" title="Live queue" visual="queue" flip
-            :points="[
-                'Updates on its own — no refreshing, no walking to the front desk to ask',
-                'The nurse records vitals while the patient is still waiting',
-                'Waiting time visible per patient, so nobody is quietly forgotten',
-            ]">
-            Who is waiting, who is being seen, and for how long. The board is the same for
-            reception, the nurse and the doctor, so the three of them stop interrupting each other
-            to find out where a patient is.
-        </x-feature-row>
-    </x-marketing-section>
-
-    <x-marketing-section tone="warm">
-        <x-feature-row id="consultations" :index="3" title="Consultations & vitals" visual="consult"
-            :points="[
-                'Vitals taken at check-in flow into the consultation automatically',
-                'Complaint, examination, diagnosis and plan in one structured note',
-                'A doctor can only complete their own consultations',
-            ]">
-            The nurse takes vitals while the patient waits; when the doctor opens the consultation
-            they are already there. No re-entry, and no doctor opening a consultation early just to
-            record a temperature.
-        </x-feature-row>
+            Nobody has to ask the patient what happened last time, and nothing depends on finding
+            the right paper file in the right drawer.
+        </x-feature-split>
     </x-marketing-section>
 
     <x-marketing-section tone="page">
-        <x-feature-row id="prescriptions" :index="4" title="Prescriptions" visual="prescriptions" flip
-            :points="[
-                'Autocomplete from your own drug list, not a generic formulary',
-                'Your prices, which the invoice then uses without re-typing',
-                'Dosage, frequency, route and duration captured as structured data',
+        <x-feature-panel id="live-queue" :index="2" title="Live queue" visual="queue"
+            :notes="[
+                ['icon' => 'phosphor-clock', 'body' => 'Updates on its own. No refreshing, and no walking to the front desk to ask where a patient is.'],
+                ['icon' => 'phosphor-heartbeat', 'body' => 'The nurse records vitals while the patient is still waiting, so the doctor opens a consultation that is already complete.'],
+            ]">
+            One board for reception, the nurse and the doctor — so the three of them stop
+            interrupting each other to find out who is where.
+        </x-feature-panel>
+    </x-marketing-section>
+
+    <x-marketing-section tone="warm">
+        <x-feature-split id="consultations" :index="3" title="Consultations &amp; vitals" visual="consult" flip
+            :items="[
+                ['icon' => 'phosphor-heartbeat', 'title' => 'Vitals arrive with the patient',
+                 'body' => 'Taken at check-in and pulled into the consultation automatically.'],
+                ['icon' => 'phosphor-stethoscope', 'title' => 'Structured, not freeform',
+                 'body' => 'Complaint, examination, diagnosis and plan as separate fields.'],
+                ['icon' => 'phosphor-shield-check', 'title' => 'Scoped to the treating doctor',
+                 'body' => 'A doctor can complete their own consultations, and only their own.'],
+            ]">
+            The nurse takes vitals while the patient waits; by the time the doctor opens the
+            consultation they are already there. No re-entry, and no doctor opening a consultation
+            early just to record a temperature.
+        </x-feature-split>
+    </x-marketing-section>
+
+    <x-marketing-section tone="page">
+        <x-feature-duo id="prescriptions" :index="4" title="Prescriptions"
+            :cards="[
+                ['visual' => 'prescriptions', 'icon' => 'phosphor-first-aid-kit', 'title' => 'Prescribe in seconds',
+                 'body' => 'Autocomplete from your own drug list. Dosage, frequency, route and duration captured as structured data, not a note.'],
+                ['visual' => 'catalogue', 'icon' => 'phosphor-receipt', 'title' => 'Priced from your catalogue',
+                 'body' => 'The invoice picks up your prices by itself — which is where most of the leaked revenue in a paper clinic goes missing.'],
             ]">
             Prescribe from the catalogue your clinic actually stocks, at the prices your clinic
-            actually charges. The invoice picks the prices up by itself, which is where most of the
-            leaked revenue in a paper clinic goes missing.
-        </x-feature-row>
+            actually charges.
+        </x-feature-duo>
     </x-marketing-section>
 
-    <x-marketing-section tone="warm" size="tall">
-        <x-feature-row id="billing" :index="5" title="Billing & receipts" visual="billing"
-            :points="[
-                'Invoices total themselves from the consultation and prescription',
-                'Cash, transfer or card recorded against the invoice',
-                'PDF receipts, and CSV export for whoever does your books',
+    <x-marketing-section tone="warm">
+        <x-feature-panel id="billing" :index="5" title="Billing &amp; receipts" visual="billing" flip
+            :notes="[
+                ['icon' => 'phosphor-receipt', 'body' => 'Cash, transfer or card recorded against the invoice, with a PDF receipt for the patient.'],
+                ['icon' => 'phosphor-download-simple', 'body' => 'CSV export for whoever does your books, so month-end is not a reconstruction exercise.'],
             ]">
             The invoice is built from what actually happened in the visit — consultation fee plus
-            the drugs prescribed, priced from your catalogue. Reception confirms and takes payment
-            rather than reconstructing the bill from memory.
-        </x-feature-row>
+            the drugs prescribed. Reception confirms and takes payment rather than rebuilding the
+            bill from memory.
+        </x-feature-panel>
     </x-marketing-section>
 
     <x-marketing-section tone="page">
-        <x-feature-row id="audit" :index="6" title="Audit & oversight" visual="audit" flip
-            :points="[
-                'Every action attributed to a named person, with a timestamp',
-                'A dashboard showing the week: patients seen, consultations, money collected',
-                'Owner visibility without standing in the clinic',
+        <x-feature-split id="audit" :index="6" title="Audit &amp; oversight" visual="audit"
+            :items="[
+                ['icon' => 'phosphor-clipboard-text', 'title' => 'Every action attributed',
+                 'body' => 'Who did what, and when — recorded automatically, not by anyone remembering to.'],
+                ['icon' => 'phosphor-chart-line', 'title' => 'The week at a glance',
+                 'body' => 'Patients seen, consultations completed, money collected.'],
+                ['icon' => 'phosphor-users-three', 'title' => 'Oversight from anywhere',
+                 'body' => 'For an owner who is not in the building every day.'],
             ]">
-            Every change is recorded against the person who made it. For an owner who is not in the
-            building every day, this is the difference between trusting the numbers and hoping
-            they are right.
-        </x-feature-row>
+            For an owner who is not there every day, this is the difference between trusting the
+            numbers and hoping they are right.
+        </x-feature-split>
     </x-marketing-section>
 
     {{-- ========================= ROLES + API ========================= --}}
@@ -143,10 +149,8 @@
     </x-marketing-section>
 
     {{-- ========================= CLOSING CTA ========================= --}}
-    <x-marketing-section tone="page" size="tight">
-        <div data-reveal>
-            <x-cta-band />
-        </div>
+    <x-marketing-section tone="page">
+        <x-cta-band />
     </x-marketing-section>
 
 @endsection

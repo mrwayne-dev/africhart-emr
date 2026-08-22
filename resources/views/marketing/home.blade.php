@@ -337,10 +337,8 @@
     </x-marketing-section>
 
     {{-- ========================= CLOSING CTA ========================= --}}
-    <x-marketing-section tone="warm" size="tight">
-        <div data-reveal>
-            <x-cta-band />
-        </div>
+    <x-marketing-section tone="warm">
+        <x-cta-band search />
     </x-marketing-section>
 
 @endsection
