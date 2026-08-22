@@ -398,6 +398,48 @@ Alpine.data('countUp', (target = 0, duration = 900) => ({
 }));
 
 /*
+ * Count-up for the honest product facts (4 roles, 5 steps, 1 database, 30 days).
+ *
+ * Two properties that decide whether this is safe:
+ *
+ * 1. No layout shift. The final value is rendered in the HTML, so with no JS
+ *    the real figure is already on screen; the count only starts once JS is
+ *    running. The numerals sit in equal-fraction grid cells with tabular-nums,
+ *    so a digit changing width cannot move anything.
+ *
+ * 2. Reduced motion short-circuits here, not only in CSS. The global guard
+ *    collapses durations, but a number mid-count would simply freeze at the
+ *    wrong value — so we leave the final figure untouched and never animate.
+ */
+Alpine.data('countUp', (target = 0, duration = 900) => ({
+    display: target,
+
+    init() {
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+        if (! ('IntersectionObserver' in window)) return;
+
+        this.display = 0;
+
+        const observer = new IntersectionObserver(([entry]) => {
+            if (! entry.isIntersecting) return;
+            observer.disconnect();
+
+            const started = performance.now();
+            const step = (now) => {
+                const t = Math.min((now - started) / duration, 1);
+                // Same decelerate as the reveals, so the page has one motion feel.
+                this.display = Math.round(target * (1 - Math.pow(1 - t, 3)));
+                if (t < 1) requestAnimationFrame(step);
+                else this.display = target;
+            };
+            requestAnimationFrame(step);
+        }, { threshold: 0.5 });
+
+        observer.observe(this.$el);
+    },
+}));
+
+/*
  * Feature showcase — a list on the left, a sticky visual on the right that
  * swaps as the reader scrolls past each item.
  *

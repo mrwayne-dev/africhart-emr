@@ -32,7 +32,7 @@
 
                     <h1 class="text-4xl sm:text-6xl lg:text-7xl font-medium text-ink tracking-tight leading-[1.02]"
                         data-reveal data-reveal-delay="80">
-                        The whole visit, end to end.
+                        The whole visit,<br class="hidden sm:block"> end to end.
                     </h1>
 
                     <p class="text-lg text-muted mt-7 leading-relaxed max-w-2xl" data-reveal data-reveal-delay="160">
@@ -55,7 +55,7 @@
                 </div>
 
                 {{-- The six, as jump links --}}
-                <nav aria-label="Jump to a feature" class="flex flex-wrap gap-2 mt-14" data-reveal data-reveal-delay="320">
+                <nav aria-label="Jump to a feature" class="flex flex-wrap gap-2 mt-14">
                     @foreach ([
                         ['#patient-records', 'Patient records'],
                         ['#live-queue', 'Live queue'],
@@ -63,8 +63,9 @@
                         ['#prescriptions', 'Prescriptions'],
                         ['#billing', 'Billing & receipts'],
                         ['#audit', 'Audit & oversight'],
-                    ] as [$href, $label])
+                    ] as $i => [$href, $label])
                         <a href="{{ $href }}"
+                            data-reveal data-reveal-delay="{{ 340 + $i * 60 }}"
                             class="group inline-flex items-center gap-1.5 border border-line rounded-full pl-4 pr-3 py-2
                                 text-sm text-muted transition-colors hover:bg-warm hover:text-ink hover:border-muted/30">
                             {{ $label }}
@@ -89,7 +90,11 @@
                         <div class="py-7 sm:py-9 sm:px-8 sm:first:pl-0 sm:last:pr-0
                                 {{ $i % 2 ? 'pl-6' : 'pr-6' }} sm:border-l sm:border-line sm:first:border-l-0"
                             data-reveal data-reveal-delay="{{ $i * 70 }}">
-                            <dt class="text-4xl sm:text-5xl font-medium text-ink tracking-tight tabular-nums">{{ $value }}</dt>
+                            {{-- Final value is in the HTML, so with no JS the real
+                                 figure is already on screen; countUp only takes over
+                                 once Alpine is running. --}}
+                            <dt class="text-4xl sm:text-5xl font-medium text-ink tracking-tight tabular-nums"
+                                x-data="countUp({{ $value }})" x-text="display">{{ $value }}</dt>
                             <dd class="text-sm text-muted mt-2 leading-snug">{{ $label }}</dd>
                         </div>
                     @endforeach

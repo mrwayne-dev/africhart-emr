@@ -26,9 +26,10 @@
                 every plan rather than mentioned after you commit.
             </p>
 
-            <ul class="flex flex-wrap items-center gap-x-6 gap-y-2 mt-8" data-reveal data-reveal-delay="240">
-                @foreach (['30-day trial', 'No card to start', 'Cancel anytime'] as $point)
-                    <li class="inline-flex items-center gap-1.5 text-sm text-muted">
+            <ul class="flex flex-wrap items-center gap-x-6 gap-y-2 mt-8">
+                @foreach (['30-day trial', 'No card to start', 'Cancel anytime'] as $i => $point)
+                    <li class="inline-flex items-center gap-1.5 text-sm text-muted"
+                        data-reveal data-reveal-delay="{{ 260 + $i * 70 }}">
                         <x-phosphor-check-circle class="w-4 h-4 text-ink" aria-hidden="true" />
                         {{ $point }}
                     </li>
@@ -40,7 +41,7 @@
              toggle because it is a teaser; here the comparison IS the page. --}}
         <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mt-16">
             @foreach ($tiers as $i => $tier)
-                <div data-reveal data-reveal-delay="{{ $i * 80 }}">
+                <div data-reveal data-reveal-delay="{{ 480 + $i * 90 }}">
                     <x-pricing-tier :tier="$tier" />
                 </div>
             @endforeach
