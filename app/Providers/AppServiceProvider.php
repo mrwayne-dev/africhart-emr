@@ -2,10 +2,16 @@
 
 namespace App\Providers;
 
+use App\Console\Commands\AuditScheduler;
 use App\Models\PlatformAdmin;
 use App\Models\Staff;
 use Illuminate\Cache\RateLimiting\Limit;
+use Exception;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Database\QueryException;
+use Illuminate\Foundation\Events\DiagnosingHealth;
+use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
@@ -98,6 +104,44 @@ class AppServiceProvider extends ServiceProvider
         // Non-model abilities — admin-only features.
         Gate::define('view-audit-log', fn (Staff $user) => $user->isAdmin());
         Gate::define('export-data', fn (Staff $user) => $user->isAdmin());
+
+        /*
+         * Make scheduler silence visible from OUTSIDE the application.
+         *
+         * schedule:audit catches "the scheduler runs but a task stopped
+         * working". It cannot catch "the scheduler stopped running", because
+         * then it stops running too — which is precisely the failure this
+         * project already had once, undetected for months.
+         *
+         * Laravel's health endpoint fires DiagnosingHealth before reporting
+         * healthy. Failing it here means any external uptime monitor already
+         * watching /up becomes the dead-man's switch, with no new
+         * infrastructure and, critically, living outside the process that could
+         * die.
+         *
+         * ⚠️ Arming this is a DEPLOYMENT step: until something actually polls
+         * /up, the outermost layer is not connected.
+         *
+         * Guarded so the endpoint never 500s on its own account — a health
+         * check that breaks when the database is unreachable reports the wrong
+         * fault, and an unmigrated environment is not unhealthy.
+         */
+        Event::listen(DiagnosingHealth::class, function () {
+            try {
+                if (! Schema::hasTable('scheduled_task_runs')) {
+                    return;
+                }
+
+                $problems = app(AuditScheduler::class)->findSilentTasks();
+
+                if ($problems) {
+                    throw new Exception('Scheduler silence: '.implode(' | ', $problems));
+                }
+            } catch (QueryException) {
+                // Database unreachable is a database problem, not a scheduler
+                // one. Let the usual failure surface it.
+            }
+        });
 
         /*
          * Login throttle, 5 attempts per minute per email+IP.

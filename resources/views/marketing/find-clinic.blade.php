@@ -46,7 +46,6 @@
                 {{-- Live preview, the same device the sign-up form uses — it
                      teaches the subdomain model while you type. --}}
                 <p class="mt-2 text-xs text-muted" aria-live="polite">
-                    <x-phosphor-arrow-right class="w-3 h-3 inline-block align-[-1px]" aria-hidden="true" />
                     <span class="font-mono text-ink-body"
                         x-text="(slug || 'yourclinic') + '.{{ config('tenancy.root_domain') }}'">yourclinic.{{ config('tenancy.root_domain') }}</span>
                 </p>

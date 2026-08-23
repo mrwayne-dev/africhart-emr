@@ -1,5 +1,8 @@
 <?php
 
+use App\Console\Commands\AuditScheduler;
+use App\Console\Commands\AuditTrials;
+use App\Console\Commands\BackupTenants;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
@@ -8,9 +11,59 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
-// --- Backups (spatie/laravel-backup) ---
-// "Your records, safe forever" — a daily off-site backup plus weekly housekeeping
-// and a health check. Requires `php artisan schedule:run` to be wired to cron.
-Schedule::command('backup:clean')->daily()->at('01:30');
-Schedule::command('backup:run')->daily()->at('02:00');
-Schedule::command('backup:monitor')->daily()->at('03:00');
+/*
+|--------------------------------------------------------------------------
+| Scheduled work under tenancy (ARCHITECTURE.md §7)
+|--------------------------------------------------------------------------
+|
+| Two kinds of task, and conflating them is the bug:
+|
+|   PER-TENANT  must iterate clinics explicitly. `backup:run` on its own backs
+|               up whichever database the DEFAULT connection points at — the
+|               central one, every time — while reporting success. It is a
+|               failure mode indistinguishable from working.
+|
+|   CENTRAL     runs ONCE. Trial expiry and (later) dunning read the registry,
+|               which is a central table. Running them per tenant would be N
+|               identical queries and N times the notifications.
+|
+| Everything carries withoutOverlapping(): a backup across N tenant databases
+| will outlive its minute, and the next tick must not start a second one on top
+| of it. The expiry is generous — a stuck lock that clears itself in an hour is
+| better than one that needs a human at 3am.
+|
+| Everything also records its run, so SILENCE is detectable. See
+| AuditScheduler: monitoring failures alone is what let a scheduler that had
+| never fired look healthy for months.
+|
+*/
+
+// --- Per-tenant: one archive per clinic ---
+Schedule::command(BackupTenants::class)
+    ->dailyAt('02:00')
+    ->withoutOverlapping(60)
+    ->runInBackground()
+    ->appendOutputTo(storage_path('logs/tenant-backups.log'));
+
+// --- Central housekeeping for spatie's own bookkeeping (runs once) ---
+Schedule::command('backup:clean')
+    ->dailyAt('01:30')
+    ->withoutOverlapping(30);
+
+// --- Central, once: read the registry, report on trials ---
+Schedule::command(AuditTrials::class)
+    ->dailyAt('06:00')
+    ->withoutOverlapping(15);
+
+/*
+ * --- Silence detection ---
+ *
+ * Runs AFTER the tasks it audits, so a same-day backup counts. It cannot catch
+ * the scheduler dying altogether — a silence detector that is itself silent
+ * detects nothing — which is why the same check is exposed through /up for an
+ * external monitor. This layer catches "the scheduler runs but a task stopped
+ * working", which is the more common and more insidious case.
+ */
+Schedule::command(AuditScheduler::class)
+    ->dailyAt('07:00')
+    ->withoutOverlapping(15);
