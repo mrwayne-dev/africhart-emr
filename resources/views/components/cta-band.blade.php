@@ -94,7 +94,7 @@
 
             <p class="text-xs text-white/45 mt-5">
                 Already set up?
-                <a href="{{ route('login') }}" class="text-white hover:underline">Sign in to your clinic</a>
+                <span class="text-white/90">sign in at <span class="font-mono">yourclinic.{{ config('tenancy.root_domain') }}</span></span>
             </p>
         </div>
     </div>

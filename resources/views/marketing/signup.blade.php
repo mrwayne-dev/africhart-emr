@@ -198,8 +198,12 @@
                     </x-form-steps>
 
                     <p class="text-xs text-muted text-center mt-5">
-                        Already set up?
-                        <a href="{{ route('login') }}" class="text-ink hover:underline">Sign in to your clinic</a>
+                        {{-- No route('login') here: login lives on the clinic's OWN subdomain, so a
+                     central page cannot generate that URL without knowing which clinic —
+                     and guessing would send someone to the wrong one. T2.2 "find your
+                     clinic" becomes this link once the registry lookup exists. --}}
+                        Already set up? Sign in at your clinic's own address —
+                        <span class="font-mono text-ink-body">yourclinic.{{ config('tenancy.root_domain') }}</span>
                     </p>
                 </div>
             </div>

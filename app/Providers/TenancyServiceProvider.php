@@ -134,6 +134,15 @@ class TenancyServiceProvider extends ServiceProvider
             // Even higher priority than the initialization middleware
             Middleware\PreventAccessFromCentralDomains::class,
 
+            /*
+             * Ours, and it MUST be listed here. Middleware priority decides
+             * what runs first within a group, and if `auth` ran before tenancy
+             * was initialised it would look for a `staff` table on the CENTRAL
+             * connection — where none exists. Every staff login would fail with
+             * a missing-table error rather than a wrong-password one.
+             */
+            \App\Http\Middleware\InitializeTenancyBySubdomain::class,
+
             Middleware\InitializeTenancyByDomain::class,
             Middleware\InitializeTenancyBySubdomain::class,
             Middleware\InitializeTenancyByDomainOrSubdomain::class,
