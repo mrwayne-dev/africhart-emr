@@ -3,12 +3,18 @@
 declare(strict_types=1);
 
 use Stancl\Tenancy\Database\Models\Domain;
-use Stancl\Tenancy\Database\Models\Tenant;
 
 return [
-    'tenant_model' => Tenant::class,
+    'tenant_model' => \App\Models\Clinic::class,
     'id_generator' => Stancl\Tenancy\UUIDGenerator::class,
 
+    /*
+     * Unused. stancl's domain-based resolvers read this, but we identify
+     * tenants against `clinics.subdomain` (§3.2) rather than a `domains` table,
+     * and that table's migration was removed in step 1. Left pointing at the
+     * package default so nothing that dereferences the key explodes; nothing in
+     * this application reads it.
+     */
     'domain_model' => Domain::class,
 
     /**
@@ -24,6 +30,28 @@ return [
      * administers tenants and must never itself run inside one. It also appears
      * in the reserved-subdomain blocklist so no clinic can ever claim it.
      */
+    /*
+     * The apex the platform runs under. Clinic addresses are
+     * <subdomain>.<root_domain>, and Clinic::url() builds from this so the
+     * address is derived in one place rather than concatenated at call sites.
+     */
+    'root_domain' => env('TENANCY_ROOT_DOMAIN', 'africhartemr.com'),
+
+    /*
+     * D4 / §3.3 — subdomains a clinic may never claim.
+     *
+     * Read in TWO places, deliberately: sign-up validation (so a visitor is
+     * told immediately) and provisioning (which is what actually protects the
+     * system, because validation can be bypassed and provisioning cannot).
+     *
+     * Config rather than a database table so it can grow without a migration.
+     * Grow it BEFORE you need a name, not after — reclaiming a subdomain from a
+     * live clinic means changing the address their staff have bookmarked.
+     */
+    'reserved_subdomains' => [
+        'www', 'admin', 'app', 'api', 'mail', 'support', 'staff', 'help', 'status', 'blog',
+    ],
+
     'central_domains' => [
         'africhartemr.com',
         'www.africhartemr.com',
@@ -235,7 +263,15 @@ return [
      * Parameters used by the tenants:seed command.
      */
     'seeder_parameters' => [
-        '--class' => 'DatabaseSeeder', // root seeder class
+        /*
+         * TenantDatabaseSeeder, not DatabaseSeeder. DatabaseSeeder is the
+         * CENTRAL one (plans); pointing tenant seeding at it would try to write
+         * platform reference data into a clinic's database.
+         *
+         * Note this seeds DEMO data and must not run for a real clinic — see
+         * the warning on the class. A4 provisioning decides whether to call it.
+         */
+        '--class' => 'Database\\Seeders\\TenantDatabaseSeeder',
         // '--force' => true, // This needs to be true to seed tenant databases in production
     ],
 ];

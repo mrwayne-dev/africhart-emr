@@ -53,6 +53,21 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        /*
+         * Central migrations live in database/migrations/central (ARCHITECTURE
+         * §4.3). Laravel's migrator globs a directory non-recursively, so once
+         * the migrations moved into subdirectories the default path finds
+         * nothing — this registers the central set explicitly.
+         *
+         * Tenant migrations are NOT registered here. stancl passes
+         * `--path=database/migrations/tenant --realpath` when it migrates a
+         * tenant, and Laravel's BaseCommand::getMigrationPaths() returns ONLY
+         * the explicit --path when one is given. So `php artisan migrate` sees
+         * central and nothing else, and `tenants:migrate` sees tenant and
+         * nothing else. That mutual exclusion is the migration split.
+         */
+        $this->loadMigrationsFrom(database_path('migrations/central'));
+
         // Non-model abilities — admin-only features.
         Gate::define('view-audit-log', fn (User $user) => $user->isAdmin());
         Gate::define('export-data', fn (User $user) => $user->isAdmin());
