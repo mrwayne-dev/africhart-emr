@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Test configuration for the TENANCY suite.
+
+    Separate from phpunit.xml on purpose, because the defaults there would
+    silently destroy the thing this suite exists to prove:
+
+      CACHE_STORE=array      cache isolation tested against an in-memory array
+                             says nothing about D1, where isolation comes from
+                             the cache table living in the tenant's database
+      SESSION_DRIVER=array   same for sessions
+      QUEUE_CONNECTION=sync  runs jobs inline, so a job never round-trips
+                             through a jobs table and tenant context is never
+                             actually serialised and restored
+      DB=sqlite :memory:     cannot hold a central registry plus two separate
+                             tenant databases at all
+
+    So this file mirrors PRODUCTION: real MySQL, `database` for cache, session
+    and queue. A test that passes here has exercised the same machinery a clinic
+    does.
+
+    Run:  composer test:tenancy
+          (which passes this file to phpunit via its configuration flag —
+           spelled out in composer.json, because a double hyphen cannot appear
+           inside an XML comment)
+
+    Requires the central test database to exist:
+          CREATE DATABASE africhart_testing;
+-->
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
+         bootstrap="vendor/autoload.php"
+         colors="true"
+>
+    <testsuites>
+        <testsuite name="Tenancy">
+            <directory>tests/Tenancy</directory>
+        </testsuite>
+    </testsuites>
+
+    <source>
+        <include>
+            <directory>app</directory>
+        </include>
+    </source>
+
+    <php>
+        <env name="APP_ENV" value="testing"/>
+        <env name="APP_MAINTENANCE_DRIVER" value="file"/>
+        <env name="BCRYPT_ROUNDS" value="4"/>
+        <env name="BROADCAST_CONNECTION" value="null"/>
+        <env name="MAIL_MAILER" value="array"/>
+
+        <!-- Real MySQL. A dedicated database, never the dev one. -->
+        <env name="DB_CONNECTION" value="mysql"/>
+        <env name="DB_DATABASE" value="africhart_testing"/>
+        <env name="DB_URL" value=""/>
+
+        <!-- D1: the drivers whose isolation this suite proves. -->
+        <env name="CACHE_STORE" value="database"/>
+        <env name="SESSION_DRIVER" value="database"/>
+        <env name="QUEUE_CONNECTION" value="database"/>
+
+        <!--
+            SESSION_DOMAIN is deliberately absent, not set to "".
+            §6.2 asserts config('session.domain') is null, and that assertion is
+            the guard against somebody "helpfully" scoping the cookie to
+            .africhartemr.com and sharing one session across every clinic.
+        -->
+
+        <!--
+            A distinct prefix for test tenant databases. This is a SAFETY
+            boundary, not cosmetics: teardown drops databases by prefix, and
+            this one cannot match a dev tenant (africhart_tenant_) or anything
+            on a real server.
+        -->
+        <env name="TENANCY_TENANT_PREFIX" value="africhart_testtenant_"/>
+        <env name="TENANCY_ROOT_DOMAIN" value="africhart.test"/>
+
+        <env name="PULSE_ENABLED" value="false"/>
+        <env name="TELESCOPE_ENABLED" value="false"/>
+        <env name="NIGHTWATCH_ENABLED" value="false"/>
+    </php>
+</phpunit>

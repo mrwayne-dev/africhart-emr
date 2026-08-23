@@ -1,10 +1,9 @@
 <?php
 
-namespace Tests\Feature\Tenancy;
+namespace Tests\Tenancy;
 
 use App\Models\Clinic;
 use Illuminate\Support\Facades\DB;
-use Tests\TestCase;
 
 /**
  * The central ↔ tenant connection boundary.
@@ -20,39 +19,18 @@ use Tests\TestCase;
  * a scheduled command — silently running against the wrong clinic's database.
  * That is a cross-tenant write, and nothing about it would look like an error.
  *
- * Runs against whatever clinics exist; skips cleanly when none do, so it never
- * reports a false pass on an empty database.
+ * Runs against real provisioned tenants, torn down afterwards — see
+ * TenancyTestCase for the three guards that stand between teardown and real
+ * data.
  */
-class ConnectionBoundaryTest extends TestCase
+class ConnectionBoundaryTest extends TenancyTestCase
 {
-    /*
-     * phpunit.xml pins the suite to sqlite :memory:, which cannot hold the
-     * central registry or two provisioned tenant databases. Rather than
-     * false-pass against an empty in-memory schema, this class skips unless it
-     * is genuinely running against the MySQL central database.
-     *
-     * ⚠️ Step 6 needs a real answer to this. The isolation suite has to
-     * provision two tenants and prove leaks fail, which sqlite cannot do — it
-     * will need a dedicated MySQL test database and a tenant teardown strategy.
-     * Deciding that is part of step 6, not something to bodge here.
-     */
-    protected function setUp(): void
-    {
-        parent::setUp();
-
-        if (DB::connection()->getDriverName() !== 'mysql') {
-            $this->markTestSkipped(
-                'Tenancy boundary tests need MySQL; the suite is pinned to sqlite. See step 6.'
-            );
-        }
-    }
-
     public function test_central_context_uses_the_central_database(): void
     {
         $this->assertFalse(tenancy()->initialized, 'Tenancy must not be initialised by default.');
 
         $this->assertSame(
-            config('database.connections.'.config('tenancy.database.central_connection').'.database'),
+            $this->centralDatabase(),
             DB::connection()->getDatabaseName(),
             'A central request must run against the central database.',
         );
@@ -70,11 +48,7 @@ class ConnectionBoundaryTest extends TestCase
 
     public function test_entering_a_tenant_swaps_the_connection_and_leaving_restores_it(): void
     {
-        $clinic = Clinic::first();
-
-        if (! $clinic) {
-            $this->markTestSkipped('No clinic provisioned; run this against a database with at least one.');
-        }
+        $clinic = $this->provisionClinic('boundary');
 
         $before = DB::connection()->getDatabaseName();
 
@@ -92,13 +66,8 @@ class ConnectionBoundaryTest extends TestCase
 
     public function test_two_clinics_resolve_to_two_different_databases(): void
     {
-        $clinics = Clinic::limit(2)->get();
-
-        if ($clinics->count() < 2) {
-            $this->markTestSkipped('Needs two provisioned clinics.');
-        }
-
-        [$a, $b] = [$clinics[0], $clinics[1]];
+        $a = $this->provisionClinic('alpha');
+        $b = $this->provisionClinic('bravo');
 
         tenancy()->initialize($a);
         $dbA = DB::connection()->getDatabaseName();

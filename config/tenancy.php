@@ -120,7 +120,7 @@ return [
          * are identifiable at a glance in `SHOW DATABASES` — an operator
          * debugging at 2am should not have to guess which database is whose.
          */
-        'prefix' => 'africhart_tenant_',
+        'prefix' => env('TENANCY_TENANT_PREFIX', 'africhart_tenant_'),
         'suffix' => '',
 
         /**
