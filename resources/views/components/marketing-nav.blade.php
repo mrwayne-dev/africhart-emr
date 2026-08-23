@@ -174,13 +174,17 @@
                 </div>
 
                 {{-- Actions (desktop) --}}
+                {{-- No @auth branch.
+
+                     There is no authenticated state on the central domain: the
+                     `web` guard resolves to Staff, whose table lives in a
+                     TENANT database and does not exist centrally. @auth is
+                     therefore always false here — and worse, a session that
+                     ever carried a user id would make auth()->check() query a
+                     missing table and 500 every marketing page. Dashboard also
+                     could not be linked even in principle: route('dashboard')
+                     needs a {clinic}, and central does not know which. --}}
                 <div class="hidden md:flex items-center gap-3">
-                    @auth
-                        <a href="{{ route('dashboard') }}"
-                            class="bg-ink text-white rounded-full px-5 py-2.5 text-sm font-medium hover:bg-ink/90 transition-colors">
-                            Dashboard
-                        </a>
-                    @else
                         <a href="{{ route('demo') }}"
                             class="inline-flex items-center border rounded-full px-4 py-2 text-sm font-medium transition-colors"
                             :class="onHero
@@ -194,7 +198,6 @@
                             Get started
                             <x-phosphor-arrow-right class="w-4 h-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
                         </a>
-                    @endauth
                 </div>
 
                 {{-- Hamburger. Sits above the overlay (the bar is z-50, the panel
@@ -319,23 +322,25 @@
 
             {{-- Actions, separated at the foot of the screen. --}}
             <div class="px-6 pb-8 pt-6 border-t border-line bg-page/60">
-                @auth
-                    <a href="{{ route('dashboard') }}" @click="closeMobile()"
-                        class="block bg-ink text-white rounded-full px-5 py-3.5 text-sm font-medium hover:bg-ink/90 transition-colors text-center">
-                        Dashboard
+                <div class="flex flex-col gap-3">
+                    <a href="{{ route('signup') }}" @click="closeMobile()"
+                        class="bg-ink text-white rounded-full px-5 py-3.5 text-sm font-medium hover:bg-ink/90 transition-colors text-center">
+                        Get started
                     </a>
-                @else
-                    <div class="flex flex-col gap-3">
-                        <a href="{{ route('signup') }}" @click="closeMobile()"
-                            class="bg-ink text-white rounded-full px-5 py-3.5 text-sm font-medium hover:bg-ink/90 transition-colors text-center">
-                            Get started
-                        </a>
-                        <a href="{{ route('demo') }}" @click="closeMobile()"
-                            class="border border-line text-ink rounded-full px-4 py-3.5 text-sm font-medium hover:bg-warm transition-colors text-center">
-                            Book a demo
-                        </a>
-                    </div>
-                @endauth
+                    <a href="{{ route('demo') }}" @click="closeMobile()"
+                        class="border border-line text-ink rounded-full px-4 py-3.5 text-sm font-medium hover:bg-warm transition-colors text-center">
+                        Book a demo
+                    </a>
+                </div>
+
+                {{-- Staff entry point. Not a login link: login lives on the
+                     clinic's own subdomain, and this is how someone gets there
+                     when they do not know the address. --}}
+                <p class="text-center text-sm text-muted mt-5">
+                    Clinic staff?
+                    <a href="{{ route('find-clinic') }}" @click="closeMobile()"
+                        class="text-ink font-medium hover:underline">Find your clinic</a>
+                </p>
             </div>
         </div>
     </div>

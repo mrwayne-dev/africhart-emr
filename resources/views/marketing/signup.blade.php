@@ -202,8 +202,8 @@
                      central page cannot generate that URL without knowing which clinic —
                      and guessing would send someone to the wrong one. T2.2 "find your
                      clinic" becomes this link once the registry lookup exists. --}}
-                        Already set up? Sign in at your clinic's own address —
-                        <span class="font-mono text-ink-body">yourclinic.{{ config('tenancy.root_domain') }}</span>
+                        Already set up?
+                        <a href="{{ route('find-clinic') }}" class="text-ink hover:underline">Find your clinic</a>
                     </p>
                 </div>
             </div>

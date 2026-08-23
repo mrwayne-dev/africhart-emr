@@ -37,15 +37,16 @@
                     ['Get started', 'signup'],
                 ],
                 /*
-                 * No Sign in. Login lives on the clinic's OWN subdomain, so a
-                 * central page has no clinic to point at — route('login') now
-                 * requires the {clinic} domain parameter and would throw here.
-                 * T2.2 "find your clinic" is the right link and needs the
-                 * registry lookup A1 has only just made possible.
+                 * "Find your clinic", not "Sign in". Login lives on the clinic's
+                 * own subdomain, so a central page has no clinic to point at —
+                 * route('login') requires the {clinic} domain parameter and
+                 * would throw here. The lookup is the correct central entry
+                 * point and became buildable once the registry existed.
                  */
                 'Company' => [
                     ['About', 'about'],
                     ['Contact', 'contact'],
+                    ['Find your clinic', 'find-clinic'],
                 ],
                 'Legal' => [
                     ['Privacy', 'legal.privacy'],

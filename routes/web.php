@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ClinicLookupController;
 use App\Http\Controllers\LeadController;
 use App\Http\Controllers\MarketingController;
 use Illuminate\Support\Facades\Route;
@@ -36,6 +37,17 @@ Route::controller(MarketingController::class)->group(function () {
 // Lead capture. `/signup` is a CLINIC requesting access — deliberately distinct
 // from `/register`, which is a staff member joining an existing clinic with an
 // invite code. Neither creates an account here; provisioning stays manual.
+/*
+ * Find your clinic (T2.2). The staff entry point on central, replacing the
+ * /login that now lives per-subdomain. Throttled: it answers "does a clinic by
+ * this name exist", which is a question worth rate-limiting even though clinic
+ * names are not secret.
+ */
+Route::controller(ClinicLookupController::class)->group(function () {
+    Route::get('/find-clinic', 'show')->name('find-clinic');
+    Route::post('/find-clinic', 'find')->middleware('throttle:10,1');
+});
+
 Route::controller(LeadController::class)->group(function () {
     Route::get('/demo', 'showDemo')->name('demo');
     Route::post('/demo', 'storeDemo')->middleware('throttle:5,1');

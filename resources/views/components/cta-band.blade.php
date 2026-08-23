@@ -94,7 +94,7 @@
 
             <p class="text-xs text-white/45 mt-5">
                 Already set up?
-                <span class="text-white/90">sign in at <span class="font-mono">yourclinic.{{ config('tenancy.root_domain') }}</span></span>
+                <a href="{{ route('find-clinic') }}" class="text-white hover:underline">Find your clinic</a>
             </p>
         </div>
     </div>
