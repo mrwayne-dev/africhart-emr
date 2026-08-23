@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Models\User;
+use App\Models\Staff;
 use App\Notifications\EmailVerificationCode;
 
 class EmailVerificationService
@@ -10,7 +10,7 @@ class EmailVerificationService
     /**
      * Generate a fresh 6-digit code, store it on the user, and email it.
      */
-    public function sendCode(User $user): void
+    public function sendCode(Staff $user): void
     {
         $code = (string) random_int(100000, 999999);
 
@@ -27,7 +27,7 @@ class EmailVerificationService
     /**
      * Check a submitted code. On success, mark the user verified and clear the code.
      */
-    public function verify(User $user, string $code): bool
+    public function verify(Staff $user, string $code): bool
     {
         if ($user->email_verification_code === null
             || $user->email_verification_code_expires_at === null

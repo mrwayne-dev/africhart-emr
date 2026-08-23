@@ -60,17 +60,17 @@ class PatientQueue extends Model
 
     public function checkedInBy(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'checked_in_by');
+        return $this->belongsTo(Staff::class, 'checked_in_by');
     }
 
     public function assignedDoctor(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'assigned_doctor_id');
+        return $this->belongsTo(Staff::class, 'assigned_doctor_id');
     }
 
     public function vitalsRecordedBy(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'vitals_recorded_by');
+        return $this->belongsTo(Staff::class, 'vitals_recorded_by');
     }
 
     // --- Accessors ---

@@ -2,7 +2,7 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
+use App\Models\Staff;
 use App\Services\PatientService;
 use Illuminate\Database\Seeder;
 
@@ -10,7 +10,7 @@ class PatientSeeder extends Seeder
 {
     public function run(): void
     {
-        $admin = User::where('role', 'admin')->first();
+        $admin = Staff::where('role', 'admin')->first();
         $patientService = app(PatientService::class);
 
         $patients = [

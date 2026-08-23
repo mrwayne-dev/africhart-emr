@@ -31,7 +31,7 @@ class ConsultationResource extends JsonResource
                 'notes' => $this->vitals_notes,
             ],
             'patient' => new PatientResource($this->whenLoaded('patient')),
-            'doctor' => new UserResource($this->whenLoaded('doctor')),
+            'doctor' => new StaffResource($this->whenLoaded('doctor')),
             'prescriptions' => PrescriptionResource::collection($this->whenLoaded('prescriptions')),
             'invoice' => new InvoiceResource($this->whenLoaded('invoice')),
             'created_at' => $this->created_at?->toISOString(),

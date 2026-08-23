@@ -55,7 +55,7 @@ class Invoice extends Model
 
     public function createdBy(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'created_by');
+        return $this->belongsTo(Staff::class, 'created_by');
     }
 
     public function items(): HasMany

@@ -2,7 +2,7 @@
 
 namespace App\Http\Requests;
 
-use App\Enums\UserRole;
+use App\Enums\StaffRole;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -23,7 +23,7 @@ class CheckInRequest extends FormRequest
             'assigned_doctor_id' => [
                 'nullable',
                 'integer',
-                Rule::exists('users', 'id')->where('role', UserRole::Doctor->value),
+                Rule::exists('users', 'id')->where('role', StaffRole::Doctor->value),
             ],
             'reason' => ['nullable', 'string', 'max:500'],
         ];

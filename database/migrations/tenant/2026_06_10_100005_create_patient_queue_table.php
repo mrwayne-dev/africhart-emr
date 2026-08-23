@@ -12,8 +12,8 @@ return new class extends Migration
             $table->id();
 
             $table->foreignId('patient_id')->constrained()->onDelete('cascade');
-            $table->foreignId('checked_in_by')->constrained('users')->onDelete('restrict');
-            $table->foreignId('assigned_doctor_id')->nullable()->constrained('users')->onDelete('set null');
+            $table->foreignId('checked_in_by')->constrained('staff')->onDelete('restrict');
+            $table->foreignId('assigned_doctor_id')->nullable()->constrained('staff')->onDelete('set null');
 
             $table->enum('status', ['waiting', 'in_consultation', 'completed', 'cancelled'])
                 ->default('waiting');

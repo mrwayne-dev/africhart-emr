@@ -24,7 +24,7 @@ class PrescriptionResource extends JsonResource
             'route_label' => $this->route->label(),
             'instructions' => $this->instructions,
             'quantity' => $this->quantity,
-            'prescribed_by' => new UserResource($this->whenLoaded('prescribedBy')),
+            'prescribed_by' => new StaffResource($this->whenLoaded('prescribedBy')),
             'created_at' => $this->created_at?->toISOString(),
         ];
     }

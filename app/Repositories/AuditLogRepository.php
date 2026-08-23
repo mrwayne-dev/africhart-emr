@@ -19,7 +19,7 @@ class AuditLogRepository extends BaseRepository
     public function getPaginated(
         ?string $search = null,
         ?string $modelType = null,
-        ?int $userId = null,
+        ?int $staffId = null,
         int $perPage = 25
     ): LengthAwarePaginator {
         $query = $this->model->newQuery();
@@ -35,8 +35,8 @@ class AuditLogRepository extends BaseRepository
             $query->where('model_type', $modelType);
         }
 
-        if ($userId) {
-            $query->where('user_id', $userId);
+        if ($staffId) {
+            $query->where('staff_id', $staffId);
         }
 
         return $query->orderByDesc('created_at')->paginate($perPage)->withQueryString();

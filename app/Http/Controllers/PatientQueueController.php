@@ -2,14 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\UserRole;
+use App\Enums\StaffRole;
 use App\Http\Controllers\Concerns\RendersLiveFragment;
 use App\Http\Requests\AssignDoctorRequest;
 use App\Http\Requests\CheckInRequest;
 use App\Http\Requests\RecordQueueVitalsRequest;
 use App\Models\Patient;
 use App\Models\PatientQueue;
-use App\Models\User;
+use App\Models\Staff;
 use App\Services\PatientQueueService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -62,7 +62,7 @@ class PatientQueueController extends BaseController
 
     private function doctors()
     {
-        return User::where('role', UserRole::Doctor->value)->orderBy('name')->get(['id', 'name']);
+        return Staff::where('role', StaffRole::Doctor->value)->orderBy('name')->get(['id', 'name']);
     }
 
     public function store(CheckInRequest $request): RedirectResponse

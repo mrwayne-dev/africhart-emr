@@ -14,7 +14,7 @@ return new class extends Migration
             // Relationships
             $table->foreignId('patient_id')->constrained()->onDelete('restrict');
             $table->foreignId('consultation_id')->nullable()->constrained()->onDelete('set null');
-            $table->foreignId('created_by')->constrained('users')->onDelete('restrict');
+            $table->foreignId('created_by')->constrained('staff')->onDelete('restrict');
 
             // Invoice details
             $table->string('invoice_number', 25)->unique();  // ACH-INV-YYYYMMDD-XXXX

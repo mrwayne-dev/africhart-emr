@@ -6,7 +6,7 @@ use App\Enums\PaymentMethod;
 use App\Enums\QueueStatus;
 use App\Models\AuditLog;
 use App\Models\Patient;
-use App\Models\User;
+use App\Models\Staff;
 use App\Services\ConsultationService;
 use App\Services\InvoiceService;
 use App\Services\PatientQueueService;
@@ -24,11 +24,11 @@ class Phase1DemoSeeder extends Seeder
 {
     public function run(): void
     {
-        $doctor = User::where('role', 'doctor')->first();
-        $receptionist = User::where('role', 'receptionist')->first();
+        $doctor = Staff::where('role', 'doctor')->first();
+        $receptionist = Staff::where('role', 'receptionist')->first();
 
         if (! $doctor || ! $receptionist) {
-            $this->command?->warn('Phase1DemoSeeder skipped — run UserSeeder first.');
+            $this->command?->warn('Phase1DemoSeeder skipped — run StaffSeeder first.');
 
             return;
         }
@@ -138,11 +138,11 @@ class Phase1DemoSeeder extends Seeder
      * admin activity feed has content on a fresh demo (model events are muted
      * during seeding, so we record these explicitly).
      */
-    private function logActivity(string $action, Model $model, string $description, User $user, \DateTimeInterface $at): void
+    private function logActivity(string $action, Model $model, string $description, Staff $staff, \DateTimeInterface $at): void
     {
         AuditLog::create([
-            'user_id' => $user->id,
-            'user_name' => $user->name,
+            'staff_id' => $staff->id,
+            'user_name' => $staff->name,
             'action' => $action,
             'model_type' => $model::class,
             'model_id' => $model->getKey(),

@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
+use App\Models\Staff;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
@@ -15,12 +15,12 @@ class StaffController extends BaseController
 {
     public function index(): View
     {
-        $staff = User::withTrashed()->orderBy('name')->get();
+        $staff = Staff::withTrashed()->orderBy('name')->get();
 
         return view('staff.index', compact('staff'));
     }
 
-    public function deactivate(User $user): RedirectResponse
+    public function deactivate(Staff $user): RedirectResponse
     {
         if ($user->id === auth()->id()) {
             return back()->with('error', 'You cannot deactivate your own account.');
@@ -31,7 +31,7 @@ class StaffController extends BaseController
         return back()->with('success', "{$user->name} has been deactivated and can no longer sign in.");
     }
 
-    public function reactivate(User $user): RedirectResponse
+    public function reactivate(Staff $user): RedirectResponse
     {
         $user->restore();
 

@@ -2,8 +2,10 @@
 
 namespace App\Providers;
 
-use App\Models\User;
+use App\Models\PlatformAdmin;
+use App\Models\Staff;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
@@ -68,9 +70,34 @@ class AppServiceProvider extends ServiceProvider
          */
         $this->loadMigrationsFrom(database_path('migrations/central'));
 
+        /*
+         * Morph map — REQUIRED by the users → staff rename (ARCHITECTURE §8.3).
+         *
+         * personal_access_tokens.tokenable_type stores a fully-qualified class
+         * NAME as a database value. Every token issued before the rename holds
+         * the literal string 'App\Models\User'. Renaming the class does not
+         * touch those rows: the token still exists, still matches on hash, and
+         * then resolves to a class that no longer exists. Sanctum returns null
+         * and the request 401s, with nothing in the log explaining why.
+         *
+         * The alias fixes both directions at once. 'staff' => Staff::class
+         * means new tokens store the short alias instead of a class name, so
+         * the next rename cannot break them either — which is the actual defect,
+         * not the rename. Mapping the legacy FQCN alongside it keeps every
+         * already-issued token resolving.
+         *
+         * A data migration rewriting tokenable_type would have fixed today and
+         * left the same trap set for next time.
+         */
+        Relation::enforceMorphMap([
+            'staff' => Staff::class,
+            'App\\Models\\User' => Staff::class,   // tokens issued before the rename
+            'platform_admin' => PlatformAdmin::class,
+        ]);
+
         // Non-model abilities — admin-only features.
-        Gate::define('view-audit-log', fn (User $user) => $user->isAdmin());
-        Gate::define('export-data', fn (User $user) => $user->isAdmin());
+        Gate::define('view-audit-log', fn (Staff $user) => $user->isAdmin());
+        Gate::define('export-data', fn (Staff $user) => $user->isAdmin());
 
         /*
          * Login throttle, 5 attempts per minute per email+IP.

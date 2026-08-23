@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\UserRole;
+use App\Enums\StaffRole;
 use App\Http\Controllers\Concerns\RendersLiveFragment;
 use App\Models\Patient;
-use App\Models\User;
+use App\Models\Staff;
 use App\Services\DashboardService;
 use App\Services\PatientQueueService;
 use Illuminate\Http\JsonResponse;
@@ -114,7 +114,7 @@ class DashboardController extends BaseController
     {
         return [
             'patients' => Patient::orderBy('full_name')->get(['id', 'full_name', 'patient_id']),
-            'doctors' => User::where('role', UserRole::Doctor->value)->orderBy('name')->get(['id', 'name']),
+            'doctors' => Staff::where('role', StaffRole::Doctor->value)->orderBy('name')->get(['id', 'name']),
         ];
     }
 }

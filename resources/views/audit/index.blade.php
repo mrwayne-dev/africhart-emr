@@ -16,11 +16,11 @@
                 <option value="{{ $type }}" @selected(request('model_type') === $type)>{{ class_basename($type) }}</option>
             @endforeach
         </select>
-        <select name="user_id"
+        <select name="staff_id"
             class="sm:w-44 bg-warm rounded text-sm text-ink-body px-4 py-2.5 border border-transparent focus:bg-page focus:border-ink focus:outline-none transition-colors">
             <option value="">All users</option>
-            @foreach ($users as $u)
-                <option value="{{ $u->id }}" @selected((string) request('user_id') === (string) $u->id)>{{ $u->name }}</option>
+            @foreach ($staff as $u)
+                <option value="{{ $u->id }}" @selected((string) request('staff_id') === (string) $u->id)>{{ $u->name }}</option>
             @endforeach
         </select>
         <button type="submit" class="bg-ink text-white rounded-full px-5 py-2.5 text-sm font-medium hover:bg-ink/90 transition-colors">Filter</button>
@@ -32,7 +32,7 @@
                 <thead>
                     <tr class="text-left text-muted border-b border-line whitespace-nowrap">
                         <th class="px-4 py-3 font-medium whitespace-nowrap">When</th>
-                        <th class="px-4 py-3 font-medium">User</th>
+                        <th class="px-4 py-3 font-medium">Staff</th>
                         <th class="px-4 py-3 font-medium">Action</th>
                         <th class="px-4 py-3 font-medium">Record</th>
                         <th class="px-4 py-3 font-medium">Description</th>

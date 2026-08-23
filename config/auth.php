@@ -1,6 +1,7 @@
 <?php
 
-use App\Models\User;
+use App\Models\PlatformAdmin;
+use App\Models\Staff;
 
 return [
 
@@ -17,7 +18,7 @@ return [
 
     'defaults' => [
         'guard' => env('AUTH_GUARD', 'web'),
-        'passwords' => env('AUTH_PASSWORD_BROKER', 'users'),
+        'passwords' => env('AUTH_PASSWORD_BROKER', 'staff'),
     ],
 
     /*
@@ -37,16 +38,33 @@ return [
     |
     */
 
+    /*
+     * Two guards, deliberately separate (ARCHITECTURE.md D5, §5).
+     *
+     * `web`   — clinic staff, on a clinic's own subdomain, against that
+     *           tenant's `staff` table.
+     * `admin` — platform operators, on admin.africhartemr.com (a CENTRAL
+     *           domain), against central `platform_admins`.
+     *
+     * They must never share a table, a model or a guard. One guard resolving to
+     * two tables is how an operator ends up authenticated as a clinician, and
+     * that mistake reaches every clinic at once rather than one.
+     */
     'guards' => [
         'web' => [
             'driver' => 'session',
-            'provider' => 'users',
+            'provider' => 'staff',
+        ],
+
+        'admin' => [
+            'driver' => 'session',
+            'provider' => 'platform_admins',
         ],
     ],
 
     /*
     |--------------------------------------------------------------------------
-    | User Providers
+    | Providers
     |--------------------------------------------------------------------------
     |
     | All authentication guards have a user provider, which defines how the
@@ -62,15 +80,18 @@ return [
     */
 
     'providers' => [
-        'users' => [
+        // Per-tenant. Resolved against whichever clinic database the request
+        // is in — there is no `staff` table in the central database at all.
+        'staff' => [
             'driver' => 'eloquent',
-            'model' => env('AUTH_MODEL', User::class),
+            'model' => env('AUTH_MODEL', Staff::class),
         ],
 
-        // 'users' => [
-        //     'driver' => 'database',
-        //     'table' => 'users',
-        // ],
+        // Central. Pinned to the central connection by the model itself.
+        'platform_admins' => [
+            'driver' => 'eloquent',
+            'model' => PlatformAdmin::class,
+        ],
     ],
 
     /*
@@ -93,8 +114,10 @@ return [
     */
 
     'passwords' => [
-        'users' => [
-            'provider' => 'users',
+        // Tenant-side: a reset token is meaningless outside the clinic that
+        // issued it, so the table lives in the tenant database.
+        'staff' => [
+            'provider' => 'staff',
             'table' => env('AUTH_PASSWORD_RESET_TOKEN_TABLE', 'password_reset_tokens'),
             'expire' => 60,
             'throttle' => 60,

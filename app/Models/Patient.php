@@ -40,7 +40,7 @@ class Patient extends Model
 
     public function registeredBy(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'registered_by');
+        return $this->belongsTo(Staff::class, 'registered_by');
     }
 
     public function consultations(): HasMany

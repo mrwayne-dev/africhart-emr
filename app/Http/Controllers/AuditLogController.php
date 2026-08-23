@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
+use App\Models\Staff;
 use App\Repositories\AuditLogRepository;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -20,13 +20,13 @@ class AuditLogController extends BaseController
         $logs = $this->auditLogRepository->getPaginated(
             search: $request->input('search'),
             modelType: $request->input('model_type'),
-            userId: $request->input('user_id'),
+            staffId: $request->input('staff_id'),
         );
 
         return view('audit.index', [
             'logs' => $logs,
             'modelTypes' => $this->auditLogRepository->distinctModelTypes(),
-            'users' => User::orderBy('name')->get(['id', 'name']),
+            'staff' => Staff::orderBy('name')->get(['id', 'name']),
         ]);
     }
 }

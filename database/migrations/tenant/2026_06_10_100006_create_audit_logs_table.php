@@ -11,7 +11,14 @@ return new class extends Migration
         Schema::create('audit_logs', function (Blueprint $table) {
             $table->id();
 
-            $table->foreignId('user_id')->nullable()->constrained()->onDelete('set null');
+            /*
+             * staff_id, not user_id. This FK used the bare constrained() form,
+             * which infers its target table from the COLUMN NAME — so it
+             * pointed at `users` without the word appearing anywhere, and a
+             * grep for constrained('users') does not find it. Renaming the
+             * column is what repoints it at `staff`.
+             */
+            $table->foreignId('staff_id')->nullable()->constrained('staff')->onDelete('set null');
             $table->string('user_name');                // Snapshot of name at time of action
             $table->string('action');                   // created, updated, deleted
             $table->string('model_type');               // App\Models\Patient, etc.
@@ -24,7 +31,7 @@ return new class extends Migration
             $table->timestamp('created_at')->nullable();
 
             $table->index(['model_type', 'model_id']);
-            $table->index('user_id');
+            $table->index('staff_id');
             $table->index('created_at');
         });
     }

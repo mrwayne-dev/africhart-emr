@@ -5,7 +5,7 @@ namespace App\Services;
 use App\Models\Consultation;
 use App\Models\Invoice;
 use App\Models\Patient;
-use App\Models\User;
+use App\Models\Staff;
 use App\Notifications\AdminActivity;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Notification;
@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\Notification;
  */
 class AdminNotifier
 {
-    public function patientRegistered(Patient $patient, User $actor): void
+    public function patientRegistered(Patient $patient, Staff $actor): void
     {
         $this->send(new AdminActivity(
             subject: 'New patient registered — '.$patient->patient_id,
@@ -27,10 +27,10 @@ class AdminNotifier
             ],
             actionText: 'View patient',
             actionUrl: route('patients.show', $patient),
-        ), excludeUserId: $actor->id);
+        ), excludeStaffId: $actor->id);
     }
 
-    public function patientUpdated(Patient $patient, User $actor): void
+    public function patientUpdated(Patient $patient, Staff $actor): void
     {
         $this->send(new AdminActivity(
             subject: 'Patient record updated — '.$patient->patient_id,
@@ -41,10 +41,10 @@ class AdminNotifier
             ],
             actionText: 'View patient',
             actionUrl: route('patients.show', $patient),
-        ), excludeUserId: $actor->id);
+        ), excludeStaffId: $actor->id);
     }
 
-    public function consultationCompleted(Consultation $consultation, User $actor): void
+    public function consultationCompleted(Consultation $consultation, Staff $actor): void
     {
         $this->send(new AdminActivity(
             subject: 'Consultation completed — '.$consultation->consultation_id,
@@ -56,10 +56,10 @@ class AdminNotifier
             ],
             actionText: 'View consultation',
             actionUrl: route('consultations.show', $consultation),
-        ), excludeUserId: $actor->id);
+        ), excludeStaffId: $actor->id);
     }
 
-    public function invoiceIssued(Invoice $invoice, User $actor): void
+    public function invoiceIssued(Invoice $invoice, Staff $actor): void
     {
         $this->send(new AdminActivity(
             subject: 'Invoice issued — '.$invoice->invoice_number,
@@ -71,10 +71,10 @@ class AdminNotifier
             ],
             actionText: 'View invoice',
             actionUrl: route('invoices.show', $invoice),
-        ), excludeUserId: $actor->id);
+        ), excludeStaffId: $actor->id);
     }
 
-    public function staffRegistered(User $user): void
+    public function staffRegistered(Staff $user): void
     {
         $this->send(new AdminActivity(
             subject: 'New staff account registered',
@@ -84,10 +84,10 @@ class AdminNotifier
                 "Email: {$user->email}",
                 'Role: '.$user->role->label(),
             ],
-        ), excludeUserId: $user->id);
+        ), excludeStaffId: $user->id);
     }
 
-    public function emailVerified(User $user): void
+    public function emailVerified(Staff $user): void
     {
         $this->send(new AdminActivity(
             subject: 'Staff email verified',
@@ -97,17 +97,17 @@ class AdminNotifier
                 "Email: {$user->email}",
                 'Role: '.$user->role->label(),
             ],
-        ), excludeUserId: $user->id);
+        ), excludeStaffId: $user->id);
     }
 
     /**
      * Send to every admin (optionally excluding one user, e.g. the actor).
      */
-    private function send(AdminActivity $notification, ?int $excludeUserId = null): void
+    private function send(AdminActivity $notification, ?int $excludeStaffId = null): void
     {
         try {
-            $admins = User::where('role', 'admin')
-                ->when($excludeUserId, fn ($q) => $q->where('id', '!=', $excludeUserId))
+            $admins = Staff::where('role', 'admin')
+                ->when($excludeStaffId, fn ($q) => $q->where('id', '!=', $excludeStaffId))
                 ->get();
 
             if ($admins->isNotEmpty()) {

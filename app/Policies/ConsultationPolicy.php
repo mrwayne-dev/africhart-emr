@@ -3,19 +3,19 @@
 namespace App\Policies;
 
 use App\Models\Consultation;
-use App\Models\User;
+use App\Models\Staff;
 
 class ConsultationPolicy
 {
     /**
      * Admins, doctors and nurses can browse consultations.
      */
-    public function viewAny(User $user): bool
+    public function viewAny(Staff $user): bool
     {
         return $user->isAdmin() || $user->isDoctor() || $user->isNurse();
     }
 
-    public function view(User $user, Consultation $consultation): bool
+    public function view(Staff $user, Consultation $consultation): bool
     {
         return $user->isAdmin() || $user->isDoctor() || $user->isNurse();
     }
@@ -23,7 +23,7 @@ class ConsultationPolicy
     /**
      * Only doctors and admins can start a consultation.
      */
-    public function create(User $user): bool
+    public function create(Staff $user): bool
     {
         return $user->isAdmin() || $user->isDoctor();
     }
@@ -31,7 +31,7 @@ class ConsultationPolicy
     /**
      * Only the doctor who created it, or an admin, may edit the notes.
      */
-    public function update(User $user, Consultation $consultation): bool
+    public function update(Staff $user, Consultation $consultation): bool
     {
         return $user->isAdmin() || $user->id === $consultation->doctor_id;
     }
@@ -39,7 +39,7 @@ class ConsultationPolicy
     /**
      * Vitals may be recorded by the owning doctor, any nurse, or an admin.
      */
-    public function recordVitals(User $user, Consultation $consultation): bool
+    public function recordVitals(Staff $user, Consultation $consultation): bool
     {
         return $user->isAdmin()
             || $user->isNurse()
@@ -49,7 +49,7 @@ class ConsultationPolicy
     /**
      * Completing a consultation is restricted to its doctor or an admin.
      */
-    public function complete(User $user, Consultation $consultation): bool
+    public function complete(Staff $user, Consultation $consultation): bool
     {
         return $user->isAdmin() || $user->id === $consultation->doctor_id;
     }

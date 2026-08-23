@@ -13,7 +13,7 @@ return new class extends Migration
 
             // Relationships
             $table->foreignId('patient_id')->constrained()->onDelete('restrict');
-            $table->foreignId('doctor_id')->constrained('users')->onDelete('restrict');
+            $table->foreignId('doctor_id')->constrained('staff')->onDelete('restrict');
 
             // Clinical data
             $table->text('chief_complaint');

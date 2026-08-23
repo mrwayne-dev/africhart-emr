@@ -14,7 +14,7 @@ return new class extends Migration
             // Relationships
             $table->foreignId('consultation_id')->constrained()->onDelete('cascade');
             $table->foreignId('patient_id')->constrained()->onDelete('restrict');
-            $table->foreignId('prescribed_by')->constrained('users')->onDelete('restrict');
+            $table->foreignId('prescribed_by')->constrained('staff')->onDelete('restrict');
 
             // Medication details
             $table->string('medication_name');

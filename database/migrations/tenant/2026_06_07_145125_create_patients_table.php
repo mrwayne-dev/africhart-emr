@@ -26,7 +26,7 @@ return new class extends Migration
             // System fields
             $table->string('patient_id', 20)->unique(); // Auto-generated: ACH-YYYYMMDD-XXXX
             $table->foreignId('registered_by')
-                ->constrained('users')
+                ->constrained('staff')
                 ->onDelete('restrict');             // Never delete a user who registered patients
 
             $table->timestamps();

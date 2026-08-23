@@ -25,7 +25,7 @@ class TenantDatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call([
-            UserSeeder::class,
+            StaffSeeder::class,
             MedicationSeeder::class,
             PatientSeeder::class,
             Phase1DemoSeeder::class,

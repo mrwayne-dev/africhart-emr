@@ -21,7 +21,7 @@ class PatientResource extends JsonResource
             'phone' => $this->phone,
             'blood_group' => $this->blood_group->value,
             'allergies' => $this->allergies,
-            'registered_by' => new UserResource($this->whenLoaded('registeredBy')),
+            'registered_by' => new StaffResource($this->whenLoaded('registeredBy')),
             'created_at' => $this->created_at?->toISOString(),
             'updated_at' => $this->updated_at?->toISOString(),
         ];

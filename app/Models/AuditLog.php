@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 #[Fillable([
-    'user_id',
+    'staff_id',
     'user_name',
     'action',
     'model_type',
@@ -35,7 +35,7 @@ class AuditLog extends Model
 
     public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(Staff::class);
     }
 
     // --- Behaviour ---
@@ -45,12 +45,12 @@ class AuditLog extends Model
      */
     public static function record(string $action, Model $model, ?string $description = null): void
     {
-        $user = auth()->user();
+        $staff = auth()->user();
         $className = class_basename($model);
 
         static::create([
-            'user_id' => $user?->id,
-            'user_name' => $user?->name ?? 'System',
+            'staff_id' => $staff?->id,
+            'user_name' => $staff?->name ?? 'System',
             'action' => $action,
             'model_type' => get_class($model),
             'model_id' => $model->getKey(),

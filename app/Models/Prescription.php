@@ -45,7 +45,7 @@ class Prescription extends Model
 
     public function prescribedBy(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'prescribed_by');
+        return $this->belongsTo(Staff::class, 'prescribed_by');
     }
 
     // --- Accessors ---

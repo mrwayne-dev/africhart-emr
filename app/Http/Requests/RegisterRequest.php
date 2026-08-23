@@ -2,7 +2,7 @@
 
 namespace App\Http\Requests;
 
-use App\Enums\UserRole;
+use App\Enums\StaffRole;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
@@ -23,7 +23,7 @@ class RegisterRequest extends FormRequest
             'name' => ['required', 'string', 'max:255', 'min:2'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
             'password' => ['required', 'confirmed', Password::min(8)],
-            'role' => ['required', Rule::in(array_column(UserRole::cases(), 'value'))],
+            'role' => ['required', Rule::in(array_column(StaffRole::cases(), 'value'))],
             'invite_code' => [
                 'required',
                 'string',

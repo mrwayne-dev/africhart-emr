@@ -18,7 +18,7 @@ return new class extends Migration
             $table->decimal('height', 5, 1)->nullable()->after('weight');
             $table->text('vitals_notes')->nullable()->after('height');
             $table->foreignId('vitals_recorded_by')->nullable()->after('vitals_notes')
-                ->constrained('users')->onDelete('set null');
+                ->constrained('staff')->onDelete('set null');
             $table->timestamp('vitals_recorded_at')->nullable()->after('vitals_recorded_by');
         });
     }

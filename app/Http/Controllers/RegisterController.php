@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\RegisterRequest;
-use App\Models\User;
+use App\Models\Staff;
 use App\Services\AdminNotifier;
 use App\Services\EmailVerificationService;
 use Illuminate\Http\RedirectResponse;
@@ -27,7 +27,7 @@ class RegisterController extends BaseController
         $data = $request->validated();
 
         // Role is authoritative from the validated invite code/role pairing.
-        $user = User::create([
+        $user = Staff::create([
             'name' => $data['name'],
             'email' => $data['email'],
             'password' => $data['password'],

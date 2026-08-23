@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\BaseController;
-use App\Http\Resources\UserResource;
-use App\Models\User;
+use App\Http\Resources\StaffResource;
+use App\Models\Staff;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -36,7 +36,7 @@ class AuthController extends BaseController
             'password' => ['required'],
         ]);
 
-        $user = User::where('email', $request->email)->first();
+        $user = Staff::where('email', $request->email)->first();
 
         if (! $user || ! Hash::check($request->password, $user->password)) {
             return $this->error('Invalid credentials.', 401);
@@ -45,7 +45,7 @@ class AuthController extends BaseController
         $token = $user->createToken('api-token')->plainTextToken;
 
         return $this->success([
-            'user' => (new UserResource($user))->resolve(),
+            'user' => (new StaffResource($user))->resolve(),
             'token' => $token,
         ], 'Authenticated successfully.');
     }
@@ -80,6 +80,6 @@ class AuthController extends BaseController
      */
     public function user(Request $request): JsonResponse
     {
-        return $this->success((new UserResource($request->user()))->resolve());
+        return $this->success((new StaffResource($request->user()))->resolve());
     }
 }

@@ -2,7 +2,7 @@
 
 namespace App\Http\Requests;
 
-use App\Enums\UserRole;
+use App\Enums\StaffRole;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -22,7 +22,7 @@ class AssignDoctorRequest extends FormRequest
             'assigned_doctor_id' => [
                 'required',
                 'integer',
-                Rule::exists('users', 'id')->where('role', UserRole::Doctor->value),
+                Rule::exists('users', 'id')->where('role', StaffRole::Doctor->value),
             ],
         ];
     }

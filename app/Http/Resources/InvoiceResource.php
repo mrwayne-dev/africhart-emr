@@ -26,7 +26,7 @@ class InvoiceResource extends JsonResource
             'notes' => $this->notes,
             'patient' => new PatientResource($this->whenLoaded('patient')),
             'consultation_id' => $this->consultation_id,
-            'created_by' => new UserResource($this->whenLoaded('createdBy')),
+            'created_by' => new StaffResource($this->whenLoaded('createdBy')),
             'items' => InvoiceItemResource::collection($this->whenLoaded('items')),
             'created_at' => $this->created_at?->toISOString(),
         ];
