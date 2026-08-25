@@ -1,8 +1,8 @@
 # AfriChart EMR — SaaS Architecture
 
-**Status:** A1 design, locked. Supersedes the earlier *SaaS Scaling Architecture & Roadmap*, which
+**Status:** A1 **BUILT and accepted** (2026-08-25). Design locked 2026-08-23; §12 records where implementation corrected the design. Supersedes the earlier *SaaS Scaling Architecture & Roadmap*, which
 was written before the VPS existed and has drifted (see §10).
-**Written:** 2026-08-23 · **Repo at:** `034c894`
+**Written:** 2026-08-23 · **Revised:** 2026-08-25 · **Repo at:** `11872c0`
 **Companions:** [`PHASE2_SOW_TODO.md`](PHASE2_SOW_TODO.md) · [`PHASE2_PROGRESS_2026-08-22.md`](PHASE2_PROGRESS_2026-08-22.md)
 
 ---
@@ -14,7 +14,7 @@ re-litigated mid-build, and so the reasoning survives the person who made them.
 
 | # | Decision | Rationale |
 |---|---|---|
-| **D1** | **`database` driver for cache, sessions AND queue** | Isolation is **structural**, not conventional. Each tenant's cache entries, sessions and queued jobs physically live in that tenant's own database, so a cross-tenant leak would require a connection bug, not merely a forgotten key prefix. Slower than Redis, and worth it: the isolation story is the product's commercial proposition, and "we cannot leak because the data is not in the same database" is a sentence a clinic owner can check. |
+| **D1** | **`database` driver for cache, sessions AND queue** | Isolation is **structural**, not conventional. Each tenant's cache entries, sessions and queued jobs physically live in that tenant's own database, so a cross-tenant leak would require a connection bug, not merely a forgotten key prefix. Slower than Redis, and worth it: the isolation story is the product's commercial proposition, and "we cannot leak because the data is not in the same database" is a sentence a clinic owner can check. **⚠️ Implementation correction: the cache does NOT follow the connection swap on its own** — `CacheManager` resolves a store once and `DatabaseStore` holds a live `Connection` object. `App\Tenancy\DatabaseCacheTenancyBootstrapper` is REQUIRED to make this decision true. See §12. |
 | **D2** | **`stancl/tenancy` in multi-database mode — one database per tenant** | Every clinic gets its own MySQL database. Worth stating explicitly not because the package fights it — v3's *published config* is already multi-database, with `DatabaseTenancyBootstrapper` active and a `MySQLDatabaseManager` wired — but because most of stancl's **tutorials and examples** demonstrate single-database tenancy with a `tenant_id` column. Anyone learning the package from its docs will reach for the wrong pattern; the config is right by default. |
 | **D3** | **Redis deferred to Stage 4** | Not rejected — deferred. Revisit when measured load justifies it, at which point the tenancy bootstrappers' key-prefixing must be audited as a security change, not a performance one. |
 | **D4** | **Central domains are excluded from tenant resolution** | `africhartemr.com`, `www.africhartemr.com`, `admin.africhartemr.com`. Everything else under `*.africhartemr.com` is a tenant. |
@@ -82,7 +82,9 @@ bookmarked.
 | `platform_admins` | Operators — us. Separate model, separate guard, never mixed with clinic staff |
 | `plans` | Tier definitions and their feature maps (feeds B2 gating) |
 | `marketing_leads` | Already built and already central. Demo, contact and sign-up submissions |
-| `jobs`, `job_batches`, `failed_jobs` | **Central** queue only — cross-tenant work (trial expiry, dunning, provisioning) |
+| `jobs`, `job_batches`, `failed_jobs` | **Central** queue — cross-tenant work, AND every tenant job: jobs are stored centrally with a `tenant_id` in the payload, so one worker serves all clinics |
+| `sessions`, `cache`, `cache_locks` | **Central's own.** Not an oversight in reverse — the central app is a real app: the marketing site posts CSRF-protected forms and the admin panel authenticates. Under D1 those need a session table on the central connection. These tables exist in BOTH databases, and a central session is a different session from a tenant one — which is what §6.2 asserts |
+| `scheduled_task_runs` | Every scheduled task run, so SILENCE is detectable (§7) |
 
 **`clinics` schema:**
 
@@ -91,7 +93,7 @@ bookmarked.
 | `id` | string/uuid | stancl's tenant key |
 | `name` | string | Clinic's display name |
 | `subdomain` | string **unique** | The address. Validated against the reserved list |
-| `database` | string | Tenant DB name, derived at provisioning |
+| `tenancy_db_name` | string | Tenant DB name, derived at provisioning. **Named for stancl's internal-key convention** (`HasInternalKeys::internalPrefix()` is `tenancy_`, and `DatabaseConfig::getName()` reads exactly this attribute), not the `database` this doc first specified — same information, under the name the package contracts on |
 | `status` | string | `provisioning · trialing · active · past_due · suspended · cancelled` |
 | `plan` | string | FK to `plans` |
 | `owner_name` | string | |
@@ -125,11 +127,12 @@ Everything clinical, plus the clinic's own staff and its own session/cache/job t
 ### 4.3 Migration split
 
 `database/migrations/` splits into `database/migrations/central/` and
-`database/migrations/tenant/`. **Nineteen** migrations exist today:
+`database/migrations/tenant/`. **Twenty-four** migrations as built (nineteen at design
+time, plus the five central tables the design did not anticipate — see §12):
 
 | Set | Count | Contents |
 |---|---|---|
-| **Central** | 3 | The three `marketing_leads` migrations — plus new ones for `clinics`, `platform_admins`, `plans` |
+| **Central** | 8 | 3 × `marketing_leads` · central framework tables (sessions, cache, jobs) · `plans` · `clinics` · `platform_admins` · `scheduled_task_runs` |
 | **Tenant** | 16 | 3 Laravel scaffolding (`users`→`staff`, `cache`, `jobs`) + 13 clinical |
 
 > The scaffolding migration `0001_01_01_000000_create_users_table.php` creates **three** tables in
@@ -139,7 +142,7 @@ Everything clinical, plus the clinic's own staff and its own session/cache/job t
 
 ---
 
-## 5. `users` → `staff`
+## 5. `users` → `staff` ✅ *(done — commit `43a413f`, 48 files, one atomic commit)*
 
 The clinic's people are **staff of that clinic**, not users of a platform. With platform operators
 arriving in central `platform_admins`, keeping both called "user" guarantees somebody eventually
@@ -185,7 +188,7 @@ assignedDoctor, vitalsRecordedBy}`, `Prescription::prescribedBy()`.
 
 ---
 
-## 6. Isolation guarantees the A1 test suite must prove
+## 6. Isolation guarantees the A1 test suite must prove ✅ *(built — 28 tests, 143 assertions; `composer test:tenancy`)*
 
 Four guarantees. Each is proved by a test that **attempts a cross-tenant leak and asserts it
 fails** — not by a test that merely confirms the happy path works. A test that only shows tenant A
@@ -236,7 +239,7 @@ Every test runs against **two real provisioned tenants**, not mocks.
 
 ---
 
-## 7. Scheduler under tenancy
+## 7. Scheduler under tenancy ✅ *(built — commit `d626a5e`)*
 
 The current cron runs `schedule:run` **once, against one database**. Under tenancy that silently
 backs up whichever database the default connection points at — a failure mode that looks exactly
@@ -251,7 +254,10 @@ like success, which is how backups came to have never run at all before Sprint 0
 
 ## 8. What these decisions force to change in the existing codebase
 
-Measured against `034c894`, not estimated.
+*Written as a forecast against `034c894`. Kept as written, because the estimate proved
+accurate and its accuracy is itself worth recording — but §8.1–8.3 are now **DONE**
+(commit `43a413f`) and §8.4–8.5 are **still outstanding**. The one thing the forecast
+missed is called out under 8.1.*
 
 ### 8.1 The rename surface
 
@@ -260,13 +266,27 @@ Measured against `034c894`, not estimated.
 relationship methods (§5). This is mechanical but wide, and it must be done in one commit — a
 half-renamed auth layer is worse than either state.
 
+> ✅ **Done** — 48 files in one commit. The 22-file count was right about the model
+> references and the 8 FKs were exactly right, including the implicit `constrained()` on
+> `audit_logs` this doc warned a grep would miss.
+>
+> ⚠️ **What the forecast missed:** `UserResource`. It referenced the model by NAME only —
+> no import, no `User::` call — so nothing that greps for the model could ever have found
+> it. Renames leak through vocabulary, not just imports. Also missed: `sessions.user_id`
+> must NOT be renamed, because Laravel hardcodes that column name in
+> `DatabaseSessionHandler::addUserInformation()`.
+
 ### 8.2 Session, cache and job tables move to tenant
 
 `SESSION_DRIVER=database`, `CACHE_STORE=database` and `QUEUE_CONNECTION=database` are already the
 deployed configuration, which is what makes D1 cheap. But the tables currently live in the single
 database and must be created per tenant by the tenant migration set.
 
-### 8.3 ⚠️ Sanctum tokens will break on rename
+> ✅ **Done**, with a correction: they had to be created in **both** sets, not moved. See
+> §12 item 2. And the cache needed a bootstrapper of its own to follow the connection at
+> all — §12 item 1, the bug the acceptance gate caught.
+
+### 8.3 ⚠️ Sanctum tokens will break on rename ✅ *(handled — morph map, same commit)*
 
 `personal_access_tokens` uses `morphs('tokenable')`, which stores the **fully-qualified class
 name** — currently the string `App\Models\User` — in `tokenable_type`. Renaming the model
@@ -278,7 +298,7 @@ rewriting `tokenable_type`, or a `Relation::enforceMorphMap()` alias. **Recommen
 It fixes it permanently and stops the class name being a database value at all — which is the
 underlying defect, and it will bite again at the next rename otherwise.
 
-### 8.4 Items A2 will move — flagged here, not fixed here
+### 8.4 Items A2 will move — ⬜ STILL OUTSTANDING
 
 None of these belong to A1, but all become **wrong** the moment a second clinic exists:
 
@@ -294,7 +314,7 @@ None of these belong to A1, but all become **wrong** the moment a second clinic 
 > admits an admin to *whichever clinic they happen to visit*. That is a cross-tenant
 > authentication hole, and it must close before tenant #2 — not before tenant #10.
 
-### 8.5 Marketing sign-up already feeds this
+### 8.5 Marketing sign-up already feeds this — ⬜ blocklist STILL NOT ENFORCED
 
 `marketing_leads` (central, built) collects clinic name, owner name, email, phone, city and chosen
 plan — the exact inputs `tenant:create` needs. The sign-up form already previews the subdomain from
@@ -336,5 +356,48 @@ any failure.
 
 ---
 
-*Written 2026-08-23 against `034c894`. Every codebase figure in §5 and §8 was read from the repo,
-not estimated.*
+
+
+---
+
+## 12. Where implementation corrected the design
+
+The design above held. Five things it did not anticipate, each found by building or by
+the acceptance gate rather than by review — recorded so the doc stays trustworthy and
+so the corrections are not silently absorbed.
+
+| # | The design said | Reality | Consequence |
+|---|---|---|---|
+| 1 | D1: cache isolation is structural because the tenant connection swaps | **False as written.** `CacheManager` resolves a store once; `DatabaseStore` holds a live `Connection` OBJECT. Every tenant's cache read and write went to `africhart_central` | `DatabaseCacheTenancyBootstrapper` added. Found by §6.3, not by review — it had been committed and would have shipped |
+| 2 | §4.1 lists central's tables | Omitted `sessions`, `cache`, `cache_locks`. The central app posts CSRF-protected forms, so under D1 it needs its own session table | Central framework migration added. These tables exist in both databases, which is correct rather than duplication |
+| 3 | §4.1 names the column `database` | stancl reads `tenancy_db_name` — its internal-key convention | Column renamed to match the package's contract |
+| 4 | §3.1 lists central domains | They were a hardcoded list beside `root_domain` and drifted the moment it changed, leaving every tenant route unreachable | `central_domains` is now DERIVED from `root_domain` |
+| 5 | D2's rationale: stancl defaults to single-DB | v3's *published config* is already multi-database. What misleads is its **tutorials**, which demonstrate single-DB with a `tenant_id` column | Decision unchanged; rationale corrected |
+
+### Two traps worth carrying into A2/A4
+
+- **`Job::dispatch()` pushes in its DESTRUCTOR.** `fn () => Job::dispatch(...)` hands the
+  pending job out of a tenant-scoped closure, so it is built after tenancy ends, with no
+  tenant. Any code shaped `return SomeJob::dispatch(...)` inside a tenant callback has
+  this bug. Pinned as its own test.
+- **spatie's `backup:run` takes its config by constructor injection.** A runtime
+  `config()` override is invisible unless `--config` is passed — which is how the
+  per-tenant backup command archived the central database twice while reporting success.
+
+### Still outstanding from this document
+
+- **§3.3 / §8.5 — the reserved-subdomain blocklist is enforced NOWHERE.**
+  `config('tenancy.reserved_subdomains')` exists and is read by nothing. It must gate
+  sign-up validation *and* provisioning. Belongs with A4.
+- **§8.4 — the A2 items are untouched**, and the invite codes among them are a
+  cross-tenant authentication hole the moment a second clinic exists.
+- **§9 — `tenant:create` is not built.** The create+migrate pipeline it wraps already
+  runs and is exercised by every isolation test.
+
+---
+
+---
+
+*Written 2026-08-23, revised 2026-08-25 against `11872c0`. Every codebase figure was read
+from the repo or a live run, not estimated. §12 records where building it corrected the
+design.*

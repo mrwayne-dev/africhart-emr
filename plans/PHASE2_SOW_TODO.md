@@ -2,7 +2,8 @@
 
 **Source:** SCOPE OF WORK — AfriChart EMR SaaS Platform (Phase 2), Ref `ACT-DEV-006`
 **Architecture:** *AfriChart EMR — SaaS Scaling Architecture & Roadmap* (see [§7 reconciliation](#7-architecture-doc--what-is-now-out-of-date) — parts of it are now out of date)
-**Updated:** 2026-08-23 · **Sprint 0 complete · B3 complete · A1 design locked**
+**Updated:** 2026-08-25 · **Sprint 0 · B3 · A1 all complete**
+**Latest report:** [`PHASE2_PROGRESS_2026-08-25.md`](PHASE2_PROGRESS_2026-08-25.md)
 **Companions:** `plans/africhart-platform-spec-public-ui-plans.md` · `~/Documents/wayne/vps/wayneVPS-SETUP.md` · `~/Documents/wayne/vps/africhart-smoke-deploy.md`
 
 Legend: ✅ done · 🟡 partial · ⬜ not started · ⚠️ decision needed
@@ -30,19 +31,19 @@ Legend: ✅ done · 🟡 partial · ⬜ not started · ⚠️ decision needed
 
 | SOW item | | Status | Where it stands |
 |---|---|---|---|
-| **A1** | Tenancy architecture `[NEW]` | 🟡 | **Design locked** in `ARCHITECTURE.md`. Zero tenancy packages in the repo — build not started |
-| **A2** | Per-tenant configuration | 🟡 | Drug catalogue DB-backed; prefix/fee/invites still global |
+| **A1** | Tenancy architecture `[NEW]` | ✅ | **COMPLETE 2026-08-25.** Built and through the acceptance gate — 28 tests, 143 assertions, two real tenants |
+| **A2** | Per-tenant configuration | 🟡 | Unblocked by A1. ⚠️ **Invite codes are a hard gate before tenant #2** — see A2 below |
 | **A3** | VPS infrastructure `[NEW]` | 🟡 **~90%** | Only off-site object storage outstanding |
-| **A4** | Provisioning command `[NEW]` | ⬜ | Depends on A1 |
-| **A5** | Backups | 🟡 | **Now live, encrypted, restore rehearsed.** Off-site + per-clinic outstanding |
-| **A6** | Tenant #1 | ⬜ | Now a fresh stand-up, not a migration |
+| **A4** | Provisioning command `[NEW]` | ⬜ | **Unblocked.** The create+migrate pipeline already runs; `tenant:create` wraps it |
+| **A5** | Backups | 🟡 | Live, encrypted, restore rehearsed. **Per-clinic backups now built and verified by archive contents.** Off-site still blocked on credentials |
+| **A6** | Tenant #1 | ⬜ | **Unblocked.** Fresh stand-up. ⚠️ Gated on the A2 invite-code fix |
 | **B1** | Subscription & billing `[NEW]` | ⬜ | Architecture to be designed (§6) |
 | **B2** | Plans, gating & metering `[NEW]` | ⬜ | Tiers designed, nothing built |
 | **B3** | Public marketing site `[NEW]` | ✅ | **Complete 2026-08-22** — 10 pages + 3 legal docs. See `PHASE2_PROGRESS_2026-08-22.md` |
 | **B4** | In-clinic account surfaces `[NEW]` | 🟡 | Two seams shipped; wizard + Settings hub absent |
-| **B5** | Super-admin panel `[NEW]` | ⬜ | Depends on A1 |
+| **B5** | Super-admin panel `[NEW]` | ⬜ | **Unblocked.** `platform_admins` + the `admin` guard now exist |
 | **B6** | Product telemetry `[NEW]` | ⬜ | Not started |
-| **B7** | Compliance | 🟡 | DPA template + Privacy + Terms written 2026-08-22 (pending legal review); isolation guarantee + breach plan not |
+| **B7** | Compliance | 🟡 | Legal docs written 2026-08-22 (pending review). **The data-isolation guarantee is now DEMONSTRABLE** — the §6 suite is the evidence. Breach plan not written |
 
 ---
 
@@ -229,13 +230,17 @@ The current cron runs the scheduler **once, against one database**. Under tenanc
 silently backs up only whichever database the default connection points at — a failure
 mode that looks exactly like success.
 
-- [ ] Move scheduled work to per-tenant execution (`tenants()->each(...)` or the
-      package's tenant-aware scheduling)
-- [ ] Per-tenant backups, each verifiable independently
-- [ ] Cross-tenant scheduled jobs (trial expiry, dunning) run **centrally**, not per tenant
-- [ ] Add `withoutOverlapping()` — a slow backup across N tenant DBs will outlive its minute
-- [ ] Alert on scheduler *silence*, not just failure. A cron that stops firing produces
-      no error; the weekly health digest should assert "backup ran in the last 24h"
+- [x] ~~Move scheduled work to per-tenant execution~~ **Done** — `tenants:backup`
+- [x] ~~Per-tenant backups, each verifiable independently~~ **Done**, one archive per clinic
+- [x] ~~Cross-tenant scheduled jobs run centrally~~ **Done** — `clinics:audit-trials`
+      (deliberately report-only; the lifecycle transition is B1's)
+- [x] ~~Add `withoutOverlapping()`~~ **Done**, verified present on all four tasks
+- [x] ~~Alert on scheduler *silence*~~ **Done** — every run records a row and
+      `schedule:audit` asserts a positive: each task succeeded recently AND every active
+      clinic has a backup within 26h. Exits non-zero and fails `/up` when silent
+- [ ] ⚠️ **Arm the external monitor on `/up`** — a silence detector that is itself silent
+      detects nothing. Catching a *fully stopped* scheduler needs something outside the
+      process polling the health endpoint. **Go-live deployment task**
 - [ ] Repoint the cron path when the real app root replaces `/var/www/africhart-smoke`
 
 ---
@@ -244,37 +249,37 @@ mode that looks exactly like success.
 
 ### PHASE A
 
-#### A1. Tenancy architecture `[NEW]` 🟡 — design locked, build not started
-- [x] **Architecture doc rewritten** → [`ARCHITECTURE.md`](ARCHITECTURE.md) (2026-08-23).
-      Five decisions locked there: `database` drivers for cache/sessions/queue (Redis deferred to
-      Stage 4) · stancl in **multi-database** mode · central domains excluded from tenant
-      resolution + a reserved-subdomain blocklist · central registry schema · `users` → `staff`
-      with platform operators separate in central `platform_admins`
-- [ ] Adopt `stancl/tenancy` **in multi-database mode** (ARCHITECTURE.md §1 D2)
-- [ ] Central DB: clinic registry (name, subdomain, tenant DB, status) + platform admins + plans
-- [ ] Subdomain tenant identification + per-request connection switching
-- [ ] Split migrations into central vs tenant sets
-- [ ] Per-tenant DB creation + migration commands
-- [x] ~~⚠️ Decide cache/session/queue drivers under tenancy~~ **Settled: `database` for all three**
-      (ARCHITECTURE.md D1). Isolation becomes structural — each tenant's cache, sessions and jobs
-      live in that tenant's own DB. Redis deferred to Stage 4
-- [ ] **`users` → `staff` rename** — full: table, model, `UserRole` enum, factory, seeder, auth
-      guard/provider, 8 FK constraints, 8 relationships, 22 referencing files. One commit;
-      a half-renamed auth layer is worse than either state (ARCHITECTURE.md §5, §8.1)
-- [ ] ⚠️ **Sanctum morph map before the rename** — `personal_access_tokens.tokenable_type` stores
-      the literal string `App\Models\User`, so renaming silently invalidates every API token
-      (ARCHITECTURE.md §8.3)
-- [ ] **Isolation test suite** — four guarantees, each phrased as *attempt a cross-tenant leak and
-      assert it fails*, against two real provisioned tenants: data · session · cache · queued job.
-      Includes an assertion that `SESSION_DOMAIN` is unset (ARCHITECTURE.md §6)
+#### A1. Tenancy architecture `[NEW]` ✅ — COMPLETE 2026-08-25
+- [x] **Architecture doc** → [`ARCHITECTURE.md`](ARCHITECTURE.md), five decisions locked
+- [x] `stancl/tenancy` v3.10.1 in **multi-database** mode, confirmed from the booted app
+- [x] Central DB: `clinics` registry + `platform_admins` + `plans`
+- [x] Subdomain identification against `clinics.subdomain` + per-request connection switching
+- [x] Migrations split central (8) / tenant (16); mutually exclusive by construction
+- [x] Per-tenant DB creation + migration (the `TenantCreated` pipeline)
+- [x] Cache/session/queue drivers settled as `database` (D1)
+- [x] **`users` → `staff` rename** — 48 files, one atomic commit, Sanctum morph map included
+- [x] **Isolation test suite** — 28 tests, 143 assertions, real MySQL, two real provisioned
+      tenants. Data · session · cache · queued-job, each proved by attempting a leak.
+      Includes the `SESSION_DOMAIN`-is-null guard. Run: `composer test:tenancy`
+- [x] Suite **sabotage-tested** — removing the cache bootstrapper, setting SESSION_DOMAIN,
+      and sharing one database between two clinics each make it fail as required
+
+> **The gate earned its keep.** It found that the cache was never isolated — every
+> tenant's reads and writes went to `africhart_central`. Two further real bugs came out
+> of the same work: per-tenant backups that archived the central database twice while
+> reporting success, and `central_domains` drifting from `root_domain`. See
+> [`PHASE2_PROGRESS_2026-08-25.md`](PHASE2_PROGRESS_2026-08-25.md) §4.
 
 #### A2. Per-tenant configuration ⬜🟡
 - [ ] ID prefix `ACH-` — hardcoded in `PatientService.php:115`,
       `ConsultationService.php:87`, `InvoiceService.php:167`
 - [ ] Consultation fee — `config/billing.php` → tenant settings
 - [ ] Drug catalogue — scope the existing `medications` table per tenant 🟡
-- [ ] Invite codes — `.env` `REGISTER_CODE_*` (`RegisterRequest.php:32`) → in-app,
-      per-clinic, single-use, expiring
+- [ ] 🔴 **Invite codes — HARD GATE BEFORE TENANT #2.** `.env` `REGISTER_CODE_*`
+      (`RegisterRequest.php:32`) → in-app, per-clinic, single-use, expiring.
+      They are global today: with two clinics, one code admits an admin to
+      **whichever clinic they happen to visit**. That is a cross-tenant
+      authentication hole, and A6 must not provision a second clinic until it closes
 - [ ] Brand-string sweep (architecture doc §7: must be complete **before tenant #2**)
 
 #### A3. Infrastructure ✅🟡 — remaining
@@ -286,12 +291,20 @@ mode that looks exactly like success.
 #### A4. Provisioning `[NEW]` ⬜
 - [ ] `php artisan tenant:create` — register, create + migrate DB, seed config, first
       admin user, assign subdomain, send setup link
+- [ ] ⚠️ **Enforce the reserved-subdomain blocklist.** `config('tenancy.reserved_subdomains')`
+      exists and is read NOWHERE. ARCHITECTURE §3.3/§8.5 requires it in sign-up validation
+      *and* at provisioning — the second is what actually protects the system. Until then
+      a clinic could claim `admin` or `api`
+- [ ] ⚠️ **Do NOT run `TenantDatabaseSeeder` for a real clinic** — it seeds demo patients.
+      A real clinic is provisioned empty apart from its own configuration
 - [ ] Idempotent, with rollback on partial failure
 - [ ] Deprovision / suspend counterpart
 - [ ] Operator runbook
 
 #### A5. Backups ✅🟡 — remaining
-- [ ] Per-clinic backups once A1 lands
+- [x] ~~Per-clinic backups once A1 lands~~ **Done** — `tenants:backup` iterates clinics
+      and writes one archive each, verified by extracting them and counting rows
+      (`hope` archive: 2 Hope rows / 0 Grace; `grace`: the reverse)
 - [ ] Off-site destination (blocked on credentials)
 - [ ] Re-rehearse restore **per tenant** after A1
 - [ ] Monitor for scheduler silence
@@ -467,12 +480,15 @@ proxy spoofing closed.
 
 ## 9. Suggested sequence from here
 
-**Sprint 1 — A1 tenancy** (the long pole)
-Rewrite the architecture doc → central DB + registry → subdomain identification →
-per-request switching → migration split → **isolation tests** (data, session, cache, queue)
+**~~Sprint 1 — A1 tenancy~~ ✅ COMPLETE 2026-08-25** (the long pole, now behind us)
+Architecture doc → central registry → users→staff rename → subdomain identification →
+per-request switching → migration split → scheduler → **isolation suite** (28 tests,
+143 assertions, sabotage-tested)
 
-**Sprint 2 — A2 + A3 remainder + A4**
-Per-tenant config → off-site backups → provisioning command
+**Sprint 2 — A2 + A3 remainder + A4** ← **NEXT**
+Invite codes FIRST (the hard gate) → ID prefix, fee, catalogue scoping → off-site
+backups *(unblocks the moment credentials arrive)* → `tenant:create` with the reserved
+blocklist and rollback
 
 **Sprint 3 — A6 → Phase A acceptance**
 Tenant #1 fresh → second clinic → prove isolation → per-tenant backups + restore →
