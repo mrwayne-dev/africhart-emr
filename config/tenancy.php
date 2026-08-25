@@ -52,16 +52,30 @@ return [
         'www', 'admin', 'app', 'api', 'mail', 'support', 'staff', 'help', 'status', 'blog',
     ],
 
-    'central_domains' => [
-        'africhartemr.com',
-        'www.africhartemr.com',
-        'admin.africhartemr.com',
+    'central_domains' => array_values(array_unique(array_filter([
+        /*
+         * DERIVED from root_domain, not hardcoded beside it.
+         *
+         * These two were independent lists, and they drifted the moment
+         * root_domain changed: the test environment set it to africhart.test
+         * while central_domains still named africhartemr.com, so the
+         * identification middleware — which requires a host to sit under a
+         * CENTRAL domain before it will read a subdomain from it — saw no
+         * subdomain at all and every tenant route 404'd.
+         *
+         * A root domain is central by definition, as are its www and admin
+         * labels. Deriving them means changing the domain cannot leave tenant
+         * routing silently unreachable.
+         */
+        env('TENANCY_ROOT_DOMAIN', 'africhartemr.com'),
+        'www.'.env('TENANCY_ROOT_DOMAIN', 'africhartemr.com'),
+        'admin.'.env('TENANCY_ROOT_DOMAIN', 'africhartemr.com'),
 
-        // Local development.
+        // Local development, where the app is reached by a different name.
         'africhart-emr.test',
         '127.0.0.1',
         'localhost',
-    ],
+    ]))),
 
     /**
      * Tenancy bootstrappers are executed when tenancy is initialized.
@@ -92,6 +106,23 @@ return [
          * change at that point: it moves isolation from structural to conventional.
          */
         // Stancl\Tenancy\Bootstrappers\CacheTenancyBootstrapper::class,
+
+        /*
+         * Ours instead, and it is REQUIRED — not an optimisation.
+         *
+         * Disabling stancl's cache bootstrapper was right (it needs tags, which
+         * the database store has not got), but the reasoning recorded alongside
+         * it was wrong: DatabaseTenancyBootstrapper swapping the default
+         * connection does NOT redirect the cache, because CacheManager resolves
+         * a store once and DatabaseStore holds a live Connection object.
+         *
+         * Without this, every tenant's cache read and write went to
+         * africhart_central — proven by the §6.3 tests, which found a probe
+         * written in clinic A readable in clinic B. This forgets the resolved
+         * store on every tenancy switch so it re-resolves against the current
+         * connection, putting the row in the tenant's own `cache` table.
+         */
+        \App\Tenancy\DatabaseCacheTenancyBootstrapper::class,
 
         Stancl\Tenancy\Bootstrappers\FilesystemTenancyBootstrapper::class,
         Stancl\Tenancy\Bootstrappers\QueueTenancyBootstrapper::class,

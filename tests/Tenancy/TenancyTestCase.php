@@ -57,8 +57,15 @@ abstract class TenancyTestCase extends TestCase
             self::$centralPrepared = true;
         }
 
-        // Registry state must not carry between tests.
+        /*
+         * Registry and queue state must not carry between tests. The jobs table
+         * is CENTRAL and survives migrate:fresh (which runs once per process),
+         * so a job left by an earlier test would be read as this test's own —
+         * and that already produced one confusing failure.
+         */
         Clinic::query()->delete();
+        DB::table('jobs')->delete();
+        DB::table('failed_jobs')->delete();
         $this->seedPlans();
     }
 
@@ -107,6 +114,84 @@ abstract class TenancyTestCase extends TestCase
         $this->provisioned[] = $database;
 
         return $clinic;
+    }
+
+    /**
+     * Seed one clinic with a full, DISTINGUISHABLE set of clinical records.
+     *
+     * Distinguishable is the point: every value carries the clinic's subdomain,
+     * so a leak is not merely a wrong count but a visibly foreign record. A
+     * test that seeds identical data into both tenants can pass while the
+     * databases are shared.
+     *
+     * @return array{staff:int, patient:int, consultation:int, invoice:int, audit:int}
+     *         the primary keys, so another tenant's context can try to reach them
+     */
+    protected function seedClinicalRecords(Clinic $clinic, int $patients = 3): array
+    {
+        return $this->inTenant($clinic, function () use ($clinic, $patients) {
+            $sub = $clinic->subdomain;
+
+            $staff = \App\Models\Staff::create([
+                'name' => ucfirst($sub).' Doctor',
+                'email' => "doctor@{$sub}.test",
+                'password' => 'password123',
+                'role' => \App\Enums\StaffRole::Doctor,
+            ]);
+            $staff->forceFill(['email_verified_at' => now()])->save();
+
+            $firstPatient = null;
+
+            for ($i = 1; $i <= $patients; $i++) {
+                $patient = \App\Models\Patient::create([
+                    'patient_id' => strtoupper($sub)."-P-{$i}",
+                    'full_name' => ucfirst($sub)." Patient {$i}",
+                    'date_of_birth' => '1990-01-01',
+                    'phone' => '080300000'.$i,
+                    'blood_group' => 'O+',
+                    'allergies' => null,
+                    'registered_by' => $staff->id,
+                ]);
+
+                $firstPatient ??= $patient;
+            }
+
+            $consultation = \App\Models\Consultation::create([
+                'patient_id' => $firstPatient->id,
+                'doctor_id' => $staff->id,
+                'chief_complaint' => "{$sub} complaint",
+                'clinical_notes' => "{$sub} notes",
+                'status' => 'completed',
+                'consultation_id' => strtoupper($sub).'-C-1',
+            ]);
+
+            $invoice = \App\Models\Invoice::create([
+                'patient_id' => $firstPatient->id,
+                'consultation_id' => $consultation->id,
+                'created_by' => $staff->id,
+                'invoice_number' => strtoupper($sub).'-INV-1',
+                'subtotal' => 5000,
+                'total' => 5000,
+                'status' => 'issued',
+            ]);
+
+            $audit = \App\Models\AuditLog::create([
+                'staff_id' => $staff->id,
+                'user_name' => $staff->name,
+                'action' => 'created',
+                'model_type' => \App\Models\Patient::class,
+                'model_id' => $firstPatient->id,
+                'description' => "{$sub} registered a patient",
+            ]);
+
+            return [
+                'staff' => $staff->id,
+                'patient' => $firstPatient->id,
+                'consultation' => $consultation->id,
+                'invoice' => $invoice->id,
+                'audit' => $audit->id,
+            ];
+        });
     }
 
     /** Run a callback inside a clinic's context, then return to central. */
