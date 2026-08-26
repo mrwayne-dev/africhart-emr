@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Plan;
 use Illuminate\View\View;
 
 /**
@@ -107,64 +108,41 @@ class MarketingController extends BaseController
      *
      * @return array<int, array<string, mixed>>
      */
+    /**
+     * The pricing tiers, read from the `plans` table.
+     *
+     * This used to be a hardcoded array, which meant the figures a clinic was
+     * quoted lived somewhere different from the figures billing would charge.
+     * The table is the single source of truth now — change a price in
+     * PlanSeeder, re-seed, and every surface follows.
+     *
+     * The array SHAPE is preserved so the pricing views did not have to change
+     * with the source: they still receive name/slug/price/setup/blurb/cta/
+     * featured/features, only now each value came out of the database.
+     *
+     * @return array<int, array<string, mixed>>
+     */
     private function tiers(): array
     {
-        return [
-            [
-                'name' => 'Starter',
-                'slug' => 'starter',
-                'price' => '25,000',
-                'setup' => '50,000',
-                'blurb' => 'For a single clinic finding its feet.',
-                'featured' => false,
-                'cta' => 'Start free trial',
-                'features' => [
-                    ['label' => '1 site', 'included' => true],
-                    ['label' => 'Up to 3 staff', 'included' => true],
-                    ['label' => 'Patients, queue & vitals', 'included' => true],
-                    ['label' => 'Consultations & prescriptions', 'included' => true],
-                    ['label' => 'Invoicing & receipts', 'included' => true],
-                    ['label' => 'Audit log & oversight dashboard', 'included' => false],
-                    ['label' => 'PDF receipts & CSV export', 'included' => false],
-                    ['label' => 'Email support', 'included' => true],
-                ],
-            ],
-            [
-                'name' => 'Clinic',
-                'slug' => 'clinic',
-                'price' => '50,000',
-                'setup' => '75,000',
-                'blurb' => 'For an owner who wants to see everything.',
-                'featured' => true,
-                'cta' => 'Start free trial',
-                'features' => [
-                    ['label' => '1 site', 'included' => true],
-                    ['label' => 'Unlimited staff', 'included' => true],
-                    ['label' => 'Patients, queue & vitals', 'included' => true],
-                    ['label' => 'Consultations & prescriptions', 'included' => true],
-                    ['label' => 'Invoicing & receipts', 'included' => true],
-                    ['label' => 'Audit log & oversight dashboard', 'included' => true],
-                    ['label' => 'PDF receipts & CSV export', 'included' => true],
-                    ['label' => 'Priority email support', 'included' => true],
-                ],
-            ],
-            [
-                'name' => 'Group',
-                'slug' => 'group',
-                'price' => '40,000',
-                'setup' => '100,000',
-                'blurb' => 'Per site, for two or more locations.',
-                'featured' => false,
-                'cta' => 'Talk to us',
-                'features' => [
-                    ['label' => '2+ sites', 'included' => true],
-                    ['label' => 'Unlimited staff', 'included' => true],
-                    ['label' => 'Everything in Clinic', 'included' => true],
-                    ['label' => 'Consolidated owner dashboard', 'included' => true],
-                    ['label' => 'REST API access', 'included' => true],
-                    ['label' => 'Priority email & onboarding', 'included' => true],
-                ],
-            ],
-        ];
+        return Plan::query()
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->get()
+            ->map(fn (Plan $plan) => [
+                'name' => $plan->name,
+                'slug' => $plan->slug,
+                'price' => $plan->formattedMonthlyPrice(),
+                'priceSuffix' => $plan->priceSuffix(),
+                // Raw naira too, so a view can compute a worked example (e.g.
+                // "two sites on Group") instead of a human retyping the product.
+                'monthlyNaira' => $plan->monthlyPriceNaira(),
+                'perSite' => $plan->isPerSite(),
+                'setup' => $plan->formattedSetupFee(),
+                'blurb' => $plan->blurb,
+                'featured' => $plan->is_featured,
+                'cta' => $plan->cta_label,
+                'features' => $plan->highlights ?? [],
+            ])
+            ->all();
     }
 }

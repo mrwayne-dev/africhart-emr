@@ -47,10 +47,17 @@
             @endforeach
         </div>
 
-        <p class="text-sm text-muted mt-8" data-reveal>
-            Group is priced per site. Two locations on Group is
-            <span class="text-ink">&#8358;80,000</span> a month.
-        </p>
+        {{-- Worked example, COMPUTED from the plans table rather than typed.
+             It was a literal "₦80,000" (two lots of the old ₦40,000), which is
+             the kind of derived figure that quietly goes stale the first time a
+             price changes — and did. --}}
+        @php $perSite = collect($tiers)->firstWhere('perSite', true); @endphp
+        @if ($perSite)
+            <p class="text-sm text-muted mt-8" data-reveal>
+                {{ $perSite['name'] }} is priced per site. Two locations is
+                <span class="text-ink">&#8358;{{ number_format($perSite['monthlyNaira'] * 2) }}</span> a month.
+            </p>
+        @endif
     </x-marketing-section>
 
     {{-- ========================= SETUP FEE ========================= --}}

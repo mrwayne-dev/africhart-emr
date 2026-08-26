@@ -19,6 +19,9 @@ re-litigated mid-build, and so the reasoning survives the person who made them.
 | **D3** | **Redis deferred to Stage 4** | Not rejected — deferred. Revisit when measured load justifies it, at which point the tenancy bootstrappers' key-prefixing must be audited as a security change, not a performance one. |
 | **D4** | **Central domains are excluded from tenant resolution** | `africhartemr.com`, `www.africhartemr.com`, `admin.africhartemr.com`. Everything else under `*.africhartemr.com` is a tenant. |
 | **D5** | **Clinic staff live in a per-tenant `staff` table with a `Staff` model** | Renamed from `users`. Platform operators are a separate concept in the central `platform_admins` table. The two must never be the same table, the same model, or the same guard. |
+| **D6** | **Pricing lives in the `plans` table — single source of truth** | Client-confirmed 2026-08-25: Starter ₦45k/mo + ₦75k setup · Clinic ₦85k/mo + ₦120k setup · Group ₦65k **per site**/mo + ₦150k setup. `price_basis` models per-site explicitly. The figures previously existed in four places; `/pricing`, Home and Sign-Up now all read the table. **Annual pricing is not confirmed — do not derive one.** See SOW to-do §0.1 |
+| **D7** | **Clinics only — hospitals are out of scope** | Outpatient clinics and multi-clinic groups. No inpatient/ward tier; "Group" means several outpatient clinics under one owner, not a hospital with departments. A hospital tier is a possible future phase — **do not design speculatively for it**. See SOW to-do §0.2 |
+| **D8** | **Paystack is the payment gateway; Wema Bank is the settlement account** | B1 builds against Paystack only — no second gateway, no abstraction for a provider we do not use. Wema is a Paystack dashboard setting: no bank integration, nothing to build. The gateway choice is settled; the nine architecture questions are not. See SOW to-do §0.3 |
 
 ---
 

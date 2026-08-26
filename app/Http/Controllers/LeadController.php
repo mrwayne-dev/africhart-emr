@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\LeadRequest;
 use App\Models\MarketingLead;
+use App\Models\Plan;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
@@ -40,9 +41,22 @@ class LeadController extends BaseController
          */
         $plan = $request->query('plan');
 
+        /*
+         * Plans come from the table, not a literal in the view. Sign-up used to
+         * repeat the prices twice more — once for the carried-plan chip and once
+         * for the plan picker — which made four copies of a commercial figure in
+         * the codebase.
+         */
+        $plans = Plan::query()
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->get()
+            ->keyBy('slug');
+
         return view('marketing.signup', [
             'clinic' => $request->query('clinic'),
-            'plan' => in_array($plan, ['starter', 'clinic', 'group'], true) ? $plan : null,
+            'plan' => $plans->has($plan) ? $plan : null,
+            'plans' => $plans,
         ]);
     }
 

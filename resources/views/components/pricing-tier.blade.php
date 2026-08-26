@@ -40,7 +40,10 @@
                     'text-5xl sm:text-6xl' => $lg,
                     'text-4xl' => ! $lg,
                 ])>&#8358;{{ $tier['price'] }}</span>
-                <span class="text-sm text-muted">/month</span>
+                {{-- Not a hardcoded "/month": Group is charged PER SITE, and
+                     showing only "/month" beside its figure would understate a
+                     three-location group by two thirds. --}}
+                <span class="text-sm text-muted">{{ $tier['priceSuffix'] ?? '/month' }}</span>
             </p>
 
             <p @class(['text-muted mt-3 leading-relaxed', 'text-base' => $lg, 'text-sm' => ! $lg])>

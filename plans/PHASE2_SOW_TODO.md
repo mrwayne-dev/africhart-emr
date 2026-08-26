@@ -18,12 +18,71 @@ Legend: ✅ done · 🟡 partial · ⬜ not started · ⚠️ decision needed
 | Who holds the Contabo + domain accounts (§7.2)? | **The Client holds them** — matches the SOW recommendation |
 | Migrate the existing live clinic (A6)? | **No migration.** The EMR has not launched and no clinics are signed. A6 becomes *stand up Tenant #1 fresh* |
 | Root-domain conflict (marketing vs EMR)? | **Deferred** — root domain gets reassigned at project end |
-| Paystack architecture | **To be designed** — see [§6](#6-paystack--architecture-to-be-designed) |
+| Paystack architecture | **Gateway CHOSEN (locked).** The nine design questions in [§6](#6-paystack--architecture-to-be-designed) still need working through before B1 builds |
+| **Pricing** | **LOCKED 2026-08-25.** Starter ₦45k/mo + ₦75k setup · Clinic ₦85k/mo + ₦120k setup · Group ₦65k **per site**/mo + ₦150k setup. Supersedes the platform-spec proposal; SOW Appendix 1 is answered |
+| **Market** | **Clinics only.** Hospitals explicitly out of scope |
+| **Payment gateway** | **Paystack (locked)**, settling to **Wema Bank** |
 
 > **The A6 change matters more than it looks.** With no live clinic and no patient
 > data, the data-protection gate is no longer blocking Phase A. It moves to
 > *before first real patient*, not *before migration*. That removes the single
 > heaviest dependency from the Phase A critical path.
+
+---
+
+## 0. Locked business decisions — do not re-open
+
+Recorded 2026-08-25. These are commercial decisions from the Client, not
+engineering preferences, and they are settled. A future sprint that finds them
+inconvenient should raise it with the Client rather than quietly diverge.
+
+### 0.1 Pricing — LOCKED
+
+| Tier | Monthly | One-time setup |
+|---|---|---|
+| **Starter** | ₦45,000 | ₦75,000 |
+| **Clinic** | ₦85,000 | ₦120,000 |
+| **Group** | ₦65,000 **per site** | ₦150,000 |
+
+- **Group is per-site**, modelled explicitly as `plans.price_basis = 'per_site'`. Two
+  locations is ₦130,000/month, and the pricing page computes that rather than stating it.
+- **The monthly subscription and the setup fee stay two distinct values.** One recurs,
+  one does not; collapsing them into a single "cost" would misrepresent both.
+- **These live in the `plans` table, which is now the single source of truth.** They
+  previously existed in four places. `/pricing`, the Home teaser and both Sign-Up
+  surfaces all read from the table — proven by changing a price in the database alone
+  and watching the page follow.
+- To change a price: edit `PlanSeeder` and re-seed. Nowhere else.
+- ⚠️ **Annual pricing is NOT confirmed.** There is deliberately no annual column and no
+  toggle. Do not derive one from the monthly figure — an annual price normally carries a
+  discount, and inventing that discount would be inventing a commercial term.
+
+### 0.2 Market — clinics only, hospitals out of scope
+
+The product serves **outpatient clinics and multi-clinic groups**. There is no
+hospital or inpatient tier, and "Group" means several outpatient clinics under one
+owner — not a hospital with departments.
+
+A true hospital tier (wards, admissions, departmental modules) is a **possible future
+phase, not current scope**. Nothing in Phase 2 should be designed speculatively to
+accommodate it.
+
+### 0.3 Payments — Paystack, settling to Wema Bank
+
+- **Paystack is the payment gateway.** It runs the recurring subscription billing in B1.
+  Billing is built against Paystack only — no second gateway, no abstraction layer for
+  a provider we are not using.
+- **Wema Bank is the settlement account** where collected funds land. That is a setting
+  inside the Paystack dashboard: **no integration work, no bank API, nothing to build.**
+- ⚠️ The **gateway choice** is settled. The **nine architecture questions** at
+  [§6](#6-paystack--architecture-to-be-designed) — subscription mechanism, setup-fee
+  handling, trial mechanics, per-site metering for Group, read-only propagation,
+  refunds — are still open and must be worked through before B1 builds.
+
+> Remember the two Paystack accounts never touch: **patient → clinic** payments settle
+> into *the clinic's own* merchant account, while **clinic → AfriChart** subscriptions
+> settle into ours (Wema). Mixing them would put AfriChart in possession of clinical
+> revenue, which is a regulatory problem nobody wants.
 
 ---
 
@@ -329,8 +388,11 @@ mode that looks exactly like success.
 - [ ] Gate enforced in UI **and** server-side (architecture doc: "hiding alone is theater")
 - [ ] Keep audit logging always-on; gate **visibility/export**, never the trait
 - [ ] Usage counters (seats, sites)
-- [ ] ⚠️ Confirm pricing: SOW Appendix 1 is blank; the platform spec proposes
-      Starter ₦25k / Clinic ₦50k / Group ₦40k-per-site
+- [x] ~~⚠️ Confirm pricing~~ **LOCKED 2026-08-25** (§0.1): Starter ₦45k / Clinic ₦85k /
+      Group ₦65k-per-site, with setup fees ₦75k / ₦120k / ₦150k. Now in the `plans`
+      table as the single source of truth, which is also what B2 gates against
+- [ ] Per-site metering for Group — the price basis is modelled; enforcing seat/site
+      counts against it is still B2's job
 
 #### B3. Public marketing site `[NEW]` ✅ — COMPLETE 2026-08-22
 Root domain is reassigned at project end (settled). Built behind that.

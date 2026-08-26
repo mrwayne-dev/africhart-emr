@@ -3,16 +3,6 @@
 @section('title', 'Get started — AfriChart')
 @section('description', 'Start your clinic on AfriChart. Thirty days free, no card required, and we set it up for you.')
 
-@php
-    // Labels for the plan carried over from /pricing. The controller has
-    // already validated the slug, so this only ever reads one of the three.
-    $planLabels = [
-        'starter' => ['name' => 'Starter', 'price' => '₦25,000', 'note' => 'Up to 2 doctors'],
-        'clinic'  => ['name' => 'Clinic',  'price' => '₦50,000', 'note' => 'Up to 8 doctors'],
-        'group'   => ['name' => 'Group',   'price' => '₦40,000', 'note' => 'Per location'],
-    ];
-@endphp
-
 @section('content')
 
     {{-- Focused layout: no nav menu, no footer. See layouts/focus. --}}
@@ -71,10 +61,13 @@
                         <div class="flex items-center justify-between gap-4 bg-warm rounded-card px-4 py-3.5 mb-6">
                             <div class="flex items-center gap-3 min-w-0">
                                 <x-phosphor-check-circle class="w-5 h-5 text-ink shrink-0" aria-hidden="true" />
+                                {{-- Figures from the plans table, never a literal —
+                                     see PlanSeeder, the single source of truth. --}}
                                 <p class="text-sm text-ink-body truncate">
-                                    <span class="font-medium">You're starting on: {{ $planLabels[$plan]['name'] }}</span>
+                                    <span class="font-medium">You're starting on: {{ $plans[$plan]->name }}</span>
                                     <span class="text-muted">
-                                        — {{ $planLabels[$plan]['price'] }}/month · {{ $planLabels[$plan]['note'] }}
+                                        — &#8358;{{ $plans[$plan]->formattedMonthlyPrice() }}{{ $plans[$plan]->priceSuffix() }}
+                                        · {{ $plans[$plan]->capacityNote() }}
                                     </span>
                                 </p>
                             </div>
@@ -158,11 +151,9 @@
                                      plan is asked for here instead of assumed. --}}
                                 <x-marketing-field name="plan" label="Which plan" optional
                                     placeholder="Not sure yet — help me choose"
-                                    :options="[
-                                        'starter' => 'Starter — ₦25,000/month, up to 2 doctors',
-                                        'clinic' => 'Clinic — ₦50,000/month, up to 8 doctors',
-                                        'group' => 'Group — ₦40,000/month per location',
-                                    ]"
+                                    :options="$plans->mapWithKeys(fn ($p) => [
+                                        $p->slug => $p->name.' — ₦'.$p->formattedMonthlyPrice().$p->priceSuffix().', '.strtolower($p->capacityNote()),
+                                    ])->all()"
                                     hint="You can change this before your trial ends." />
                             @endif
 
