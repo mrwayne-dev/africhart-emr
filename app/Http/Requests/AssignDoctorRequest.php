@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Enums\StaffRole;
+use App\Models\Staff;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -22,7 +23,16 @@ class AssignDoctorRequest extends FormRequest
             'assigned_doctor_id' => [
                 'required',
                 'integer',
-                Rule::exists('users', 'id')->where('role', StaffRole::Doctor->value),
+                /*
+                 * Staff::class, not the string 'staff'. Laravel resolves a
+                 * model class to its table, and the class reference is what
+                 * makes the next rename safe: this rule previously named
+                 * `users` as a string literal, so when that table was renamed
+                 * the grep for `User::` / `App\Models\User` matched nothing
+                 * and the rule survived the rename pointing at a table that no
+                 * longer existed. Every request that selected a doctor 500'd.
+                 */
+                Rule::exists(Staff::class, 'id')->where('role', StaffRole::Doctor->value),
             ],
         ];
     }
