@@ -334,11 +334,22 @@ mode that looks exactly like success.
       `ConsultationService.php:87`, `InvoiceService.php:167`
 - [ ] Consultation fee — `config/billing.php` → tenant settings
 - [ ] Drug catalogue — scope the existing `medications` table per tenant 🟡
-- [ ] 🔴 **Invite codes — HARD GATE BEFORE TENANT #2.** `.env` `REGISTER_CODE_*`
-      (`RegisterRequest.php:32`) → in-app, per-clinic, single-use, expiring.
-      They are global today: with two clinics, one code admits an admin to
-      **whichever clinic they happen to visit**. That is a cross-tenant
-      authentication hole, and A6 must not provision a second clinic until it closes
+- [x] ✅ **Invite codes — GATE CLOSED (Sprint 2, 2026-08-27).** The four global
+      `REGISTER_CODE_*` values and `/register` are **deleted**, not disabled.
+      Staff now join through `staff_invitations` in the **tenant** database:
+      admin-issued, single-use, 7-day expiry, revocable, token stored only as a
+      SHA-256 hash. Two holes closed, not one — the codes were global, *and* the
+      old form let the visitor pick their own role, so whoever held the admin
+      code chose to be an admin. Role now comes from the invitation record and
+      is never read from the request.
+      Cross-tenant rejection is **structural**: clinic A's invitation row does
+      not exist in clinic B's database, so there is no ownership check to get
+      wrong. Proved by `tests/Tenancy/InviteIsolationTest.php` (13 tests) —
+      including a revert-to-red run with the table moved to central, where B
+      duly accepted A's invitation (302, not 404).
+      ⚠️ Bootstrap: a clinic's FIRST admin cannot come from an invitation.
+      `php artisan clinic:invite` issues it from the CLI; **A4's `tenant:create`
+      should call this at the end of provisioning**
 - [ ] Brand-string sweep (architecture doc §7: must be complete **before tenant #2**)
 
 #### A3. Infrastructure ✅🟡 — remaining
@@ -350,6 +361,11 @@ mode that looks exactly like success.
 #### A4. Provisioning `[NEW]` ⬜
 - [ ] `php artisan tenant:create` — register, create + migrate DB, seed config, first
       admin user, assign subdomain, send setup link
+      - **The first admin must come from `php artisan clinic:invite` (built in Sprint 2).**
+        Self-registration is gone, and invitations are sent BY an admin — so a freshly
+        provisioned clinic has nobody who can invite anyone. `tenant:create` should call
+        `clinic:invite <subdomain> <owner email> --role=admin` as its last step; until it
+        does, that command is run by hand and is the only way into a new clinic
 - [ ] ⚠️ **Enforce the reserved-subdomain blocklist.** `config('tenancy.reserved_subdomains')`
       exists and is read NOWHERE. ARCHITECTURE §3.3/§8.5 requires it in sign-up validation
       *and* at provisioning — the second is what actually protects the system. Until then
@@ -431,6 +447,24 @@ Root domain is reassigned at project end (settled). Built behind that.
 - [ ] Legal certification is the Client's responsibility (SOW §9.3)
 
 ---
+
+## 5.1 Housekeeping — small, known, not yet done
+
+- [ ] ⚠️ **The default test command tests nothing.** `phpunit.xml` registers only
+      `tests/Unit` and `tests/Feature`, which between them hold Laravel's two stock
+      example tests. Every real test in this project lives in `tests/Tenancy/` and runs
+      only under `phpunit.tenancy.xml` (via `composer test:tenancy`), because it needs
+      real MySQL. So `php artisan test` reports green having exercised nothing — a trap
+      for anyone, including CI, who reasonably assumes otherwise. Either point the
+      default at the real suite or make it fail loudly with a pointer to `test:tenancy`
+- [ ] The tenancy suite **cannot be run twice concurrently**: both processes share
+      `africhart_testing` and the `africhart_testtenant_` prefix, and teardown drops
+      databases BY PREFIX — so a second run deletes the first run's tenants mid-test.
+      It surfaces as unrelated-looking random failures. A lock file, or a per-process
+      prefix, would remove the foot-gun
+- [ ] `docs/WALKTHROUGH.md` still references the deleted `database/schema/*.sql` dumps
+      (~line 1318) and the removed `REGISTER_CODE_*` config (~line 1065). Left alone in
+      Sprint 2 only because the file had unrelated uncommitted edits at the time
 
 ## 6. Paystack — architecture to be designed
 

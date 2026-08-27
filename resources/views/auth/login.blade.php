@@ -56,9 +56,13 @@
         </form>
 
         <div class="mt-6 pt-5 border-t border-line flex flex-col gap-2 text-center">
+            {{-- No link: joining a clinic is not something you can start from
+                 here any more. An invitation arrives by email with a link that
+                 carries its own credential, so there is no page to send someone
+                 to and nothing for them to type. --}}
             <p class="text-sm text-muted">
-                Joining a clinic already on AfriChart?
-                <a href="{{ route('register') }}" class="text-ink font-medium hover:underline">Use your invite code</a>
+                Joining a clinic already on AfriChart? Your administrator sends you
+                an invitation by email.
             </p>
             <p class="text-sm text-muted">
                 New clinic?

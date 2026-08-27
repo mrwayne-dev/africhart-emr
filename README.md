@@ -33,7 +33,6 @@ Route → Controller → Service (business logic) → Repository (DB queries) �
    - database credentials (`DB_DATABASE=africhart_emr`, `DB_USERNAME`, `DB_PASSWORD`)
    - mail (SMTP) credentials for verification / reset emails — note `MAIL_ENCRYPTION=ssl`
      for port 465, and `MAIL_FROM_ADDRESS` must be an address your SMTP account owns
-   - registration invite codes (`REGISTER_CODE_ADMIN`, `REGISTER_CODE_DOCTOR`)
 5. `php artisan key:generate`
 6. Create the database: `mysql -u root -p -e "CREATE DATABASE africhart_emr;"`
 7. `php artisan migrate --seed`
@@ -151,10 +150,16 @@ Seeded accounts (pre-verified, so they skip email verification):
 | Nurse        | nurse@africhart.com    | password |
 | Receptionist | reception@africhart.com| password |
 
-New accounts can also self-register at `/register`, but only with the matching
-**invite code** for the chosen role (set in `.env` as `REGISTER_CODE_ADMIN` /
-`REGISTER_CODE_DOCTOR` / `REGISTER_CODE_NURSE` / `REGISTER_CODE_RECEPTIONIST`).
-After registering, the user verifies their email with a 6-digit code sent to their inbox.
+**There is no self-registration.** A clinic's first admin is created with the clinic;
+everyone else is invited by an admin from **Staff → Send invitation**. The invitee gets
+an email with a single-use link (`/invite/{token}`, valid 7 days) where they set their
+own password. The role is fixed by the admin who sent the invitation and is read from
+the invitation record, never from the form — so it cannot be changed by the person
+accepting. Because the invitation lives in the clinic's own database, a link issued by
+one clinic is simply not found on another.
+
+This replaced four `REGISTER_CODE_*` values in `.env`: one code per role for the whole
+server, shared by every clinic and never expiring.
 
 ## REST API
 

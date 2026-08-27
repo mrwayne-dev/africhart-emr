@@ -2,6 +2,9 @@
 
 @section('title', 'Reset password — AfriChart EMR')
 
+{{-- The URL contains a password-reset token: never canonicalised, never indexed. --}}
+@section('private-url', '1')
+
 @section('content')
     <div class="bg-page border border-line rounded-card p-8">
         <div class="mb-6">
