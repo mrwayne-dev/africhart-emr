@@ -63,20 +63,30 @@ wayne open africhart-emr
 > commands above after every `wayne serve`.** No-sudo alternative for local dev:
 > `chmod -R 777 storage bootstrap/cache`.
 
-## Database dumps
+## Database setup
 
-Ready-to-import SQL lives in `database/schema/`:
+There is no SQL dump to import. Since A1 the application runs **two kinds of
+database** and a single-file dump cannot express that:
 
-| File | Contents |
+| | |
 |---|---|
-| `africhart_emr.sql` | Full dump — structure **+ demo data** (4 users, 25 patients, 12 consultations + prescriptions + invoices, a live queue, audit log, migration rows). Import this for an instant working demo. |
-| `africhart_emr-structure.sql` | Structure only (empty tables). |
+| **Central** | One database: the clinic registry, plans, jobs, sessions, cache |
+| **Tenant** | One database *per clinic*, holding all clinical data |
 
-Import (no `CREATE DATABASE` in the file, so pick the target DB yourself):
 ```bash
-mysql -u <user> -p <database> < database/schema/africhart_emr.sql
+php artisan migrate          # central schema only
+php artisan db:seed --class=Database\\Seeders\\PlanSeeder
 ```
-Regenerate after schema changes: `mysqldump -u root -p --no-tablespaces --add-drop-table africhart_emr > database/schema/africhart_emr.sql`.
+
+Tenant databases are **provisioned, not imported**. Creating a `Clinic` fires
+`TenantCreated`, which runs `CreateDatabase` then `MigrateDatabase` (see
+`app/Providers/TenancyServiceProvider.php`), so a new clinic's database is
+created and migrated for you. `php artisan tenants:list` shows what exists, and
+`tenants:migrate` brings every clinic up to date after a new tenant migration.
+
+> The old `database/schema/africhart_emr.sql` dumps were removed in A1. They
+> described the pre-tenancy schema — one database with a `users` table — so
+> importing one would have rebuilt exactly the layout the rename replaced.
 
 ## Deployment (live server — shared hosting / cPanel)
 
@@ -109,8 +119,8 @@ Set DB + mail + invite-code values. **No trailing spaces** in values, and quote 
 special characters (e.g. `DB_PASSWORD="..."`). Then `php artisan key:generate` if `APP_KEY`
 is blank.
 
-**4. Database.** Import `database/schema/africhart_emr.sql` via phpMyAdmin/CLI, **or**
-`php artisan migrate --seed`.
+**4. Database.** `php artisan migrate` for the central schema, then seed plans. Tenant
+databases are provisioned per clinic — see **Database setup** above.
 
 **5. Permissions & web root.**
 ```bash
