@@ -2,8 +2,14 @@
 
 namespace Tests\Tenancy;
 
+use App\Enums\StaffRole;
+use App\Models\AuditLog;
 use App\Models\Clinic;
+use App\Models\Consultation;
+use App\Models\Invoice;
+use App\Models\Patient;
 use App\Models\Plan;
+use App\Models\Staff;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -97,6 +103,13 @@ abstract class TenancyTestCase extends TestCase
         $clinic = Clinic::create(array_merge([
             'name' => Str::headline($subdomain).' Clinic',
             'subdomain' => $subdomain,
+            /*
+             * Derived from the subdomain so every test clinic gets a DISTINCT
+             * prefix without each test having to think about it — which is what
+             * makes the identifier-collision tests meaningful rather than
+             * accidental. Tests that care pass their own.
+             */
+            'id_prefix' => Str::upper(Str::substr(preg_replace('/[^a-z0-9]/', '', $subdomain), 0, 4)),
             'plan' => 'clinic',
             'status' => 'active',
             'owner_name' => 'Owner '.$subdomain,
@@ -106,7 +119,7 @@ abstract class TenancyTestCase extends TestCase
         $database = $clinic->database()->getName();
 
         $this->assertStringStartsWith(
-            $this->testPrefix(),
+            $this->tenantDatabasePrefix(),
             $database,
             'A provisioned test tenant must carry the test prefix, or teardown will not drop it.',
         );
@@ -125,25 +138,25 @@ abstract class TenancyTestCase extends TestCase
      * databases are shared.
      *
      * @return array{staff:int, patient:int, consultation:int, invoice:int, audit:int}
-     *         the primary keys, so another tenant's context can try to reach them
+     *                                                                                 the primary keys, so another tenant's context can try to reach them
      */
     protected function seedClinicalRecords(Clinic $clinic, int $patients = 3): array
     {
         return $this->inTenant($clinic, function () use ($clinic, $patients) {
             $sub = $clinic->subdomain;
 
-            $staff = \App\Models\Staff::create([
+            $staff = Staff::create([
                 'name' => ucfirst($sub).' Doctor',
                 'email' => "doctor@{$sub}.test",
                 'password' => 'password123',
-                'role' => \App\Enums\StaffRole::Doctor,
+                'role' => StaffRole::Doctor,
             ]);
             $staff->forceFill(['email_verified_at' => now()])->save();
 
             $firstPatient = null;
 
             for ($i = 1; $i <= $patients; $i++) {
-                $patient = \App\Models\Patient::create([
+                $patient = Patient::create([
                     'patient_id' => strtoupper($sub)."-P-{$i}",
                     'full_name' => ucfirst($sub)." Patient {$i}",
                     'date_of_birth' => '1990-01-01',
@@ -156,7 +169,7 @@ abstract class TenancyTestCase extends TestCase
                 $firstPatient ??= $patient;
             }
 
-            $consultation = \App\Models\Consultation::create([
+            $consultation = Consultation::create([
                 'patient_id' => $firstPatient->id,
                 'doctor_id' => $staff->id,
                 'chief_complaint' => "{$sub} complaint",
@@ -165,7 +178,7 @@ abstract class TenancyTestCase extends TestCase
                 'consultation_id' => strtoupper($sub).'-C-1',
             ]);
 
-            $invoice = \App\Models\Invoice::create([
+            $invoice = Invoice::create([
                 'patient_id' => $firstPatient->id,
                 'consultation_id' => $consultation->id,
                 'created_by' => $staff->id,
@@ -175,11 +188,11 @@ abstract class TenancyTestCase extends TestCase
                 'status' => 'issued',
             ]);
 
-            $audit = \App\Models\AuditLog::create([
+            $audit = AuditLog::create([
                 'staff_id' => $staff->id,
                 'user_name' => $staff->name,
                 'action' => 'created',
-                'model_type' => \App\Models\Patient::class,
+                'model_type' => Patient::class,
                 'model_id' => $firstPatient->id,
                 'description' => "{$sub} registered a patient",
             ]);
@@ -206,7 +219,17 @@ abstract class TenancyTestCase extends TestCase
         }
     }
 
-    protected function testPrefix(): string
+    /**
+     * NOT named testPrefix().
+     *
+     * Pint's php_unit_method_casing fixer treats any method whose name starts
+     * with "test" as a test case and rewrites it to snake_case — it renamed the
+     * declaration and left all four call sites pointing at the old name, which
+     * broke the class outright. One of those call sites is the guard in
+     * dropDatabase() that stops this suite deleting a database without the test
+     * prefix, so the failure mode was not merely a broken test run.
+     */
+    protected function tenantDatabasePrefix(): string
     {
         return (string) config('tenancy.database.prefix');
     }
@@ -228,11 +251,11 @@ abstract class TenancyTestCase extends TestCase
     private function assertUsingTestDatabase(): void
     {
         $central = $this->centralDatabase();
-        $prefix = $this->testPrefix();
+        $prefix = $this->tenantDatabasePrefix();
 
         if ($central !== 'africhart_testing' || ! str_contains($prefix, 'testtenant')) {
             $this->fail(
-                "Refusing to run: tenancy tests drop databases and must use the dedicated test "
+                'Refusing to run: tenancy tests drop databases and must use the dedicated test '
                 ."configuration. Central is [{$central}] and the tenant prefix is [{$prefix}]. "
                 .'Run with: composer test:tenancy'
             );
@@ -266,7 +289,7 @@ abstract class TenancyTestCase extends TestCase
 
     protected function existingTestDatabases(): array
     {
-        $prefix = $this->testPrefix();
+        $prefix = $this->tenantDatabasePrefix();
 
         /*
          * information_schema, not `SHOW DATABASES LIKE ?`. SHOW is not a
@@ -287,7 +310,7 @@ abstract class TenancyTestCase extends TestCase
     {
         // Belt and braces: never drop anything without the test prefix, even if
         // it somehow reached the provisioned list.
-        if (! str_starts_with($database, $this->testPrefix())) {
+        if (! str_starts_with($database, $this->tenantDatabasePrefix())) {
             return;
         }
 

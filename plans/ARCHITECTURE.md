@@ -311,16 +311,16 @@ rewriting `tokenable_type`, or a `Relation::enforceMorphMap()` alias. **Recommen
 It fixes it permanently and stops the class name being a database value at all — which is the
 underlying defect, and it will bite again at the next rename otherwise.
 
-### 8.4 Items A2 will move — ⬜ STILL OUTSTANDING
+### 8.4 Items A2 will move — ✅ DONE 2026-08-28
 
 None of these belong to A1, but all become **wrong** the moment a second clinic exists:
 
 | Item | Where | Becomes |
 |---|---|---|
-| `ACH-` ID prefix | `PatientService.php:115`, `ConsultationService.php:87`, `InvoiceService.php:167` | Per-tenant setting. Two clinics would otherwise mint identical patient IDs |
-| Consultation fee | `config/billing.php:14`, read at `InvoiceService.php:44` | Per-tenant setting |
+| ~~`ACH-` ID prefix~~ ✅ | `PatientService`, `ConsultationService`, `InvoiceService` | **Done 2026-08-28** — now `tenant()->idPrefix()`. Central `clinics.id_prefix`, UNIQUE, **not** a tenant setting: see §12 |
+| ~~Consultation fee~~ ✅ | `config/billing.php:14` | **Done** — tenant `settings.consultation_fee`, with the old config value kept as the fallback so an unconfigured clinic bills the default rather than zero |
 | Invite codes | `config/registration.php:16-20`, four `.env` values, one per role, never expiring | Per-clinic, single-use, expiring invite records |
-| Drug catalogue | `medications` table | Already DB-backed; needs tenant scoping |
+| ~~Drug catalogue~~ ✅ | `medications` table | **Was already correct** — the migration has been in the tenant set all along, and `medications` is absent from central. Confirmed against both live databases and now pinned by a test, since "already scoped" was a claim rather than evidence |
 
 > The invite codes are the urgent one. They are **global and shared across the entire install**:
 > today one code admits an admin to the only clinic. With two clinics and no change, the same code
@@ -399,6 +399,17 @@ so the corrections are not silently absorbed.
 | 3 | §4.1 names the column `database` | stancl reads `tenancy_db_name` — its internal-key convention | Column renamed to match the package's contract |
 | 4 | §3.1 lists central domains | They were a hardcoded list beside `root_domain` and drifted the moment it changed, leaving every tenant route unreachable | `central_domains` is now DERIVED from `root_domain` |
 | 5 | D2's rationale: stancl defaults to single-DB | v3's *published config* is already multi-database. What misleads is its **tutorials**, which demonstrate single-DB with a `tenant_id` column | Decision unchanged; rationale corrected |
+
+### A2 corrected the design once more
+
+| # | The design said | Reality | Consequence |
+|---|---|---|---|
+| 6 | §4.2: the tenant `settings` table holds the **ID prefix** | Wrong home. The whole point of the prefix is that two clinics must not mint the same identifier — and nothing inside clinic A's database can see clinic B's, so two clinics could both choose `ACH` and the collision would survive the fix | `id_prefix` moved to central `clinics` behind a **UNIQUE index**, which is the only place distinctness can be enforced rather than hoped for. The fee and the clinic's contact details stayed in tenant `settings`, where nothing needs to be unique |
+
+> The same reasoning as the invitations table, run in the opposite direction. There, the fact
+> belonged in the tenant database because that made cross-tenant reach impossible. Here it belongs
+> in central because that makes cross-tenant *collision* impossible. In both cases the rule is:
+> store the fact where the constraint you need can actually exist.
 
 ### Two traps worth carrying into A2/A4
 

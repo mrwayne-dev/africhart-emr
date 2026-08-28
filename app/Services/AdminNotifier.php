@@ -105,6 +105,17 @@ class AdminNotifier
      */
     private function send(AdminActivity $notification, ?int $excludeStaffId = null): void
     {
+        /*
+         * Stamped here, in the one funnel every caller passes through, rather
+         * than at the six construction sites above. Six places to remember is
+         * five chances to forget, and forgetting is invisible: the mail still
+         * sends, just without saying which clinic it came from.
+         *
+         * Read now, while we are certainly in the clinic's context — not in the
+         * queued toMail(), which runs in a worker.
+         */
+        $notification->clinicName ??= tenant('name');
+
         try {
             $admins = Staff::where('role', 'admin')
                 ->when($excludeStaffId, fn ($q) => $q->where('id', '!=', $excludeStaffId))

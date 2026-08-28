@@ -79,12 +79,23 @@ class ConsultationService extends BaseService
     }
 
     /**
-     * Generate a unique consultation ID: ACH-C-YYYYMMDD-XXXX
+     * Generate a unique consultation ID: <CLINIC>-C-YYYYMMDD-XXXX
      */
     private function generateConsultationId(): string
     {
         $today = now()->format('Ymd');
-        $prefix = "ACH-C-{$today}-";
+        /*
+         * The prefix is the CLINIC's, from the central registry — not the
+         * hardcoded "ACH". Two clinics previously minted identical identifiers:
+         * verified live, where Hope (7 patients) and Grace (3) both generated
+         * ACH-{DATE}-0001, because the counter is scoped to each clinic's own
+         * database while the prefix was scoped to nothing.
+         *
+         * It lives on `clinics` behind a UNIQUE index rather than in tenant
+         * settings, because distinctness across clinics is the whole point and
+         * nothing inside one clinic's database can enforce it.
+         */
+        $prefix = tenant()->idPrefix()."-C-{$today}-";
 
         $todayCount = $this->consultationRepository->countByConsultationIdPrefix($prefix);
         $sequence = str_pad($todayCount + 1, 4, '0', STR_PAD_LEFT);

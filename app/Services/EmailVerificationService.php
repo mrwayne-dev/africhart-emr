@@ -21,7 +21,7 @@ class EmailVerificationService
             ),
         ])->save();
 
-        $user->notify(new EmailVerificationCode($code));
+        $user->notify(new EmailVerificationCode($code, tenant('name')));
     }
 
     /**

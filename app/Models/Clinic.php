@@ -45,6 +45,7 @@ class Clinic extends BaseTenant implements TenantWithDatabase
             'id',
             'name',
             'subdomain',
+            'id_prefix',
             'tenancy_db_name',
             'status',
             'plan',
@@ -100,6 +101,38 @@ class Clinic extends BaseTenant implements TenantWithDatabase
                 throw InvalidSubdomainException::reserved($subdomain);
             }
         });
+
+        /*
+         * The identifier prefix is what stops two clinics minting the same
+         * patient and invoice numbers, so it must actually be present and
+         * usable. The UNIQUE index enforces distinctness; this enforces shape,
+         * because an empty or lowercase prefix would produce identifiers that
+         * look like a bug on a document a patient keeps.
+         */
+        static::saving(function (self $clinic) {
+            if (! $clinic->isDirty('id_prefix')) {
+                return;
+            }
+
+            $prefix = (string) $clinic->id_prefix;
+
+            if (! preg_match('/^[A-Z0-9]{2,12}$/', $prefix)) {
+                throw new \InvalidArgumentException(
+                    "The clinic identifier prefix [{$prefix}] must be 2-12 uppercase letters or digits. "
+                    .'It appears on patient IDs and invoice numbers.'
+                );
+            }
+        });
+    }
+
+    /**
+     * The prefix this clinic's patient, consultation and invoice identifiers
+     * carry. Falls back to the old global value ONLY so that a half-migrated
+     * environment fails visibly at the unique index rather than fatally here.
+     */
+    public function idPrefix(): string
+    {
+        return (string) ($this->id_prefix ?: 'ACH');
     }
 
     public function planDetails(): BelongsTo

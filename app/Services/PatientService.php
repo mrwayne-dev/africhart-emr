@@ -107,12 +107,23 @@ class PatientService extends BaseService
     }
 
     /**
-     * Generate a unique patient ID: ACH-YYYYMMDD-XXXX
+     * Generate a unique patient ID: <CLINIC>-YYYYMMDD-XXXX
      */
     private function generatePatientId(): string
     {
         $today = now()->format('Ymd');
-        $prefix = "ACH-{$today}-";
+        /*
+         * The prefix is the CLINIC's, from the central registry — not the
+         * hardcoded "ACH". Two clinics previously minted identical identifiers:
+         * verified live, where Hope (7 patients) and Grace (3) both generated
+         * ACH-{DATE}-0001, because the counter is scoped to each clinic's own
+         * database while the prefix was scoped to nothing.
+         *
+         * It lives on `clinics` behind a UNIQUE index rather than in tenant
+         * settings, because distinctness across clinics is the whole point and
+         * nothing inside one clinic's database can enforce it.
+         */
+        $prefix = tenant()->idPrefix()."-{$today}-";
 
         $todayCount = $this->patientRepository->countByPatientIdPrefix($prefix);
         $sequence = str_pad($todayCount + 1, 4, '0', STR_PAD_LEFT);

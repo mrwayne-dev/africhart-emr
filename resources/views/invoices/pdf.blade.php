@@ -28,7 +28,27 @@
     <div class="header">
         <table class="row">
             <tr>
-                <td><span class="brand">AfriChart EMR</span></td>
+                {{--
+                    The ISSUING CLINIC, not the software vendor.
+
+                    This block previously read "AfriChart EMR" and named the
+                    clinic nowhere at all — on the one document a patient keeps,
+                    and may hand to an HMO or an insurer. With a second clinic on
+                    the system, two invoices from two different practices were
+                    indistinguishable.
+
+                    AfriChart's own name stays in the footer, where a "generated
+                    by" credit belongs.
+                --}}
+                <td>
+                    <span class="brand">{{ $clinicName }}</span>
+                    @if ($clinicAddress)
+                        <div class="muted">{{ $clinicAddress }}</div>
+                    @endif
+                    @if ($clinicPhone || $clinicEmail)
+                        <div class="muted">{{ collect([$clinicPhone, $clinicEmail])->filter()->implode(' · ') }}</div>
+                    @endif
+                </td>
                 <td class="right">
                     <h1>INVOICE</h1>
                     <div class="muted">{{ $invoice->invoice_number }}</div>

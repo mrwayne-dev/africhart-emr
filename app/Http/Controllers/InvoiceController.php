@@ -9,6 +9,7 @@ use App\Http\Requests\UpdateInvoiceRequest;
 use App\Models\Consultation;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
+use App\Models\Setting;
 use App\Services\AdminNotifier;
 use App\Services\InvoiceService;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -132,7 +133,19 @@ class InvoiceController extends BaseController
 
         $invoice->load(['patient', 'consultation', 'createdBy', 'items']);
 
-        $pdf = Pdf::loadView('invoices.pdf', compact('invoice'));
+        /*
+         * Passed in rather than read from the view: dompdf renders outside the
+         * request lifecycle, and a template reaching for tenant() is a template
+         * that silently produces the wrong clinic's letterhead if it is ever
+         * rendered from a queue or a command.
+         */
+        $pdf = Pdf::loadView('invoices.pdf', [
+            'invoice' => $invoice,
+            'clinicName' => tenant('name'),
+            'clinicAddress' => Setting::get(Setting::CLINIC_ADDRESS),
+            'clinicPhone' => Setting::get(Setting::CLINIC_PHONE),
+            'clinicEmail' => Setting::get(Setting::CLINIC_EMAIL),
+        ]);
 
         return $pdf->download("Invoice-{$invoice->invoice_number}.pdf");
     }

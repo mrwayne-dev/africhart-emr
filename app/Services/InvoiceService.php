@@ -7,8 +7,10 @@ use App\Models\Consultation;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Models\Medication;
+use App\Models\Setting;
 use App\Repositories\InvoiceRepository;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
 class InvoiceService extends BaseService
@@ -41,7 +43,7 @@ class InvoiceService extends BaseService
         // Consultation fee as the first item.
         $this->addItem($invoice, [
             'description' => 'Consultation Fee',
-            'unit_price' => config('billing.consultation_fee'),
+            'unit_price' => $this->consultationFee(),
             'quantity' => 1,
             'category' => 'service',
         ]);
@@ -67,7 +69,7 @@ class InvoiceService extends BaseService
     /**
      * Build a lowercased name => default_price map for the given medication names.
      *
-     * @param  \Illuminate\Support\Collection<int, string>  $names
+     * @param  Collection<int, string>  $names
      * @return array<string, float>
      */
     private function catalogPrices($names): array
@@ -159,12 +161,38 @@ class InvoiceService extends BaseService
     }
 
     /**
-     * Generate a unique invoice number: ACH-INV-YYYYMMDD-XXXX
+     * This clinic's own consultation fee.
+     *
+     * Was config('billing.consultation_fee') — one value for the entire server,
+     * so every clinic billed the same amount whatever it actually charges.
+     *
+     * The old config value survives as the FALLBACK, deliberately: a clinic
+     * that has not set a fee yet must bill the platform default, never zero. A
+     * null coalescing to 0.0 would put a free consultation on a real invoice.
+     */
+    public function consultationFee(): float
+    {
+        return (float) Setting::get(Setting::CONSULTATION_FEE, config('billing.consultation_fee'));
+    }
+
+    /**
+     * Generate a unique invoice number: <CLINIC>-INV-YYYYMMDD-XXXX
      */
     private function generateInvoiceNumber(): string
     {
         $today = now()->format('Ymd');
-        $prefix = "ACH-INV-{$today}-";
+        /*
+         * The prefix is the CLINIC's, from the central registry — not the
+         * hardcoded "ACH". Two clinics previously minted identical identifiers:
+         * verified live, where Hope (7 patients) and Grace (3) both generated
+         * ACH-{DATE}-0001, because the counter is scoped to each clinic's own
+         * database while the prefix was scoped to nothing.
+         *
+         * It lives on `clinics` behind a UNIQUE index rather than in tenant
+         * settings, because distinctness across clinics is the whole point and
+         * nothing inside one clinic's database can enforce it.
+         */
+        $prefix = tenant()->idPrefix()."-INV-{$today}-";
 
         $todayCount = $this->invoiceRepository->countByInvoiceNumberPrefix($prefix);
         $sequence = str_pad($todayCount + 1, 4, '0', STR_PAD_LEFT);
