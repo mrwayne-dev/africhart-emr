@@ -61,9 +61,19 @@ the current `444`, which is right for junk hostnames but wrong for a mistyped cl
 ### 3.3 Reserved subdomains
 
 Clinic sign-up **must reject** these, because each either already resolves to central
-infrastructure or will be needed. Enforced in validation at sign-up *and* as a uniqueness
-constraint at provisioning — the second is what actually protects the system, since the first can
-be bypassed.
+infrastructure or will be needed. Enforced in validation at sign-up *and* at provisioning — the
+second is what actually protects the system, since the first can be bypassed.
+
+> ✅ **Done — Sprint 2, 2026-08-27.** The list was read by nothing for the whole of A1: a clinic
+> claiming `api` provisioned cleanly, database and all, which was demonstrated before it was
+> fixed. Enforcement now sits on the **`Clinic` model** (`saving`, so renames are caught too),
+> not in a provisioning command — because `tenant:create` is not the only way a clinic is born.
+> Seeders, tinker, the isolation suite and every future admin screen all go through
+> `Clinic::create()`, so the guard belongs where they all pass. `App\Tenancy\Subdomain` is the
+> single definition of what a valid address is; `App\Rules\UsableClinicSubdomain` applies it to
+> the sign-up form. The reserved set is the configured list **plus** every label sitting in front
+> of a central domain — derived for the same reason `central_domains` is derived from
+> `root_domain`, since a static list beside a derived one is exactly what drifted before.
 
 ```
 www, admin, app, api, mail, support, staff, help, status, blog
@@ -317,12 +327,25 @@ None of these belong to A1, but all become **wrong** the moment a second clinic 
 > admits an admin to *whichever clinic they happen to visit*. That is a cross-tenant
 > authentication hole, and it must close before tenant #2 — not before tenant #10.
 
-### 8.5 Marketing sign-up already feeds this — ⬜ blocklist STILL NOT ENFORCED
+### 8.5 Marketing sign-up already feeds this — ✅ blocklist NOW ENFORCED
 
 `marketing_leads` (central, built) collects clinic name, owner name, email, phone, city and chosen
 plan — the exact inputs `tenant:create` needs. The sign-up form already previews the subdomain from
 the clinic name. **The reserved-subdomain blocklist (§3.3) must be added to that form's
 validation**, since it currently previews any name at all.
+
+> ✅ **Done.** `UsableClinicSubdomain` validates the address the entered NAME would produce, since
+> the form has no subdomain field of its own. It deliberately does **not** check availability:
+> telling a public form that a subdomain is taken confirms a clinic exists at that name, which is
+> precisely the enumeration find-your-clinic refuses to do. The reserved list leaks nothing —
+> it is static config, identical for every visitor. Uniqueness stays with the unique index at
+> provisioning, where an operator can actually resolve a collision.
+>
+> The preview and the server derive the address in two languages that cannot share code, so a
+> test executes the view's **real JavaScript in node** and compares it to the PHP for the same
+> inputs. That found a shared bug: truncating at 40 characters can cut on a hyphen, leaving a
+> trailing one that the server would then reject as malformed — a long, legitimate clinic name
+> failing with a message about letters and numbers. Both sides now trim after truncating.
 
 ---
 
@@ -389,9 +412,10 @@ so the corrections are not silently absorbed.
 
 ### Still outstanding from this document
 
-- **§3.3 / §8.5 — the reserved-subdomain blocklist is enforced NOWHERE.**
-  `config('tenancy.reserved_subdomains')` exists and is read by nothing. It must gate
-  sign-up validation *and* provisioning. Belongs with A4.
+- ~~**§3.3 / §8.5 — the reserved-subdomain blocklist is enforced NOWHERE.**~~ ✅ **Closed
+  Sprint 2, 2026-08-27.** Enforced on the `Clinic` model and in sign-up validation; 10 tests,
+  including a revert-to-red run where removing the guard let `www` be provisioned and let an
+  existing clinic be renamed onto `api`.
 - **§8.4 — the A2 items are untouched**, and the invite codes among them are a
   cross-tenant authentication hole the moment a second clinic exists.
 - **§9 — `tenant:create` is not built.** The create+migrate pipeline it wraps already

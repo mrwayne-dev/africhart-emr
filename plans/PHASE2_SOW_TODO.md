@@ -366,10 +366,19 @@ mode that looks exactly like success.
         provisioned clinic has nobody who can invite anyone. `tenant:create` should call
         `clinic:invite <subdomain> <owner email> --role=admin` as its last step; until it
         does, that command is run by hand and is the only way into a new clinic
-- [ ] ⚠️ **Enforce the reserved-subdomain blocklist.** `config('tenancy.reserved_subdomains')`
-      exists and is read NOWHERE. ARCHITECTURE §3.3/§8.5 requires it in sign-up validation
-      *and* at provisioning — the second is what actually protects the system. Until then
-      a clinic could claim `admin` or `api`
+- [x] ✅ **Reserved-subdomain blocklist — GATE CLOSED (Sprint 2, 2026-08-27).** It really was
+      read nowhere: `Clinic::create(['subdomain' => 'api'])` provisioned a clinic and its
+      database cleanly, demonstrated before the fix. Now enforced on the **`Clinic` model**
+      (`saving`, so a rename onto a reserved label is caught too) — not in a provisioning
+      command, because seeders, tinker, the test suite and every future admin screen all reach
+      `Clinic::create()` without passing through one. Plus `UsableClinicSubdomain` on the
+      sign-up form, which validates the address the clinic NAME would produce.
+      Reserved = the configured list **+** every label in front of a central domain, derived
+      rather than duplicated. 10 tests, with a revert-to-red run: removing the guard let `www`
+      be provisioned and let an existing clinic be renamed onto `api`.
+      Deliberately NOT checked at sign-up: availability. Saying "that address is taken" on a
+      public form confirms a clinic exists at that name — the enumeration find-your-clinic
+      exists to avoid. Uniqueness stays with the unique index at provisioning
 - [ ] ⚠️ **Do NOT run `TenantDatabaseSeeder` for a real clinic** — it seeds demo patients.
       A real clinic is provisioned empty apart from its own configuration
 - [ ] Idempotent, with rollback on partial failure

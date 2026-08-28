@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Exceptions\InvalidSubdomainException;
+use App\Tenancy\Subdomain;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Stancl\Tenancy\Contracts\TenantWithDatabase;
 use Stancl\Tenancy\Database\Concerns\HasDatabase;
@@ -58,6 +60,46 @@ class Clinic extends BaseTenant implements TenantWithDatabase
         return [
             'trial_ends_at' => 'datetime',
         ];
+    }
+
+    /**
+     * The reserved-subdomain blocklist, enforced where it cannot be skipped.
+     *
+     * ARCHITECTURE §3.3 asks for this in sign-up validation AND at provisioning,
+     * and is explicit that the second is what actually protects the system
+     * "since the first can be bypassed". This is that second layer.
+     *
+     * It lives on the model rather than in the provisioning command because
+     * `tenant:create` is not the only way a clinic is born: seeders, tinker, the
+     * isolation suite and every future admin screen all go through
+     * Clinic::create(). A check in the command would guard one door in a
+     * building with several — the same reasoning that put staff_invitations in
+     * the tenant database instead of writing an ownership comparison.
+     *
+     * `saving`, not `creating`: renaming an existing clinic onto a reserved
+     * label is the same mistake arriving later, and it would be worse — the
+     * clinic already has staff, records and a bookmarked address.
+     *
+     * Verified before this existed: a clinic claiming `api` provisioned cleanly,
+     * database and all, with `api` sitting in the reserved list the whole time.
+     */
+    protected static function booted(): void
+    {
+        static::saving(function (self $clinic) {
+            if (! $clinic->isDirty('subdomain')) {
+                return;
+            }
+
+            $subdomain = (string) $clinic->subdomain;
+
+            if (! Subdomain::isWellFormed($subdomain)) {
+                throw InvalidSubdomainException::malformed($subdomain);
+            }
+
+            if (Subdomain::isReserved($subdomain)) {
+                throw InvalidSubdomainException::reserved($subdomain);
+            }
+        });
     }
 
     public function planDetails(): BelongsTo

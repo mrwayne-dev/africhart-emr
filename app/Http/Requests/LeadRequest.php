@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Rules\UsableClinicSubdomain;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -35,7 +36,20 @@ class LeadRequest extends FormRequest
         $isContact = $this->is('contact');
 
         return [
-            'clinic_name' => [$isContact ? 'nullable' : 'required', 'string', 'min:2', 'max:255'],
+            /*
+             * On sign-up the clinic name is not just a label — it becomes the
+             * clinic's web address, and the form shows the visitor that address
+             * as they type. So the name is validated against what it would
+             * produce (ARCHITECTURE §3.3/§8.5): the form previewed `api` or
+             * `admin` quite happily before this.
+             *
+             * Demo and Contact are conversations, not provisioning, so the name
+             * there is only ever a label and the rule would be noise.
+             */
+            'clinic_name' => array_filter([
+                $isContact ? 'nullable' : 'required', 'string', 'min:2', 'max:255',
+                $this->is('signup') ? new UsableClinicSubdomain : null,
+            ]),
             'contact_name' => ['required', 'string', 'min:2', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255'],
             'phone' => ['required', 'string', 'max:30', 'regex:/^[0-9+\-\s()]{7,}$/'],

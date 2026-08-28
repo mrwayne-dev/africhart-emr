@@ -114,6 +114,16 @@
                         <div x-ref="panel2" x-show="step === 2" class="space-y-5">
                             <div x-data="{
                                 clinic: @js(old('clinic_name', $clinic) ?? ''),
+                                /*
+                                 * Mirrors App\Tenancy\Subdomain::from(). The two
+                                 * cannot share code, so a test asserts they agree —
+                                 * if they drift, this preview promises an address
+                                 * the server will not grant.
+                                 *
+                                 * Note the SECOND hyphen trim: slicing at 40 can cut
+                                 * on a hyphen, and a trailing one is not a valid
+                                 * hostname label.
+                                 */
                                 get slug() {
                                     return this.clinic
                                         .toLowerCase()
@@ -121,6 +131,7 @@
                                         .replace(/[^a-z0-9]+/g, '-')
                                         .replace(/^-+|-+$/g, '')
                                         .slice(0, 40)
+                                        .replace(/-+$/, '')
                                 },
                             }">
                                 <x-marketing-field name="clinic_name" label="Clinic name"
