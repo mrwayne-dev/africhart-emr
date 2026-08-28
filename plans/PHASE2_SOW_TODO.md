@@ -3,7 +3,7 @@
 **Source:** SCOPE OF WORK — AfriChart EMR SaaS Platform (Phase 2), Ref `ACT-DEV-006`
 **Architecture:** *AfriChart EMR — SaaS Scaling Architecture & Roadmap* (see [§7 reconciliation](#7-architecture-doc--what-is-now-out-of-date) — parts of it are now out of date)
 **Updated:** 2026-08-25 · **Sprint 0 · B3 · A1 all complete**
-**Latest report:** [`PHASE2_PROGRESS_2026-08-25.md`](PHASE2_PROGRESS_2026-08-25.md)
+**Latest report:** [`PHASE2_PROGRESS_2026-08-28.md`](PHASE2_PROGRESS_2026-08-28.md)
 **Companions:** `plans/africhart-platform-spec-public-ui-plans.md` · `~/Documents/wayne/vps/wayneVPS-SETUP.md` · `~/Documents/wayne/vps/africhart-smoke-deploy.md`
 
 Legend: ✅ done · 🟡 partial · ⬜ not started · ⚠️ decision needed
