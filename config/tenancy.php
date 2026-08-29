@@ -204,7 +204,25 @@ return [
         'disks' => [
             'local',
             'public',
-            // 's3',
+
+            /*
+             * s3 is the OFF-SITE BACKUP destination, and it must be listed here
+             * or per-tenant isolation stops at the edge of the box.
+             *
+             * On disk each clinic's archive already lands in its own directory,
+             * because this bootstrapper suffixes storage_path(). The S3 disk is
+             * not suffixed unless it appears in this list, so with s3 commented
+             * out every clinic's archive is written to the SAME bucket path and
+             * kept apart only by the filename the backup command happens to
+             * choose. One prefix, every clinic's data — the off-site copy would
+             * be less isolated than the local one it exists to protect.
+             *
+             * Laravel passes a disk's `root` to the S3 adapter as the key
+             * prefix, so listing s3 here gives each clinic `tenant<uuid>/` of
+             * its own in the bucket, mirroring the on-disk layout exactly and
+             * letting a restore (or a scoped credential) address one clinic.
+             */
+            's3',
         ],
 
         /**
