@@ -1,6 +1,6 @@
 # AfriChart EMR — SaaS Architecture
 
-**Status:** A1 **BUILT and accepted** (2026-08-25). Design locked 2026-08-23; §12 records where implementation corrected the design. Supersedes the earlier *SaaS Scaling Architecture & Roadmap*, which
+**Status:** A1, A2, A4 and A6 **BUILT and accepted** — A1 2026-08-25, A2 2026-08-28, A4 and A6 (Phase A infrastructure, proven on production) 2026-08-29. Design locked 2026-08-23; §12 records where implementation corrected the design. Supersedes the earlier *SaaS Scaling Architecture & Roadmap*, which
 was written before the VPS existed and has drifted (see §10).
 **Written:** 2026-08-23 · **Revised:** 2026-08-25 · **Repo at:** `11872c0`
 **Companions:** [`PHASE2_SOW_TODO.md`](PHASE2_SOW_TODO.md) · [`PHASE2_PROGRESS_2026-08-22.md`](PHASE2_PROGRESS_2026-08-22.md)

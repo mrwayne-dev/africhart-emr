@@ -2,7 +2,7 @@
 
 **Source:** SCOPE OF WORK — AfriChart EMR SaaS Platform (Phase 2), Ref `ACT-DEV-006`
 **Architecture:** *AfriChart EMR — SaaS Scaling Architecture & Roadmap* (see [§7 reconciliation](#7-architecture-doc--what-is-now-out-of-date) — parts of it are now out of date)
-**Updated:** 2026-08-25 · **Sprint 0 · B3 · A1 all complete**
+**Updated:** 2026-08-29 · **Phase A infrastructure COMPLETE** — Sprint 0 · B3 · A1 · A2 · A3 · A4 · A6 done; A5 has two gates left
 **Latest report:** [`PHASE2_PROGRESS_2026-08-28.md`](PHASE2_PROGRESS_2026-08-28.md)
 **Companions:** `plans/africhart-platform-spec-public-ui-plans.md` · `~/Documents/wayne/vps/wayneVPS-SETUP.md` · `~/Documents/wayne/vps/africhart-smoke-deploy.md`
 
@@ -91,11 +91,11 @@ accommodate it.
 | SOW item | | Status | Where it stands |
 |---|---|---|---|
 | **A1** | Tenancy architecture `[NEW]` | ✅ | **COMPLETE 2026-08-25.** Built and through the acceptance gate — 28 tests, 143 assertions, two real tenants |
-| **A2** | Per-tenant configuration | 🟡 | Unblocked by A1. ⚠️ **Invite codes are a hard gate before tenant #2** — see A2 below |
-| **A3** | VPS infrastructure `[NEW]` | 🟡 **~90%** | Only off-site backup destination outstanding — deferred to Google Drive/`rclone`, pre-A6 gate |
-| **A4** | Provisioning command `[NEW]` | ⬜ | **Unblocked.** The create+migrate pipeline already runs; `tenant:create` wraps it |
-| **A5** | Backups | 🟡 | Per-clinic backup, cleanup and monitoring all built and verified by contents; silence detection wired through `/up`. **Two pre-A6 gates left: run the restore drill for real, and wire the off-site destination** |
-| **A6** | Tenant #1 | ⬜ | **Unblocked.** Fresh stand-up. ⚠️ Gated on the A2 invite-code fix |
+| **A2** | Per-tenant configuration | ✅ | **COMPLETE 2026-08-28.** ID prefix, consultation fee, catalogue scoping, clinic identity on documents, and the invite-code gate all closed. Only the brand-string sweep remains, which is a B4 feature, not a gate |
+| **A3** | VPS infrastructure `[NEW]` | ✅ | **COMPLETE 2026-08-29.** Stack stood up and proven by the A6 cutover: nginx wildcard vhost, wildcard TLS, PHP-FPM, MySQL with a least-privilege tenancy user, Redis, Supervisor, cron. Off-site object storage is **deferred by decision**, not outstanding work — it is now an A5 gate |
+| **A4** | Provisioning command `[NEW]` | ✅ | **COMPLETE 2026-08-29** (`9e2e4b8`). `tenant:create` — preflight, blocklist, starter data with no demo fixtures, first-admin invite. **Rollback proven** by forcing a mid-provision migration failure and confirming by contents that nothing was left behind |
+| **A5** | Backups | 🟡 | Per-clinic backup, cleanup and monitoring built and verified by contents, on the production box as well as locally; silence detection wired through `/up`. **Two gates left — now PRE-REAL-CLINIC, not pre-A6**, since A6 completed on throwaway clinics: run the restore drill for real, and wire the off-site destination |
+| **A6** | Tenant #1 | ✅ | **COMPLETE 2026-08-29** — infrastructure milestone. `main` deployed to `/var/www/africhart-emr`, two throwaway clinics (`alpha`, `bravo`) provisioned through the real `tenant:create`, **isolation proven on the public `:443`**, smoke deploy torn down behind a verified dump. ⚠️ Onboarding a **real** first clinic is separate and still gated on the two A5 items |
 | **B1** | Subscription & billing `[NEW]` | ⬜ | Architecture to be designed (§6) |
 | **B2** | Plans, gating & metering `[NEW]` | ⬜ | Tiers designed, nothing built |
 | **B3** | Public marketing site `[NEW]` | ✅ | **Complete 2026-08-22** — 10 pages + 3 legal docs. See `PHASE2_PROGRESS_2026-08-22.md` |
@@ -557,6 +557,19 @@ Root domain is reassigned at project end (settled). Built behind that.
 - [ ] Billing-state screens (trial ending, payment failed, read-only lockout)
 
 #### B5. Super-admin panel `[NEW]` ⬜
+- [ ] ⚠️ **Get Started promises an email nobody sends — and nobody is told.**
+      `POST /signup` writes one `marketing_leads` row and flashes a toast. That is the
+      whole action: `MarketingLead` appears in exactly two places in `app/` — the import
+      and the `create()` — with no observer, listener or notification. Meanwhile the page
+      says *"Where we send your login details"*, *"we will set your clinic up and send
+      login details shortly"*, and *"we create your clinic … and email you the link"*.
+      **No route or view surfaces leads either**, so a submission is visible only by
+      querying the database — the promise depends on an operator noticing a row that
+      nothing tells them about. Two fixes, both belong here:
+      (a) an **operator notification** on lead creation, and
+      (b) **honest copy** — "we'll be in touch" rather than "email you the link" —
+      until self-serve provisioning actually exists.
+      Investigated 2026-08-29; deliberately not fixed in that pass.
 - [ ] Clinic list + subscription status · provision/suspend
 - [ ] Impersonation — **audited and tightly access-controlled**
 - [ ] Platform metrics (needs the aggregation layer — see §6)
@@ -706,29 +719,51 @@ Architecture doc → central registry → users→staff rename → subdomain ide
 per-request switching → migration split → scheduler → **isolation suite** (28 tests,
 143 assertions, sabotage-tested)
 
-**Sprint 2 — A2 + A3 remainder + A4** ← **NEXT**
-Invite codes FIRST (the hard gate) → ID prefix, fee, catalogue scoping → off-site
-backups *(unblocks the moment credentials arrive)* → `tenant:create` with the reserved
-blocklist and rollback
+**~~Sprint 2 — A2 + A3 remainder + A4~~ ✅ COMPLETE 2026-08-29**
+Invite codes (the hard gate) → ID prefix, fee, catalogue scoping → `tenant:create` with
+the reserved blocklist and rollback. Off-site backups moved out of this sprint by
+decision rather than being finished in it — see the gates below.
 
-**Sprint 3 — A6 → Phase A acceptance**
-Tenant #1 fresh → second clinic → prove isolation → per-tenant backups + restore →
-tear down the smoke deploy
-
-**Sprint 4 — B4 + the last two Tier-2 pages** (the §6.1 ₦200,000 line item; B3 half already done)
-Setup wizard → Settings hub → find-your-clinic + invite acceptance (buildable once A1/A2 land)
-
-**Sprint 5 — B1 + B2**
-Paystack architecture agreed (§6) → subscriptions → webhooks → dunning → gating + metering
-
-**Sprint 6 — B5 + B6 + B7 → Phase B acceptance**
-Super-admin → telemetry → DPA + isolation guarantee
-
-**Timeline:** SOW estimates Phase A at ~3–4 weeks from kickoff. A3 at ~90% and the
-migration dependency removed pull that in materially. A1 remains the long pole, and the
-isolation test suite should not be compressed — it is what the entire commercial
-proposition rests on.
+**~~Sprint 3 — A6 → Phase A infrastructure acceptance~~ ✅ COMPLETE 2026-08-29**
+main deployed to the real VPS → two throwaway clinics via `tenant:create` → isolation
+proven on the public `:443` (cross-tenant sessions rejected, cross-clinic invites 404,
+independent identifiers, per-tenant encrypted backups, monitor catching a removed
+archive, silence firing `/up`) → smoke deploy torn down behind a verified dump.
 
 ---
 
-*Updated 2026-08-21 after Sprint 0. Repo at `10721b2` (branch `fix/sprint-0-hardening`).*
+### What is actually next
+
+**1. The pre-real-clinic gates — A5.** ⚠️ **CLIENT-BLOCKED** on the backup account.
+Nothing else should cross the real-data threshold until both are closed:
+  - **Off-site backup destination** — Google Drive via `rclone`, a free destination. A
+    lost VPS is currently a lost backup. Acceptable now (throwaway clinics, no real
+    patient data); not acceptable for a real clinic.
+  - **Execute the restore drill for real** on an AES-encrypted archive. The documented
+    procedure was `unzip`-based and could not have worked; the doc is corrected but a
+    corrected doc is a claim, not evidence.
+
+**2. The PHP/MySQL timezone skew.** Surfaced during the A6 cutover — PHP runs UTC while
+the MySQL session runs `+02:00`. Nothing observed breaks today, because every timestamp
+in play is written by PHP, but a SQL-side default would disagree with an
+application-written one by two hours in the same row. **This is an audit-trail integrity
+issue and must close before real patient data.** Tracked under *Post-A6* below.
+
+**3. Phase B.** In this order:
+  - **B4 — Settings hub** first; the groundwork exists (tenant `settings` table, the
+    per-clinic values A2 shipped), so this is the cheapest real progress.
+  - **B1 + B2 — billing.** The **nine Paystack architecture questions in §6 must be
+    worked through before any billing code is written.** The gateway is locked; the
+    design is not.
+  - **B5 + B6 + B7** — super-admin → telemetry → DPA + isolation guarantee.
+
+**Timeline:** Phase A infrastructure is complete. What remains before a real clinic is
+not development time but two backup gates, one of which is blocked on the Client. The
+isolation suite should still not be compressed — it is what the entire commercial
+proposition rests on, and it is now the evidence behind a claim made on production.
+
+---
+
+*Updated 2026-08-29 after the A6 cutover. Repo at `d5d89e9` (branch `main`).*
+
+*Note: there is no progress report for A6 yet — the latest is `PHASE2_PROGRESS_2026-08-28.md`, which predates the cutover. A6 is recorded here and in the commit history (`9e2e4b8` A4, `d5d89e9` A6 notes).*
