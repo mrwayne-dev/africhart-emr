@@ -92,9 +92,9 @@ accommodate it.
 |---|---|---|---|
 | **A1** | Tenancy architecture `[NEW]` | ✅ | **COMPLETE 2026-08-25.** Built and through the acceptance gate — 28 tests, 143 assertions, two real tenants |
 | **A2** | Per-tenant configuration | 🟡 | Unblocked by A1. ⚠️ **Invite codes are a hard gate before tenant #2** — see A2 below |
-| **A3** | VPS infrastructure `[NEW]` | 🟡 **~90%** | Only off-site object storage outstanding |
+| **A3** | VPS infrastructure `[NEW]` | 🟡 **~90%** | Only off-site backup destination outstanding — deferred to Google Drive/`rclone`, pre-A6 gate |
 | **A4** | Provisioning command `[NEW]` | ⬜ | **Unblocked.** The create+migrate pipeline already runs; `tenant:create` wraps it |
-| **A5** | Backups | 🟡 | Live, encrypted, restore rehearsed. **Per-clinic backups now built and verified by archive contents.** Off-site still blocked on credentials |
+| **A5** | Backups | 🟡 | Per-clinic backup, cleanup and monitoring all built and verified by contents; silence detection wired through `/up`. **Two pre-A6 gates left: run the restore drill for real, and wire the off-site destination** |
 | **A6** | Tenant #1 | ⬜ | **Unblocked.** Fresh stand-up. ⚠️ Gated on the A2 invite-code fix |
 | **B1** | Subscription & billing `[NEW]` | ⬜ | Architecture to be designed (§6) |
 | **B2** | Plans, gating & metering `[NEW]` | ⬜ | Tiers designed, nothing built |
@@ -202,9 +202,12 @@ Measured **44 MB per worker** with 6.9 GB available, then budgeted ~1.8 GB:
 
 ### 2.6 Sprint 0 items NOT done, and why
 
-- **Off-site backup storage** — needs Contabo Object Storage credentials, which only
-  the Client holds. Backups are currently **local to the box**, which means a lost VPS
-  is a lost backup. This is the single most important remaining Sprint 0 item.
+- **Off-site backup storage** — **DEFERRED, not dropped, and no longer client-blocked.**
+  Contabo Object Storage credentials were never issued; the plan is now a **free
+  destination (Google Drive via `rclone`)**, which removes the dependency on the Client
+  entirely. Backups remain **local to the box**, so a lost VPS is a lost backup.
+  Acceptable only while there is no real patient data — this is a **pre-A6 gate**,
+  tracked under A5.
 
 ---
 
@@ -396,7 +399,9 @@ mode that looks exactly like success.
       Substantially the same work as the A2 ID-prefix bullet above — do them together.
 
 #### A3. Infrastructure ✅🟡 — remaining
-- [ ] ⚠️ **Off-site backup storage** (Contabo Object Storage) — needs Client credentials
+- [ ] ⚠️ **Off-site backup storage — DEFERRED to a free destination (Google Drive via
+      `rclone`), no longer Contabo Object Storage and no longer blocked on client
+      credentials.** Pre-A6 gate — tracked in full under A5
 - [ ] Central vs tenant MySQL user/permission model
 - [ ] Script the deploy (currently documented, not automated)
 - [ ] Repoint scheduler + vhost when the real app root replaces the smoke deploy
@@ -432,11 +437,43 @@ mode that looks exactly like success.
 - [x] ~~Per-clinic backups once A1 lands~~ **Done** — `tenants:backup` iterates clinics
       and writes one archive each, verified by extracting them and counting rows
       (`hope` archive: 2 Hope rows / 0 Grace; `grace`: the reverse)
-- [ ] Off-site destination (blocked on credentials)
-- [ ] Re-rehearse restore **per tenant** after A1
-- [ ] Monitor for scheduler silence
+- [x] ~~Monitor for scheduler silence~~ **Done (Sprint 2, 2026-08-29).**
+      `tenants:backup-monitor` asserts a recent archive EXISTS per clinic (the disk,
+      not the run log), is scheduled at 03:00, and is itself listed in
+      `schedule:audit`'s expectations so its own silence alarms through `/up`.
+      `tenants:backup-clean` likewise prunes per clinic — both previously acted on the
+      empty central disk and succeeded nightly while doing nothing
+
+- [ ] 🔴 **PRE-A6 GATE — execute the restore drill for real, per tenant.**
+      Not "read the runbook and agree it looks right": actually run it, end to end, on a
+      real **AES-encrypted** archive, and confirm the restored database holds that
+      clinic's data and no other's.
+      **Why this is a gate and not a chore:** the documented procedure was wrong in a way
+      that would have failed exactly when it was needed. It said `unzip`, and Info-ZIP
+      **cannot read WinZip AES archives at all** — the same trap as Sprint 0, where this
+      project's first encryption check "passed" only because `unzip` was not installed.
+      The doc is corrected (`docs/BACKUPS_AND_OPS.md` now says `7z`), but a corrected
+      doc is a claim, not evidence. **A6 must run a restore, not trust the doc.**
+
+- [ ] 🔴 **PRE-A6 GATE — off-site backup destination. DEFERRED, NOT DROPPED.**
+      No longer Contabo Object Storage / blocked on client credentials: the plan is a
+      **free destination — Google Drive via `rclone`**. Nothing is wired today.
+      **A lost VPS is currently a lost backup.** That is acceptable only while there is
+      no real data, which is true now and stops being true at tenant #1.
+      **Must close before A6 stands up the first real clinic.**
+      Groundwork already in place: `league/flysystem-aws-s3-v3` installed, and `s3`
+      listed in `config/tenancy.php` under `filesystem.disks` so any S3-compatible
+      destination is per-clinic prefixed rather than every clinic sharing one path
 
 #### A6. Tenant #1 — fresh stand-up ⬜
+
+> ⚠️ **Two A5 items gate this section — see A5 above.** Both are cheap to skip and
+> expensive to have skipped, because each one's failure mode is silence:
+> 1. **Run the restore drill for real** on an AES-encrypted archive. The documented
+>    procedure was `unzip`-based and could not have worked.
+> 2. **Wire the off-site destination** (Google Drive via `rclone`). Until then a lost
+>    VPS is a lost backup — fine with no real data, not fine with tenant #1's.
+
 - [ ] Provision AfriChart's own clinic as Tenant #1 using `tenant:create`
 - [ ] Provision a second throwaway clinic and **prove isolation between them**
 - [ ] Tear down the smoke deploy (`/var/www/africhart-smoke`, its DB and user)
