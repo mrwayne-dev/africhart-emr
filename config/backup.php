@@ -224,13 +224,29 @@ return [
      * the `Spatie\Backup\Notifications\Notifications` classes.
      */
     'notifications' => [
+        /*
+         * FAILURES notify. SUCCESSES do not.
+         *
+         * These events fire once per CLINIC, because backup, cleanup and
+         * monitoring all iterate tenants. Leaving the success notifications on
+         * means one mail per clinic per night for each of the three tasks — at
+         * two clinics that is six mails a day saying nothing happened, and it
+         * scales linearly with signups. Nobody reads the seventh day of that,
+         * which is how the one that says "FAILED" gets read as noise too.
+         *
+         * The positive signal is not absent, it moved: schedule:audit asserts
+         * that each task HAS succeeded recently and alerts on silence, and /up
+         * exposes the same question to an external monitor. That is a better
+         * "it worked" than a nightly mail, because it also fires when the mail
+         * would simply never have been sent.
+         */
         'notifications' => [
             BackupHasFailedNotification::class => ['mail'],
             UnhealthyBackupWasFoundNotification::class => ['mail'],
             CleanupHasFailedNotification::class => ['mail'],
-            BackupWasSuccessfulNotification::class => ['mail'],
-            HealthyBackupWasFoundNotification::class => ['mail'],
-            CleanupWasSuccessfulNotification::class => ['mail'],
+            BackupWasSuccessfulNotification::class => [],
+            HealthyBackupWasFoundNotification::class => [],
+            CleanupWasSuccessfulNotification::class => [],
         ],
 
         /*

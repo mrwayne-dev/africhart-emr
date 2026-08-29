@@ -3,6 +3,8 @@
 use App\Console\Commands\AuditScheduler;
 use App\Console\Commands\AuditTrials;
 use App\Console\Commands\BackupTenants;
+use App\Console\Commands\CleanupTenantBackups;
+use App\Console\Commands\MonitorTenantBackups;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
@@ -45,10 +47,37 @@ Schedule::command(BackupTenants::class)
     ->runInBackground()
     ->appendOutputTo(storage_path('logs/tenant-backups.log'));
 
-// --- Central housekeeping for spatie's own bookkeeping (runs once) ---
-Schedule::command('backup:clean')
+/*
+ * --- Per-tenant: prune each clinic's archives ---
+ *
+ * Was `backup:clean`, central and once. That pruned the central directory,
+ * which is empty — every archive is per-tenant — so it reported "Cleanup
+ * completed!" nightly while every clinic's directory grew without bound.
+ */
+Schedule::command(CleanupTenantBackups::class)
     ->dailyAt('01:30')
-    ->withoutOverlapping(30);
+    ->withoutOverlapping(30)
+    ->runInBackground()
+    ->appendOutputTo(storage_path('logs/tenant-backups.log'));
+
+/*
+ * --- Per-tenant: does a recent archive actually EXIST? ---
+ *
+ * Runs AFTER the backup, and asks the disk rather than the run log. schedule:audit
+ * below asks whether the backup task REPORTED success; this asks whether it
+ * actually produced something. A run that says ✓ while writing nothing passes the
+ * first check and fails this one, which is the exact failure this project has
+ * already met twice.
+ *
+ * `backup:monitor` alone looked at the central directory and reported "there are
+ * no backups of this application at all" while every clinic had one — and it was
+ * not scheduled at all, while the docs said it ran here at 03:00.
+ */
+Schedule::command(MonitorTenantBackups::class)
+    ->dailyAt('03:00')
+    ->withoutOverlapping(30)
+    ->runInBackground()
+    ->appendOutputTo(storage_path('logs/tenant-backups.log'));
 
 // --- Central, once: read the registry, report on trials ---
 Schedule::command(AuditTrials::class)

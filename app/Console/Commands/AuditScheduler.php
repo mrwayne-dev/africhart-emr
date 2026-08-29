@@ -49,6 +49,21 @@ class AuditScheduler extends Command
     {
         return [
             BackupTenants::TASK => 26,
+
+            /*
+             * The monitor is itself monitored. It is the check that asks whether
+             * a real archive exists on disk, so it going quiet would restore
+             * exactly the blind spot it was written to remove — and it would do
+             * so invisibly, because a monitor that never runs never complains.
+             */
+            MonitorTenantBackups::TASK => 26,
+
+            /*
+             * Cleanup silence is slower but not harmless: unpruned archives fill
+             * the disk, and a full disk stops the backups it shares a volume with.
+             */
+            CleanupTenantBackups::TASK => 26,
+
             AuditTrials::TASK => 26,
         ];
     }
