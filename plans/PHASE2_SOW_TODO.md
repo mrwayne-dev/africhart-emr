@@ -465,7 +465,43 @@ mode that looks exactly like success.
       listed in `config/tenancy.php` under `filesystem.disks` so any S3-compatible
       destination is per-clinic prefixed rather than every clinic sharing one path
 
-#### A6. Tenant #1 — fresh stand-up ⬜
+#### A6. Tenant #1 — fresh stand-up 🟡 — infrastructure PROVEN 2026-08-29
+
+- [x] ~~Deploy current main to the real VPS~~ **Done 2026-08-29.** `/var/www/africhart-emr`,
+      main `9e2e4b8`. Central DB `africhart_central`; app DB user `africhart` holds
+      least privilege — `CREATE, DROP ON *.*` plus full rights only on
+      `africhart_central` and the `africhart\_tenant\_%` pattern
+- [x] ~~Two throwaway clinics via the real `tenant:create`~~ **alpha / bravo**, provisioned
+      as www-data, each with 0 patients / 0 staff and the 10-drug starter catalogue
+- [x] ~~Prove isolation on the real box~~ On the public `:443`: cross-tenant sessions
+      rejected (302 to the other clinic's own login) while each session works at its own
+      clinic (200); invites 200 at their clinic and 404 at the other, both directions;
+      independent `ALPH-…-0001` / `BRAV-…-0001` identifiers; per-tenant AES-256 backups
+      each containing only their own database; the monitor catching a removed archive;
+      silence firing `/up` 500 → 200
+- [x] ~~Tear down the smoke deploy~~ `africhart_smoke` database + MySQL user dropped and
+      `/var/www/africhart-smoke` removed, after a verified 63KB safety dump
+      (`/root/africhart_smoke_pre-cutover.sql`, copy at `/var/www/`)
+
+- [ ] ⚠️ **Provision AfriChart's own clinic as the real Tenant #1.** NOT done — alpha and
+      bravo are throwaway test clinics on a development-phase box with no real patient
+      data. **The two A5 gates below must close before this**, because this is the step
+      that crosses the real-data threshold
+
+#### Post-A6 — found during the A6 cutover
+
+- [ ] 🔶 **PHP/MySQL timezone skew.** PHP runs UTC while the MySQL session is `+02:00`:
+      `now()` returned `21:47` against `SELECT NOW()` of `23:47` on the same box.
+      Nothing observed broke — every timestamp in play is written by PHP — but a column
+      taking a SQL-side default (`CURRENT_TIMESTAMP`) would disagree with an
+      application-written one by two hours in the same row.
+      **This matters for audit-trail integrity**, which is exactly the thing that has to
+      be trustworthy when it is questioned. Close before real patient data.
+
+- [ ] Remove the four obsolete `REGISTER_CODE_*` keys from any other environment they
+      survive in — they were stripped from the VPS `.env` at cutover
+
+#### A6 (continued) — original checklist ⬜
 
 > ⚠️ **Two A5 items gate this section — see A5 above.** Both are cheap to skip and
 > expensive to have skipped, because each one's failure mode is silence:
