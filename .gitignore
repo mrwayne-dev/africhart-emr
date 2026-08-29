@@ -20,6 +20,11 @@
 /public/storage
 /storage/*.key
 /storage/pail
+# Per-tenant storage roots. stancl's filesystem bootstrapper suffixes
+# storage_path() during tenancy, so each clinic's uploads AND its encrypted
+# backup archives land here. Committing one would put a clinic's database dump
+# in the repository — a `git add -A` away.
+/storage/tenant*/
 /vendor
 _ide_helper.php
 Homestead.json
