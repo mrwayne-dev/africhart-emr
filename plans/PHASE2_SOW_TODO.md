@@ -3,7 +3,7 @@
 **Source:** SCOPE OF WORK — AfriChart EMR SaaS Platform (Phase 2), Ref `ACT-DEV-006`
 **Architecture:** *AfriChart EMR — SaaS Scaling Architecture & Roadmap* (see [§7 reconciliation](#7-architecture-doc--what-is-now-out-of-date) — parts of it are now out of date)
 **Updated:** 2026-08-29 · **Phase A infrastructure COMPLETE** — Sprint 0 · B3 · A1 · A2 · A3 · A4 · A6 done; A5 has two gates left
-**Latest report:** [`PHASE2_PROGRESS_2026-08-28.md`](PHASE2_PROGRESS_2026-08-28.md)
+**Latest report:** [`PHASE2_PROGRESS_2026-08-29.md`](PHASE2_PROGRESS_2026-08-29.md)
 **Companions:** `plans/africhart-platform-spec-public-ui-plans.md` · `~/Documents/wayne/vps/wayneVPS-SETUP.md` · `~/Documents/wayne/vps/africhart-smoke-deploy.md`
 
 Legend: ✅ done · 🟡 partial · ⬜ not started · ⚠️ decision needed
@@ -766,4 +766,4 @@ proposition rests on, and it is now the evidence behind a claim made on producti
 
 *Updated 2026-08-29 after the A6 cutover. Repo at `d5d89e9` (branch `main`).*
 
-*Note: there is no progress report for A6 yet — the latest is `PHASE2_PROGRESS_2026-08-28.md`, which predates the cutover. A6 is recorded here and in the commit history (`9e2e4b8` A4, `d5d89e9` A6 notes).*
+*A4, the Part 4 backup work and A6 are covered by [`PHASE2_PROGRESS_2026-08-29.md`](PHASE2_PROGRESS_2026-08-29.md) — report #4, written against `97aadf9`, which closed the gap where that record was commit history alone.*
