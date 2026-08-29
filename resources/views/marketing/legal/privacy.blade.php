@@ -12,7 +12,7 @@
             [
                 'heading' => 'Who we are',
                 'body' => [
-                    'AfriChart is operated by AfriChart Technologies, based in Port Harcourt, Rivers State, Nigeria. We build and run the AfriChart clinic-management platform.',
+                    'AfriChart is operated by AfriChart Technologies Limited (RC 9782826), a company incorporated in Nigeria under the Companies and Allied Matters Act 2020 and based in Port Harcourt, Rivers State. We build and run the AfriChart clinic-management platform.',
                     'Under the Nigeria Data Protection Act 2023 (NDPA), the clinic using AfriChart is the data controller for its patient records — it decides what to collect and why. We are the data processor: we hold and process that data only on the clinic\'s instruction. For your clinic\'s own account and billing information, we are the controller.',
                 ],
             ],

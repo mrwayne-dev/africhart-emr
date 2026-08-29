@@ -38,6 +38,15 @@ class MarketingController extends BaseController
         return view('marketing.about');
     }
 
+    /**
+     * Legal hub: who the contracting entity is, its CAC registration, and an
+     * index of the three governing documents — which previously had none.
+     */
+    public function legal(): View
+    {
+        return view('marketing.legal.index');
+    }
+
     public function privacy(): View
     {
         return view('marketing.legal.privacy');

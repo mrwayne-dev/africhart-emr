@@ -6,16 +6,19 @@
      * source and cannot drift apart.
      *
      * Four middle items: Features, Company, Pricing, Contact. Company is the
-     * only dropdown — its items go to four unrelated destinations, which is what
-     * a dropdown is for. The others are single pages and stay plain links.
+     * only dropdown — its items go to unrelated destinations, which is what a
+     * dropdown is for. The others are single pages and stay plain links.
+     *
+     * Privacy and Terms were separate entries until /legal existed. They now
+     * sit behind it: a menu that lists two of three governing documents and
+     * omits the third was an index pretending not to be one.
      */
     $links = [
         ['label' => 'Features', 'route' => 'features'],
         ['label' => 'Company', 'menu' => [
             ['label' => 'About', 'desc' => 'Built in Port Harcourt', 'icon' => 'phosphor-users-three', 'href' => route('about')],
             ['label' => 'Book a demo', 'desc' => 'See it on your workflow', 'icon' => 'phosphor-envelope-simple', 'href' => route('demo')],
-            ['label' => 'Privacy', 'desc' => 'How we handle data', 'icon' => 'phosphor-lock-key', 'href' => route('legal.privacy')],
-            ['label' => 'Terms', 'desc' => 'Terms of service', 'icon' => 'phosphor-shield-check', 'href' => route('legal.terms')],
+            ['label' => 'Legal', 'desc' => 'Company registration & documents', 'icon' => 'phosphor-scales', 'href' => route('legal.index')],
         ]],
         ['label' => 'Pricing', 'route' => 'pricing'],
         ['label' => 'Contact', 'route' => 'contact'],

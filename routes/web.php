@@ -29,6 +29,7 @@ Route::controller(MarketingController::class)->group(function () {
     Route::get('/features', 'features')->name('features');
     Route::get('/pricing', 'pricing')->name('pricing');
     Route::get('/about', 'about')->name('about');
+    Route::get('/legal', 'legal')->name('legal.index');
     Route::get('/privacy', 'privacy')->name('legal.privacy');
     Route::get('/terms', 'terms')->name('legal.terms');
     Route::get('/data-processing', 'dataProcessing')->name('legal.dpa');

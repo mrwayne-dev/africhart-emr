@@ -49,6 +49,7 @@
                     ['Find your clinic', 'find-clinic'],
                 ],
                 'Legal' => [
+                    ['Company information', 'legal.index'],
                     ['Privacy', 'legal.privacy'],
                     ['Terms', 'legal.terms'],
                     ['Data processing', 'legal.dpa'],
@@ -72,8 +73,16 @@
 
         {{-- Bottom bar --}}
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-12 pt-6 border-t border-line">
+            {{-- The registered name and RC number, on every page.
+
+                 Standard practice for a Nigerian limited company, and the
+                 cheapest trust signal available to a vendor asking clinics to
+                 hand over patient records: it is checkable against the CAC
+                 register without leaving the footer to look for it. --}}
             <p class="text-xs text-muted">
-                &copy; {{ now()->year }} AfriChart Technologies. All rights reserved.
+                &copy; {{ now()->year }} AfriChart Technologies Limited ·
+                <a href="{{ route('legal.index') }}" class="hover:text-ink transition-colors">RC 9782826</a>.
+                All rights reserved.
             </p>
             <p class="text-xs text-muted">
                 Built by <a href="https://mgbah.dev" rel="noopener"

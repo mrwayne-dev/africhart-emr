@@ -12,7 +12,7 @@
             [
                 'heading' => 'Parties and roles',
                 'body' => [
-                    'The clinic subscribing to AfriChart is the data controller. AfriChart Technologies, of Port Harcourt, Rivers State, Nigeria, is the data processor.',
+                    'The clinic subscribing to AfriChart is the data controller. AfriChart Technologies Limited (RC 9782826), of Port Harcourt, Rivers State, Nigeria, is the data processor.',
                     'This agreement is entered into under the Nigeria Data Protection Act 2023. It takes effect when your clinic workspace is created and lasts as long as we hold personal data on your behalf. No signature is needed; if your clinic requires a countersigned copy for its own records, email us and we will provide one.',
                 ],
             ],
