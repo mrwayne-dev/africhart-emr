@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
     'consultation_id',
     'patient_id',
     'prescribed_by',
+    'medication_id',
     'medication_name',
     'dosage',
     'frequency',
@@ -41,6 +42,30 @@ class Prescription extends Model
     public function patient(): BelongsTo
     {
         return $this->belongsTo(Patient::class);
+    }
+
+    /**
+     * The catalogue entry this was prescribed from, when there is one.
+     *
+     * Null is a legitimate state, not missing data: it means the drug is not in
+     * this clinic's catalogue and was prescribed as free text. Read the name
+     * through displayName() rather than assuming this relation exists.
+     */
+    public function medication(): BelongsTo
+    {
+        return $this->belongsTo(Medication::class);
+    }
+
+    /** Catalogue name when linked, otherwise what the doctor typed. */
+    public function displayName(): string
+    {
+        return $this->medication?->name ?? (string) $this->medication_name;
+    }
+
+    /** Was this chosen from the catalogue, or typed in? */
+    public function isFromCatalogue(): bool
+    {
+        return $this->medication_id !== null;
     }
 
     public function prescribedBy(): BelongsTo

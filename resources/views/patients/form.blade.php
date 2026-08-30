@@ -27,6 +27,22 @@
         @enderror
     </div>
 
+    {{-- Gender --}}
+    <div>
+        <label for="gender" class="block text-sm font-medium text-ink-body mb-2">Gender</label>
+        <select name="gender" id="gender"
+            class="w-full rounded-lg border border-line bg-white px-4 py-2.5 text-ink-body focus:border-brand focus:ring-2 focus:ring-brand/20">
+            <option value="">Prefer not to say</option>
+            @foreach (['female' => 'Female', 'male' => 'Male', 'other' => 'Other'] as $value => $label)
+                <option value="{{ $value }}" @selected(old('gender', $patient->gender ?? '') === $value)>{{ $label }}</option>
+            @endforeach
+        </select>
+        @error('gender')
+            <p class="mt-1.5 text-sm text-danger">{{ $message }}</p>
+        @enderror
+    </div>
+
+
     {{-- Phone --}}
     <div>
         <label for="phone" class="block text-sm font-medium text-ink-body mb-2">Phone Number</label>
@@ -70,4 +86,46 @@
             <p class="mt-2 text-sm text-accent">{{ $message }}</p>
         @enderror
     </div>
+
+    {{-- Emergency contact — who to call when the patient cannot speak for themselves --}}
+    <div class="sm:col-span-2 pt-2 mt-2 border-t border-line">
+        <h3 class="text-sm font-semibold text-ink-body mb-1">Emergency contact</h3>
+        <p class="text-xs text-ink-muted mb-4">Optional, but the first thing needed if this patient deteriorates.</p>
+
+        <div class="grid gap-4 sm:grid-cols-3">
+            <div>
+                <label for="emergency_contact_name" class="block text-sm font-medium text-ink-body mb-2">Name</label>
+                <input type="text" name="emergency_contact_name" id="emergency_contact_name"
+                    value="{{ old('emergency_contact_name', $patient->emergency_contact_name ?? '') }}"
+                    placeholder="e.g. Emeka Eze"
+                    class="w-full rounded-lg border border-line bg-white px-4 py-2.5 text-ink-body focus:border-brand focus:ring-2 focus:ring-brand/20">
+                @error('emergency_contact_name')
+                    <p class="mt-1.5 text-sm text-danger">{{ $message }}</p>
+                @enderror
+            </div>
+
+            <div>
+                <label for="emergency_contact_phone" class="block text-sm font-medium text-ink-body mb-2">Phone</label>
+                <input type="tel" name="emergency_contact_phone" id="emergency_contact_phone"
+                    value="{{ old('emergency_contact_phone', $patient->emergency_contact_phone ?? '') }}"
+                    placeholder="e.g. 08099887766"
+                    class="w-full rounded-lg border border-line bg-white px-4 py-2.5 text-ink-body focus:border-brand focus:ring-2 focus:ring-brand/20">
+                @error('emergency_contact_phone')
+                    <p class="mt-1.5 text-sm text-danger">{{ $message }}</p>
+                @enderror
+            </div>
+
+            <div>
+                <label for="emergency_contact_relationship" class="block text-sm font-medium text-ink-body mb-2">Relationship</label>
+                <input type="text" name="emergency_contact_relationship" id="emergency_contact_relationship"
+                    value="{{ old('emergency_contact_relationship', $patient->emergency_contact_relationship ?? '') }}"
+                    placeholder="e.g. Husband, sister, neighbour"
+                    class="w-full rounded-lg border border-line bg-white px-4 py-2.5 text-ink-body focus:border-brand focus:ring-2 focus:ring-brand/20">
+                @error('emergency_contact_relationship')
+                    <p class="mt-1.5 text-sm text-danger">{{ $message }}</p>
+                @enderror
+            </div>
+        </div>
+    </div>
+
 </div>

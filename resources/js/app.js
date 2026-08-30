@@ -222,7 +222,7 @@ Alpine.data('prescriptionForm', (presets = []) => ({
     loading: false,
     presets,
     blank() {
-        return { medication_name: '', dosage: '', frequency: '', duration: '', route: 'oral', instructions: '', quantity: '' };
+        return { medication_id: '', medication_name: '', dosage: '', frequency: '', duration: '', route: 'oral', instructions: '', quantity: '' };
     },
     items: [],
 
@@ -238,11 +238,27 @@ Alpine.data('prescriptionForm', (presets = []) => ({
         if (this.items.length > 1) this.items.splice(index, 1);
     },
 
-    // Fill dosage/frequency/route from a preset when the medication name matches.
+    /*
+     * Link to the catalogue when the name matches one, and fill the defaults.
+     *
+     * medication_id is what makes a prescription structured rather than a copied
+     * string, so it is set here and CLEARED when the name no longer matches —
+     * otherwise editing "Paracetamol" into "Paracetamol suspension" would keep
+     * pointing at the wrong catalogue row.
+     *
+     * A name with no match is not an error: it is an off-catalogue prescription,
+     * which stays free text and submits with an empty medication_id.
+     */
     applyPreset(index) {
         const name = (this.items[index].medication_name || '').trim().toLowerCase();
         const preset = this.presets.find((p) => p.name.toLowerCase() === name);
-        if (!preset) return;
+
+        if (!preset) {
+            this.items[index].medication_id = '';
+            return;
+        }
+
+        this.items[index].medication_id = preset.id;
         if (!this.items[index].dosage && preset.dosages?.length) this.items[index].dosage = preset.dosages[0];
         if (!this.items[index].frequency && preset.common_frequency) this.items[index].frequency = preset.common_frequency;
         if (preset.routes?.length) this.items[index].route = preset.routes[0];

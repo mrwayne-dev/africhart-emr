@@ -142,7 +142,7 @@ class ConsultationController extends BaseController
     {
         return Medication::active()
             ->orderBy('name')
-            ->get(['name', 'dosages', 'routes', 'common_frequency'])
+            ->get(['id', 'name', 'dosages', 'routes', 'common_frequency'])
             ->toArray();
     }
 

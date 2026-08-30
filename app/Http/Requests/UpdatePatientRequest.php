@@ -29,6 +29,10 @@ class UpdatePatientRequest extends FormRequest
             ],
             'blood_group' => ['required', new Enum(BloodGroup::class)],
             'allergies' => ['nullable', 'string', 'max:1000'],
+            'gender' => ['nullable', 'string', 'in:female,male,other'],
+            'emergency_contact_name' => ['nullable', 'string', 'max:255'],
+            'emergency_contact_phone' => ['nullable', 'string', 'max:20', 'regex:/^(\\+234|0)[789]\\d{9}$/'],
+            'emergency_contact_relationship' => ['nullable', 'string', 'max:50'],
         ];
     }
 

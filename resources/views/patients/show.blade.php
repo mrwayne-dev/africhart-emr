@@ -55,6 +55,14 @@
                     <x-detail-row label="Phone Number" :value="$patient->phone" />
                     <x-detail-row label="Blood Group" :value="$patient->blood_group->label()" />
                     <x-detail-row label="Known Allergies" :value="$patient->allergies ?: 'None recorded'" />
+                    <x-detail-row label="Gender" :value="$patient->gender ? ucfirst($patient->gender) : '—'" />
+                    {{-- Emergency contact: shown as one line, because a name without a
+                         number and a number without a name are both useless in the moment. --}}
+                    <x-detail-row label="Emergency Contact" :value="$patient->emergency_contact_name
+                        ? trim($patient->emergency_contact_name
+                            .($patient->emergency_contact_relationship ? ' ('.$patient->emergency_contact_relationship.')' : '')
+                            .($patient->emergency_contact_phone ? ' — '.$patient->emergency_contact_phone : ''))
+                        : 'None recorded'" />
                     <x-detail-row label="Registered By" :value="$patient->registeredBy?->name ?? '—'" />
                     <x-detail-row label="Registered On" :value="$patient->created_at->format('j F Y, g:i A')" />
                 </div>

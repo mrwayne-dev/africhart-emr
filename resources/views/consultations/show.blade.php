@@ -144,7 +144,12 @@
         @forelse ($consultation->prescriptions as $prescription)
             <div class="flex items-start justify-between py-3 border-b border-line last:border-0">
                 <div class="text-sm">
-                    <p class="text-ink font-medium">{{ $prescription->medication_name }} {{ $prescription->dosage }}</p>
+                    <p class="text-ink font-medium">
+                        {{ $prescription->displayName() }} {{ $prescription->dosage }}
+                        @unless ($prescription->isFromCatalogue())
+                            <span class="ml-1 text-xs font-normal text-muted" title="Not in this clinic's drug catalogue">· off-catalogue</span>
+                        @endunless
+                    </p>
                     <p class="text-muted">
                         {{ $prescription->route->label() }} · {{ $prescription->frequency }} · {{ $prescription->duration }}@if ($prescription->quantity) · Qty {{ $prescription->quantity }}@endif
                     </p>
@@ -184,6 +189,9 @@
 
                     <template x-for="(item, index) in items" :key="index">
                         <div class="grid grid-cols-1 sm:grid-cols-12 gap-2 mb-2 items-start">
+                            {{-- Carries the catalogue link when one was matched; empty for
+                                 an off-catalogue drug, which is a supported outcome. --}}
+                            <input type="hidden" :name="`items[${index}][medication_id]`" :value="item.medication_id">
                             <input type="text" :name="`items[${index}][medication_name]`" x-model="item.medication_name"
                                 @change="applyPreset(index)" list="medication-presets" placeholder="Medication" required
                                 class="sm:col-span-3 bg-warm rounded text-sm px-3 py-2 border border-transparent focus:bg-page focus:border-ink focus:outline-none">

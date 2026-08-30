@@ -13,9 +13,13 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 #[Fillable([
     'full_name',
     'date_of_birth',
+    'gender',
     'phone',
     'blood_group',
     'allergies',
+    'emergency_contact_name',
+    'emergency_contact_phone',
+    'emergency_contact_relationship',
     'patient_id',
     'registered_by',
 ])]

@@ -23,6 +23,18 @@ class StorePrescriptionRequest extends FormRequest
     {
         return [
             'items' => ['required', 'array', 'min:1'],
+            /*
+             * Catalogue-linked OR free text, by design.
+             *
+             * medication_id is optional and, when given, must be a real drug in
+             * THIS clinic's catalogue — exists: runs on the tenant connection,
+             * so it cannot reach another clinic's medications.
+             *
+             * medication_name stays required either way: it is what appears on
+             * the prescription, and for an off-catalogue drug it is the only
+             * record of what was prescribed.
+             */
+            'items.*.medication_id' => ['nullable', 'integer', 'exists:medications,id'],
             'items.*.medication_name' => ['required', 'string', 'max:255'],
             'items.*.dosage' => ['required', 'string', 'max:100'],
             'items.*.frequency' => ['required', 'string', 'max:100'],
