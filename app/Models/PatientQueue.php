@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\QueueStatus;
+use App\Traits\HasAuditTrail;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -28,6 +29,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 ])]
 class PatientQueue extends Model
 {
+    use HasAuditTrail;
+
     protected $table = 'patient_queue';
 
     protected function casts(): array
@@ -101,5 +104,64 @@ class PatientQueue extends Model
     public function scopeActive($query)
     {
         return $query->whereIn('status', [QueueStatus::Waiting, QueueStatus::InConsultation]);
+    }
+
+    /**
+     * What actually happened, in the words a clinic would use.
+     *
+     * The generic trait records created/updated/deleted. For the queue that is
+     * not enough: a check-in and a set of vitals are both "updated" rows to the
+     * database, but they are different clinical events performed by different
+     * people, and an audit trail that cannot tell them apart cannot answer the
+     * question it exists to answer.
+     *
+     * The queue was not audited AT ALL before this — which meant the nurse, whose
+     * entire contribution to a visit is recorded here, left no trace in the log.
+     * A whole clinical role was invisible.
+     *
+     * wasChanged() is available inside the `updated` event because Eloquent
+     * populates $changes during finishSave(), before the event fires.
+     */
+    public function auditDescription(string $action): string
+    {
+        $patient = $this->patient?->full_name ?? "patient #{$this->patient_id}";
+
+        if ($action === 'created') {
+            $doctor = $this->assignedDoctor?->name;
+
+            return $doctor
+                ? "Checked in {$patient} as #{$this->queue_number}, assigned to {$doctor}"
+                : "Checked in {$patient} as #{$this->queue_number}, no doctor assigned yet";
+        }
+
+        if ($action === 'deleted') {
+            return "Removed {$patient} from the queue";
+        }
+
+        // `updated` covers several distinct clinical events. Name the one that
+        // actually happened, most specific first.
+        if ($this->wasChanged('vitals_recorded_at') || $this->wasChanged(['temperature', 'blood_pressure', 'pulse_rate', 'weight', 'height', 'vitals_notes'])) {
+            $vitals = array_filter([
+                $this->temperature ? "temp {$this->temperature}C" : null,
+                $this->blood_pressure ? "BP {$this->blood_pressure}" : null,
+                $this->pulse_rate ? "pulse {$this->pulse_rate}" : null,
+            ]);
+
+            return "Recorded vitals for {$patient}".($vitals ? ' — '.implode(', ', $vitals) : '');
+        }
+
+        if ($this->wasChanged('assigned_doctor_id')) {
+            $doctor = $this->assignedDoctor?->name ?? 'nobody';
+
+            return "Assigned {$patient} to {$doctor}";
+        }
+
+        if ($this->wasChanged('status')) {
+            $status = $this->status instanceof QueueStatus ? $this->status->value : (string) $this->status;
+
+            return "Queue status for {$patient} changed to {$status}";
+        }
+
+        return "Updated queue entry for {$patient}";
     }
 }
