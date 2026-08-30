@@ -253,8 +253,27 @@ return [
          * packages that use asset() calls inside the tenant app. To avoid such issues, you can
          * disable asset() helper tenancy and explicitly use tenant_asset() calls in places
          * where you want to use tenant-specific assets (product images, avatars, etc).
+         *
+         * ── DISABLED DELIBERATELY — do not flip this back to true ─────────────
+         *
+         * With this on, asset() on a tenant subdomain rewrites every URL to
+         * /tenancy/assets/..., served by stancl's TenantAssetsController. That
+         * controller calls $tenant->domains(), and Clinic does NOT have that
+         * relation: the domains table was dropped in step 1 so that
+         * clinics.subdomain is the single source of truth for addressing.
+         *
+         * The result was a 500 on every stylesheet and script — so every clinic
+         * page rendered as unstyled HTML with no JavaScript, and Alpine never
+         * booted. It reached production in A6 and went unseen, because the page
+         * itself returned 200: only the assets it referenced failed. Status
+         * codes and HTML content were checked; a browser was not.
+         *
+         * Off, asset() emits the ordinary /build/... path Vite already writes
+         * and the apex domain already serves at 200. Nothing in this app uses
+         * tenant_asset() or serves per-tenant files over HTTP, so tenancy on
+         * this helper buys nothing and costs the frontend.
          */
-        'asset_helper_tenancy' => true,
+        'asset_helper_tenancy' => false,
     ],
 
     /**
