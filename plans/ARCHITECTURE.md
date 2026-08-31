@@ -21,7 +21,46 @@ re-litigated mid-build, and so the reasoning survives the person who made them.
 | **D5** | **Clinic staff live in a per-tenant `staff` table with a `Staff` model** | Renamed from `users`. Platform operators are a separate concept in the central `platform_admins` table. The two must never be the same table, the same model, or the same guard. |
 | **D6** | **Pricing lives in the `plans` table — single source of truth** | Client-confirmed 2026-08-25: Starter ₦45k/mo + ₦75k setup · Clinic ₦85k/mo + ₦120k setup · Group ₦65k **per site**/mo + ₦150k setup. `price_basis` models per-site explicitly. The figures previously existed in four places; `/pricing`, Home and Sign-Up now all read the table. **Annual pricing is not confirmed — do not derive one.** See SOW to-do §0.1 |
 | **D7** | **Clinics only — hospitals are out of scope** | Outpatient clinics and multi-clinic groups. No inpatient/ward tier; "Group" means several outpatient clinics under one owner, not a hospital with departments. A hospital tier is a possible future phase — **do not design speculatively for it**. See SOW to-do §0.2 |
-| **D8** | **Paystack is the payment gateway; Wema Bank is the settlement account** | B1 builds against Paystack only — no second gateway, no abstraction for a provider we do not use. Wema is a Paystack dashboard setting: no bank integration, nothing to build. The gateway choice is settled; the nine architecture questions are not. See SOW to-do §0.3 |
+| **D8** | **Paystack is the payment gateway; Wema Bank is the settlement account** | B1 builds against Paystack only — no second gateway, no abstraction for a provider we do not use. Wema is a Paystack dashboard setting: no bank integration, nothing to build. The gateway choice is settled. ~~The nine architecture questions are not.~~ **They now are — see §1.1.** |
+
+### 1.1 B1 — subscription billing (locked 2026-08-29)
+
+D8 settled *which* gateway. These settle *how* it is used. They close the nine questions that
+stood open at SOW to-do §6 and were the last thing blocking B1.
+
+Recorded before a line of billing code exists, deliberately — the same pass the A1 decisions got
+before A1 was built, and for the same reason: a billing decision reversed halfway through is a
+migration against money that has already moved.
+
+| # | Decision | Rationale |
+|---|---|---|
+| **D9** | **Our own scheduler charges each cycle — NOT Paystack native Plans/Subscriptions** | The Group tier is priced **per site** (₦65k × sites, D6), and site count changes mid-cycle. Paystack's native Plans bind a subscription to a fixed amount; variable pricing and proration cannot be expressed cleanly through them, so the workaround would be cancelling and recreating subscriptions on every seat change — losing billing history and inviting double-charges at exactly the moment a customer is growing. The existing per-tenant scheduler (§7) computes each clinic's amount each cycle and uses Paystack **for the charge, not for the recurring cycle**. We keep the state; Paystack moves the money. |
+| **D10** | **The setup fee is a separate one-off transaction, charged FIRST, before the subscription begins** | The two figures are already distinct in the `plans` table (D6) — one recurs, one does not — and the ledger should agree with the price list. Keeping it standalone is also what makes the day-30 refund promise clean: a discrete transaction can be refunded through Paystack's refund API against its own reference (D15), whereas a setup fee folded into the first subscription invoice would mean partially refunding a charge that also covers a month of service. |
+| **D11** | **Trial is collect-at-conversion — no card held upfront** | The 30 days run free with no payment instrument on file; payment is collected at conversion. This fits how the product is actually sold: provisioning is operator-driven and high-touch (A4), we set the clinic up in person, and day 30 is a conversation that is happening anyway. Demanding card details before a Nigerian clinic has seen the product work is friction bought for nothing — the alternative optimises for automatic conversion in a funnel this product does not have. |
+| **D12** | **One webhook endpoint on the CENTRAL domain, with signature verification, idempotency and an event log — all three mandatory** | Subscription billing is clinic→AfriChart, which is central by definition, so the endpoint never lives on a tenant subdomain. All three requirements are load-bearing rather than best-practice garnish: **without signature verification** anyone who learns the URL can post a `charge.success` and unlock a suspended clinic; **without idempotency** Paystack's retries — which are normal, not exceptional — double-apply events; **without an event log** a billing dispute has no evidence and a failed handler cannot be replayed. |
+| **D13** | **The Group tier is ONE subscription carrying a `site_count` quantity — not N subscriptions** | Charged as per-site rate × `site_count`; adding a location increments the quantity. A group is one commercial relationship with one owner, one invoice and one dunning state. Modelling it as N subscriptions would mean N payment failures to reconcile, N refunds to coordinate, and the genuinely absurd possibility of a group being half suspended. |
+| **D14** | **Failed payment → read-only, driven by central `clinics.status`, read by tenant middleware per request with a short cache TTL** | The webhook updates `clinics.status` centrally; the tenant middleware reads it. Status is **central and single-source — it is never pushed into tenant databases**, because a copy in twenty clinic databases is twenty things to keep in step and one of them will drift into the wrong answer. The cache TTL stays in seconds-to-a-minute: it exists to spare the central database a lookup per request, not to hold state, and a clinic that has just paid must not stay locked out while a long TTL expires. |
+| **D15** | **Refunds are manual, operator-initiated through Paystack's refund API, against the standalone setup-fee transaction, and logged** | Deliberately not automated. Refunds are rare and judgement-dependent — "your staff were not using it daily by day 30" is a conversation, not a predicate — and an automated path here risks refunding money that should not be refunded far more often than it saves work. It belongs in the B5 super-admin panel. D10 is what makes it addressable at all. |
+| **D16** | **MRR and usage aggregation are deferred to B5/B6 and DO NOT block B1** | Subscription data is central, so MRR is an ordinary query against one database — there is nothing to design. Cross-tenant **usage** aggregation is the hard half, and it is a B6 telemetry problem, not a billing one. Decide push-summaries versus scheduled roll-up when B6 is built; the lean is push-summaries. Naming this now stops it being discovered as a B1 blocker that it never was. |
+| **D17** | **The full dunning lifecycle is proven end-to-end on Paystack test keys before launch** | Subscribe → charge → fail → dunning → read-only → recover, all of it, on test keys. **The first real dunning must never be against a real clinic.** This is the same standard the tenancy work was held to: a billing path that has only ever been read is not a billing path that works, and the failure mode here is charging or locking out a paying customer. |
+
+> ### ⚠️ Standing constraint — the two Paystack integrations must never touch
+>
+> **Patient billing (patient → clinic)** settles into **the clinic's own** Paystack merchant
+> account and lives in the **tenant** database. **Subscription billing (clinic → AfriChart)**
+> settles into **AfriChart's** account and lives in the **central** database.
+>
+> They share a gateway vendor and nothing else — not an account, not a database, not a code path.
+> If patient payments ever settle into AfriChart's account, AfriChart is in possession of clinical
+> revenue, which is a regulatory and accounting problem nobody wants and which is discovered late,
+> by an auditor. **This is the highest-risk part of B1**, and it is a constraint rather than a
+> decision: there is no trade-off to weigh and no circumstance in which the other arrangement is
+> acceptable.
+
+> **Pricing correction.** SOW to-do §6 was written against stale figures — ₦40k per site, and a
+> ₦50k–₦100k setup fee. The locked prices are **D6**: Starter ₦45k/mo + ₦75k setup · Clinic
+> ₦85k/mo + ₦120k setup · Group ₦65k **per site**/mo + ₦150k setup. Build against D6; §6's
+> numbers are superseded.
 
 ---
 
@@ -376,7 +415,8 @@ any failure.
 
 - **Contabo Object Storage credentials** *(Client)* — backups remain local to the box. A lost VPS
   is a lost backup. Highest-risk open item and it needs no engineering.
-- **Paystack architecture** *(joint)* — nine questions at §6 of the to-do. Blocks B1.
+- ~~**Paystack architecture** *(joint)* — nine questions at §6 of the to-do. Blocks B1.~~
+  ✅ **Closed 2026-08-29** — locked as D9–D17 (§1.1). B1 is no longer blocked on design.
 - **SOW Appendix 1 pricing** *(Client)* — blank, while `/pricing` publishes the platform-spec
   proposal publicly.
 

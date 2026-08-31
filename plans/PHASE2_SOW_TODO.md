@@ -18,7 +18,7 @@ Legend: ✅ done · 🟡 partial · ⬜ not started · ⚠️ decision needed
 | Who holds the Contabo + domain accounts (§7.2)? | **The Client holds them** — matches the SOW recommendation |
 | Migrate the existing live clinic (A6)? | **No migration.** The EMR has not launched and no clinics are signed. A6 becomes *stand up Tenant #1 fresh* |
 | Root-domain conflict (marketing vs EMR)? | **Deferred** — root domain gets reassigned at project end |
-| Paystack architecture | **Gateway CHOSEN (locked).** The nine design questions in [§6](#6-paystack--architecture-to-be-designed) still need working through before B1 builds |
+| Paystack architecture | ✅ **LOCKED 2026-08-29.** Gateway (D8) and all nine design questions (D9–D17) settled. See [§6](#6-paystack--architecture-locked-2026-08-29) and ARCHITECTURE §1.1. B1 is unblocked on design |
 | **Pricing** | **LOCKED 2026-08-25.** Starter ₦45k/mo + ₦75k setup · Clinic ₦85k/mo + ₦120k setup · Group ₦65k **per site**/mo + ₦150k setup. Supersedes the platform-spec proposal; SOW Appendix 1 is answered |
 | **Market** | **Clinics only.** Hospitals explicitly out of scope |
 | **Payment gateway** | **Paystack (locked)**, settling to **Wema Bank** |
@@ -74,10 +74,11 @@ accommodate it.
   a provider we are not using.
 - **Wema Bank is the settlement account** where collected funds land. That is a setting
   inside the Paystack dashboard: **no integration work, no bank API, nothing to build.**
-- ⚠️ The **gateway choice** is settled. The **nine architecture questions** at
-  [§6](#6-paystack--architecture-to-be-designed) — subscription mechanism, setup-fee
-  handling, trial mechanics, per-site metering for Group, read-only propagation,
-  refunds — are still open and must be worked through before B1 builds.
+- ✅ The **gateway choice** and the **nine architecture questions** are both settled
+  (2026-08-29). Subscription mechanism, setup-fee handling, trial mechanics, per-site
+  metering for Group, read-only propagation and refunds are decisions **D9–D17** in
+  ARCHITECTURE §1.1, indexed at [§6](#6-paystack--architecture-locked-2026-08-29).
+  **They are not to be re-opened during the B1 build.**
 
 > Remember the two Paystack accounts never touch: **patient → clinic** payments settle
 > into *the clinic's own* merchant account, while **clinic → AfriChart** subscriptions
@@ -96,7 +97,7 @@ accommodate it.
 | **A4** | Provisioning command `[NEW]` | ✅ | **COMPLETE 2026-08-29** (`9e2e4b8`). `tenant:create` — preflight, blocklist, starter data with no demo fixtures, first-admin invite. **Rollback proven** by forcing a mid-provision migration failure and confirming by contents that nothing was left behind |
 | **A5** | Backups | 🟡 | Per-clinic backup, cleanup and monitoring built and verified by contents, on the production box as well as locally; silence detection wired through `/up`. **Two gates left — now PRE-REAL-CLINIC, not pre-A6**, since A6 completed on throwaway clinics: run the restore drill for real, and wire the off-site destination |
 | **A6** | Tenant #1 | ✅ | **COMPLETE 2026-08-29** — infrastructure milestone. `main` deployed to `/var/www/africhart-emr`, two throwaway clinics (`alpha`, `bravo`) provisioned through the real `tenant:create`, **isolation proven on the public `:443`**, smoke deploy torn down behind a verified dump. ⚠️ Onboarding a **real** first clinic is separate and still gated on the two A5 items |
-| **B1** | Subscription & billing `[NEW]` | ⬜ | Architecture to be designed (§6) |
+| **B1** | Subscription & billing `[NEW]` | ⬜ | **Design locked (D9–D17).** Nothing built yet |
 | **B2** | Plans, gating & metering `[NEW]` | ⬜ | Tiers designed, nothing built |
 | **B3** | Public marketing site `[NEW]` | ✅ | **Complete 2026-08-22** — 10 pages + 3 legal docs. See `PHASE2_PROGRESS_2026-08-22.md` |
 | **B4** | In-clinic account surfaces `[NEW]` | 🟡 | Two seams shipped; wizard + Settings hub absent |
@@ -517,12 +518,26 @@ mode that looks exactly like success.
 
 ### PHASE B
 
-#### B1. Subscription & billing `[NEW]` ⬜ — architecture in §6
+#### B1. Subscription & billing `[NEW]` ⬜ — design LOCKED (D9–D17), nothing built
+
+Build against ARCHITECTURE §1.1. The decisions are settled; do not re-open them mid-build.
+
 - [ ] Lifecycle: `trialing → active → past_due → suspended (read-only) → cancelled`
-- [ ] Paystack recurring naira billing
-- [ ] Webhook handler with **signature verification**
+- [ ] Charge each cycle from **our own scheduler** — not Paystack Plans (**D9**)
+- [ ] Setup fee as a **separate one-off transaction, charged first** (**D10**)
+- [ ] Trial with **no card upfront**; collect at day-30 conversion (**D11**)
+- [ ] Central-domain webhook: **signature verification + idempotency + event log**,
+      all three (**D12**)
+- [ ] Group billed as **one subscription × `site_count`** (**D13**)
+- [ ] Read-only driven by central `clinics.status`, short-TTL cache in tenant
+      middleware; **status never copied into tenant DBs** (**D14**)
 - [ ] Dunning: reminders → grace → read-only lockout
 - [ ] Never delete clinic data for non-payment
+- [ ] ⚠️ **Gate before launch (D17):** the whole lifecycle — subscribe → charge → fail →
+      dunning → read-only → recover — proven on Paystack **test keys**. The first real
+      dunning must never be against a real clinic
+- [ ] ⚠️ **Standing constraint:** patient→clinic and clinic→AfriChart payments never share
+      an account, a database or a code path. The highest-risk part of B1
 
 #### B2. Plans, gating & metering `[NEW]` ⬜
 - [ ] `plan_features` map in the central DB
@@ -604,11 +619,13 @@ Root domain is reassigned at project end (settled). Built behind that.
       (~line 1318) and the removed `REGISTER_CODE_*` config (~line 1065). Left alone in
       Sprint 2 only because the file had unrelated uncommitted edits at the time
 
-## 6. Paystack — architecture to be designed
+## 6. Paystack — architecture LOCKED (2026-08-29)
 
-To be worked through together. Capturing the shape and the open questions now.
+The nine questions that stood here are **resolved**. They are recorded as decisions **D9–D17** in
+[`ARCHITECTURE.md`](ARCHITECTURE.md) §1.1, with the reasoning, and are not to be re-opened during
+the B1 build. This section is the index; the architecture doc is the record.
 
-### The two integrations must never touch
+### The two integrations must never touch — STANDING CONSTRAINT
 
 | | **Patient billing** | **Clinic subscription billing** |
 |---|---|---|
@@ -618,32 +635,39 @@ To be worked through together. Capturing the shape and the open questions now.
 | Merchant account | **The clinic's own** | **AfriChart's** |
 | Commercials | Phase-1 carry-over, **no extra fee** (SOW §6) | Part of Phase 2 |
 
-> The merchant-account split is the part most likely to go wrong. Patient payments must
-> settle into **the clinic's** Paystack account, not AfriChart's — otherwise AfriChart
-> is holding clinical revenue, which is a regulatory and accounting problem nobody wants.
+> They share a gateway vendor and nothing else — not an account, not a database, not a code path.
+> Patient payments must settle into **the clinic's** Paystack account; if they ever land in
+> AfriChart's, AfriChart is holding clinical revenue, which is a regulatory and accounting problem
+> discovered late and by an auditor. **The highest-risk part of B1.** A constraint, not a decision:
+> there is no trade-off and no acceptable alternative arrangement.
 
-### Questions to resolve before building
+### The nine, resolved
 
-- [ ] **Subscription mechanism** — Paystack Plans + Subscriptions, or charge-on-schedule
-      from our own scheduler? Plans are simpler; scheduler gives control over proration,
-      the ₦40k-per-site Group tier, and mid-cycle seat changes.
-- [ ] **Setup fee** (₦50k–₦100k one-time) — separate one-off transaction before the
-      subscription starts, or first-invoice line item?
-- [ ] **Trial mechanics** — setup-fee-first then 30 days free, gated on *daily usage*.
-      Does Paystack hold a card through the trial, or do we collect at conversion?
-- [ ] **Webhook endpoint** — lives on the root/central domain. Needs signature
-      verification, idempotency (Paystack retries), and an event log.
-- [ ] **Group tier** — ₦40k **per site**. Quantity-based subscription, or N subscriptions?
-      Affects how seats/sites metering is modelled.
-- [ ] **Failed payment → read-only** — how does tenant middleware learn status? Cached
-      from central per request, or pushed on webhook? Cache TTL vs how fast a lockout lifts
-      after payment.
-- [ ] **Refunds** — the "full setup-fee refund if unused by day 30" promise needs a path.
-- [ ] **Cross-tenant aggregation for MRR** — architecture doc §2 flags that patient data
-      cannot be JOINed across tenant DBs. Subscription data is central so **MRR is easy**;
-      it is *usage* metrics that need the aggregation layer. Decide push-summaries vs
-      scheduled roll-up when B5/B6 are built.
-- [ ] **Test mode** — Paystack test keys through the whole dunning lifecycle before launch.
+| # | Question | Decision |
+|---|---|---|
+| **D9** | Native Plans or our own scheduler? | **Our own scheduler.** Group is per-site and changes mid-cycle; native Plans cannot express variable pricing or proration cleanly. Paystack moves the money; we keep the cycle |
+| **D10** | Setup fee: separate transaction or invoice line? | **Separate one-off transaction, charged first**, before the subscription begins. Keeps the day-30 refund clean |
+| **D11** | Trial: hold a card, or collect at conversion? | **Collect at conversion**, no card upfront. Fits the operator-driven, high-touch sale |
+| **D12** | Webhook shape | **Central-domain endpoint**; signature verification, idempotency and an event log **all mandatory** |
+| **D13** | Group tier: quantity or N subscriptions? | **One subscription with a `site_count` quantity.** One group, one billing relationship, one dunning state |
+| **D14** | How does tenant middleware learn payment status? | Central **`clinics.status`**, read per request behind a **short cache TTL**. Never pushed into tenant DBs |
+| **D15** | Refund path for the day-30 promise | **Manual, operator-initiated** via Paystack's refund API against the standalone setup-fee transaction, logged. B5 panel |
+| **D16** | Cross-tenant aggregation for MRR | **Deferred to B5/B6 — does not block B1.** MRR is a central query; *usage* aggregation is a B6 telemetry problem (lean: push-summaries) |
+| **D17** | Test mode | **Full dunning lifecycle on test keys before launch.** The first real dunning must never be against a real clinic |
+
+### ⚠️ Pricing in this section was stale
+
+Earlier drafts of §6 quoted **₦40k per site** and a **₦50k–₦100k** setup fee. Both are wrong.
+The locked figures are **§0.1 / D6**:
+
+| Tier | Monthly | Setup |
+|---|---|---|
+| Starter | ₦45,000 | ₦75,000 |
+| Clinic | ₦85,000 | ₦120,000 |
+| Group | ₦65,000 **per site** | ₦150,000 |
+
+Build against the `plans` table, which is the single source of truth. Annual pricing remains
+unconfirmed — do not derive one.
 
 ---
 
@@ -752,9 +776,10 @@ issue and must close before real patient data.** Tracked under *Post-A6* below.
 **3. Phase B.** In this order:
   - **B4 — Settings hub** first; the groundwork exists (tenant `settings` table, the
     per-clinic values A2 shipped), so this is the cheapest real progress.
-  - **B1 + B2 — billing.** The **nine Paystack architecture questions in §6 must be
-    worked through before any billing code is written.** The gateway is locked; the
-    design is not.
+  - **B1 + B2 — billing.** Design is now locked as well as the gateway: build against
+    **D9–D17** (ARCHITECTURE §1.1). Two things govern the build — the merchant-account
+    split (patient→clinic and clinic→AfriChart never touch) and **D17**, the full dunning
+    lifecycle proven on test keys before launch.
   - **B5 + B6 + B7** — super-admin → telemetry → DPA + isolation guarantee.
 
 **Timeline:** Phase A infrastructure is complete. What remains before a real clinic is
