@@ -59,6 +59,29 @@ return [
             'prefix_indexes' => true,
             'strict' => true,
             'engine' => null,
+
+            /*
+             * Pin the CONNECTION to UTC, matching config('app.timezone').
+             *
+             * Without this the session timezone is SYSTEM — the server's local
+             * zone, +01:00 here and +02:00 in production. PHP writes UTC, so a
+             * value MySQL generates itself (a CURRENT_TIMESTAMP default, NOW(),
+             * date arithmetic in raw SQL) disagreed with a value Laravel wrote
+             * by the size of that offset, inside the same row.
+             *
+             * `failed_jobs.failed_at` is the only column in the schema that
+             * takes a SQL-side default, so it was the only one silently
+             * recording a different clock from every column beside it. That is
+             * a small blast radius today and a landmine later: the next
+             * useCurrent() anyone adds inherits the bug, and it is invisible
+             * until someone compares two columns.
+             *
+             * This changes what MySQL GENERATES, not what is stored. DATETIME
+             * columns hold a literal wall-clock string with no zone attached,
+             * so existing rows are neither rewritten nor reinterpreted —
+             * verified against real audit_logs rows before and after.
+             */
+            'timezone' => env('DB_TIMEZONE', '+00:00'),
             'options' => extension_loaded('pdo_mysql') ? array_filter([
                 Mysql::ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
             ]) : [],
