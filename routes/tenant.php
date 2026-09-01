@@ -15,6 +15,7 @@ use App\Http\Controllers\PasswordResetController;
 use App\Http\Controllers\PatientController;
 use App\Http\Controllers\PatientQueueController;
 use App\Http\Controllers\PrescriptionController;
+use App\Http\Controllers\Settings\CatalogueController;
 use App\Http\Controllers\Settings\ClinicProfileController;
 use App\Http\Controllers\Settings\TeamController;
 use App\Http\Controllers\StaffController;
@@ -245,7 +246,12 @@ Route::domain('{clinic}.'.config('tenancy.root_domain'))->middleware([
 
         // --- Drug catalog (admin only) ---
         Route::middleware('role:admin')->group(function () {
-            Route::get('/drug-catalog', [MedicationController::class, 'index'])->name('medications.index');
+            /*
+             * Now Settings -> Drug Catalogue. Redirected rather than removed,
+             * same as /staff: it is in the sidebar's muscle memory.
+             */
+            Route::redirect('/drug-catalog', '/settings/catalogue')->name('medications.index');
+            Route::get('/settings/catalogue', [CatalogueController::class, 'index'])->name('settings.catalogue.index');
             Route::post('/drug-catalog', [MedicationController::class, 'store'])->name('medications.store');
             Route::put('/drug-catalog/{medication}', [MedicationController::class, 'update'])->name('medications.update');
             Route::patch('/drug-catalog/{medication}/toggle', [MedicationController::class, 'toggle'])->name('medications.toggle');

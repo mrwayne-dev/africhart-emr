@@ -1,10 +1,12 @@
 @extends('layouts.app')
 
-@section('title', 'Drug Catalog')
-@section('page-title', 'Drug Catalog')
-@section('page-subtitle', 'Medications & default prices used when billing prescriptions')
+@section('title', 'Drug Catalogue — Settings')
+@section('page-title', 'Settings')
+@section('page-subtitle', 'Drug Catalogue')
 
 @section('content')
+<x-settings-shell active="catalogue">
+
 @php $currency = config('billing.currency_symbol', '₦'); @endphp
 <div x-data="{
         open: false,
@@ -36,7 +38,7 @@
     {{-- Search + add --}}
     <div class="bg-page border border-line rounded-card p-4 mb-6">
         <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-            <form method="GET" action="{{ route('medications.index') }}" class="flex-1 flex items-center gap-3">
+            <form method="GET" action="{{ route('settings.catalogue.index') }}" class="flex-1 flex items-center gap-3">
                 <input type="text" name="search" value="{{ request('search') }}"
                     placeholder="Search medications…"
                     class="w-full bg-warm rounded text-sm text-ink-body px-4 py-2.5 border border-transparent
@@ -200,4 +202,6 @@
         document.addEventListener('DOMContentLoaded', () => window.toast('error', @js($errors->first())));
     </script>
 @endif
+
+</x-settings-shell>
 @endsection

@@ -5,21 +5,15 @@ namespace App\Http\Controllers;
 use App\Models\Medication;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\View\View;
 
+/**
+ * The catalogue's WRITE actions. Listing moved to
+ * App\Http\Controllers\Settings\CatalogueController when B4 folded the drug
+ * catalogue into the settings hub; these are unchanged and still posted to from
+ * that screen.
+ */
 class MedicationController extends BaseController
 {
-    public function index(Request $request): View
-    {
-        $medications = Medication::query()
-            ->when($request->input('search'), fn ($q, $s) => $q->where('name', 'like', "%{$s}%"))
-            ->orderBy('name')
-            ->paginate(25)
-            ->withQueryString();
-
-        return view('drug-catalog.index', compact('medications'));
-    }
-
     public function store(Request $request): RedirectResponse
     {
         $data = $this->validateMedication($request);

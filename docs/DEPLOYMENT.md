@@ -217,7 +217,24 @@ the app's:
 - **`waitUntil: 'networkidle'` never settles** on any page that polls (the
   queue, the consultation view, the billing list). Use `'load'`.
 - **Several pages carry two submit buttons**, the first hidden. Scope every
-  click to `button[type="submit"]:visible`.
+  click to `button[type="submit"]:visible` — but see the next point, because on
+  some pages that is not enough either.
+- **A modal's trigger and its submit can carry the SAME label.** The drug
+  catalogue builds both from one `x-text` expression, so `button:has-text("Add
+  Medication")` matches the trigger first — and clicking it while the modal is
+  open lands on the modal's own backdrop. Playwright then reports
+  "…intercepts pointer events", which reads exactly like a broken z-index and
+  is not. Disambiguate by type:
+
+  ```js
+  await page.click('button[type="button"]:has-text("Add Medication")');   // opens it
+  await page.click('button[type="submit"]:has-text("Add Medication")');   // saves it
+  ```
+
+  On that same page `button[type="submit"]:visible` matches **thirteen**
+  elements — the search form, one toggle per listed medication, and the modal's
+  save. A bare `:visible` click submits the search and the real action never
+  happens, presenting as a navigation timeout.
 - **`innerText` does not include the VALUE of an `<input>`.** Checking that a
   saved value came back by searching the page text finds nothing on any form
   screen, and reports a failure while the data is sitting correctly in the
