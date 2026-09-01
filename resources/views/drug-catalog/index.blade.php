@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Drug Catalog — AfriChart EMR')
+@section('title', 'Drug Catalog')
 @section('page-title', 'Drug Catalog')
 @section('page-subtitle', 'Medications & default prices used when billing prescriptions')
 

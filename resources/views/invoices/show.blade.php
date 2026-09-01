@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Invoice '.$invoice->invoice_number.' — AfriChart EMR')
+@section('title', 'Invoice '.$invoice->invoice_number)
 @section('page-title', 'Invoice')
 @section('page-subtitle', $invoice->invoice_number)
 
@@ -24,15 +24,25 @@
     </div>
 
     <div class="bg-page border border-line rounded-card max-w-3xl print-clean">
-        {{-- Header --}}
-        <div class="px-6 py-5 border-b border-line flex items-start justify-between">
-            <div>
-                <h1 class="text-lg font-medium text-ink tracking-tight">{{ $invoice->invoice_number }}</h1>
-                <p class="text-sm text-muted mt-1">{{ $invoice->created_at->format('j F Y') }}</p>
-            </div>
-            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium {{ $invoice->status->color() }}">
+        {{--
+            Letterhead. This block did not exist: the on-screen invoice showed
+            the invoice NUMBER as its heading and named the clinic nowhere,
+            while carrying a Print button — so "Print" handed a patient a
+            document that identified no one, and "Download PDF" handed them a
+            properly headed one. Same invoice, two paths, one of them anonymous.
+        --}}
+        <div class="px-6 py-5 border-b border-line flex items-start justify-between gap-4">
+            <x-clinic-letterhead />
+            <span class="inline-flex items-center shrink-0 px-2.5 py-1 rounded-full text-xs font-medium {{ $invoice->status->color() }}">
                 {{ $invoice->status->label() }}
             </span>
+        </div>
+
+        {{-- Invoice number and date, below the letterhead: the clinic is who
+             the document is FROM, the number is what it is. --}}
+        <div class="px-6 py-4 border-b border-line flex items-baseline justify-between gap-4">
+            <h1 class="text-lg font-medium text-ink tracking-tight">{{ $invoice->invoice_number }}</h1>
+            <p class="text-sm text-muted">{{ $invoice->created_at->format('j F Y') }}</p>
         </div>
 
         {{-- Patient / consultation --}}

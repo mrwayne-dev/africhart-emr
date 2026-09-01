@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\Patient;
+use App\Support\ClinicIdentity;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 class PatientRepository extends BaseRepository
@@ -67,7 +68,18 @@ class PatientRepository extends BaseRepository
      */
     public function countToday(): int
     {
-        return $this->model->whereDate('created_at', today())->count();
+        /*
+         * The CLINIC's day, as a UTC range — not whereDate against the UTC
+         * calendar day.
+         *
+         * Timestamps are stored in UTC. A clinic in Africa/Lagos starts its day
+         * an hour before UTC does, so its day is not any single UTC date and
+         * whereDate cannot express it. A patient checked in at 00:30 Lagos is
+         * stored 23:30 UTC the previous day: under whereDate they vanished from
+         * "today" an hour later, and the daily queue_number sequence — which
+         * counts today's rows — could hand the same number out twice.
+         */
+        return $this->model->whereBetween('created_at', ClinicIdentity::todayRange())->count();
     }
 
     /**

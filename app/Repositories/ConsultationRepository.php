@@ -4,6 +4,7 @@ namespace App\Repositories;
 
 use App\Enums\ConsultationStatus;
 use App\Models\Consultation;
+use App\Support\ClinicIdentity;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 
@@ -63,7 +64,7 @@ class ConsultationRepository extends BaseRepository
     public function countToday(?int $doctorId = null): int
     {
         return $this->model
-            ->whereDate('created_at', today())
+            ->whereBetween('created_at', ClinicIdentity::todayRange())
             ->when($doctorId, fn ($q) => $q->where('doctor_id', $doctorId))
             ->count();
     }

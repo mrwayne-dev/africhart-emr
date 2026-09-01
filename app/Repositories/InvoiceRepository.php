@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\Invoice;
+use App\Support\ClinicIdentity;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 class InvoiceRepository extends BaseRepository
@@ -64,7 +65,7 @@ class InvoiceRepository extends BaseRepository
     {
         return (float) $this->model
             ->where('status', 'paid')
-            ->whereDate('paid_at', today())
+            ->whereBetween('paid_at', ClinicIdentity::todayRange())
             ->sum('total');
     }
 }

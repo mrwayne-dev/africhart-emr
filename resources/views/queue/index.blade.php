@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Patient Queue — AfriChart EMR')
+@section('title', 'Patient Queue')
 @section('page-title', 'Patient Queue')
 @section('page-subtitle', "Today's waiting list · " . now()->format('l, j F Y'))
 

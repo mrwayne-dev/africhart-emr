@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', $patient->full_name . ' — AfriChart EMR')
+@section('title', $patient->full_name)
 @section('page-title', 'Patient Record')
 @section('page-subtitle', $patient->patient_id)
 

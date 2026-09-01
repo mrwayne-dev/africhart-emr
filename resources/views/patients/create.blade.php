@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Register Patient — AfriChart EMR')
+@section('title', 'Register Patient')
 @section('page-title', 'Register New Patient')
 @section('page-subtitle', 'Add a patient to the clinic records')
 

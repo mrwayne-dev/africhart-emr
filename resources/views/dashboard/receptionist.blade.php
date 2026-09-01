@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Front Desk — AfriChart EMR')
+@section('title', 'Front Desk')
 @section('page-title', 'Front Desk')
 @section('page-subtitle', 'Check-ins, queue and billing')
 

@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Audit Log — AfriChart EMR')
+@section('title', 'Audit Log')
 @section('page-title', 'Audit Log')
 @section('page-subtitle', 'Who did what, and when')
 

@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Nurse Dashboard — AfriChart EMR')
+@section('title', 'Nurse Dashboard')
 @section('page-title', 'Nurse Dashboard')
 @section('page-subtitle', "Today's queue and vitals")
 

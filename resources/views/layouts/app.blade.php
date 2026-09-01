@@ -4,7 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', 'AfriChart EMR')</title>
+    {{--
+        The CLINIC's name, not the vendor's.
+
+        Every screen behind this layout belongs to one clinic, and the browser
+        tab is one of the places staff read it — an admin with three clinics
+        open had four tabs all saying "AfriChart EMR". Composed here rather than
+        interpolated into each view's @section('title') so a new screen cannot
+        forget it; views now name only the page.
+
+        Vendor chrome is deliberately untouched: the sidebar brand, the pre-auth
+        layouts and the API title are AfriChart's own surfaces and correctly say
+        so.
+    --}}
+    <title>@hasSection('title')@yield('title') — @endif{{ \App\Support\ClinicIdentity::name() }}</title>
     {{-- Preload the weights actually used, so font-display: optional has the
          file in hand before its window closes and text never reflows. --}}
     <link rel="preload" href="{{ asset('fonts/general-sans-400.woff2') }}" as="font" type="font/woff2" crossorigin>

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\QueueStatus;
+use App\Support\ClinicIdentity;
 use App\Traits\HasAuditTrail;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
@@ -98,7 +99,18 @@ class PatientQueue extends Model
 
     public function scopeToday($query)
     {
-        return $query->whereDate('checked_in_at', today());
+        /*
+         * The CLINIC's day, as a UTC range — not whereDate against the UTC
+         * calendar day.
+         *
+         * Timestamps are stored in UTC. A clinic in Africa/Lagos starts its day
+         * an hour before UTC does, so its day is not any single UTC date and
+         * whereDate cannot express it. A patient checked in at 00:30 Lagos is
+         * stored 23:30 UTC the previous day: under whereDate they vanished from
+         * "today" an hour later, and the daily queue_number sequence — which
+         * counts today's rows — could hand the same number out twice.
+         */
+        return $query->whereBetween('checked_in_at', ClinicIdentity::todayRange());
     }
 
     public function scopeActive($query)

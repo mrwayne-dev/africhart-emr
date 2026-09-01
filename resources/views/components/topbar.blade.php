@@ -4,14 +4,25 @@
         <button type="button" @click="sidebarOpen = true" class="md:hidden text-muted hover:text-ink -ml-1">
             <x-phosphor-list class="w-6 h-6" />
         </button>
-        <div>
-            <h1 class="text-lg font-medium text-ink tracking-tight">@yield('page-title', 'Dashboard')</h1>
-            <p class="text-sm text-muted">@yield('page-subtitle', '')</p>
+        <div class="min-w-0">
+            {{-- The clinic's own name, above the page name.
+
+                 Persistent context on every screen rather than four edits to
+                 four dashboards: staff working across two clinics could not
+                 tell from the page which one they were in. The sidebar carries
+                 the vendor brand, so the two together answer both questions —
+                 whose software, and whose clinic. --}}
+            <p class="text-xs text-muted truncate">{{ \App\Support\ClinicIdentity::name() }}</p>
+            <h1 class="text-lg font-medium text-ink tracking-tight truncate">@yield('page-title', 'Dashboard')</h1>
+            <p class="text-sm text-muted truncate">@yield('page-subtitle', '')</p>
         </div>
     </div>
 
     <div class="flex items-center gap-5">
-        <span class="text-sm text-muted hidden sm:inline">{{ now()->format('l, j F Y') }}</span>
+        {{-- The CLINIC's date, not the server's. now() is UTC; a clinic in
+             Lagos reading this between 00:00 and 01:00 local was shown
+             yesterday's date on its own screen. --}}
+        <span class="text-sm text-muted hidden sm:inline">{{ \App\Support\ClinicIdentity::today()->format('l, j F Y') }}</span>
 
         <button type="button"
             x-data
