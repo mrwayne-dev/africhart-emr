@@ -181,8 +181,24 @@ chromium.launch({
 1. **No `/tenancy/assets/` requests at all.** One is a regression of the A6 bug.
 2. **Every CSS and JS response is 200.** Collect them from `page.on('response')`;
    do not infer from the document's status.
-3. **CSS is applied, not merely fetched** — assert a *computed* style, e.g.
-   `getComputedStyle(document.body).backgroundColor === 'rgb(248, 247, 245)'`.
+3. **CSS is applied, not merely fetched** — assert a *computed* style that is
+   only true when the stylesheet loaded:
+
+   ```js
+   getComputedStyle(document.body).fontFamily.includes('General Sans')
+   ```
+
+   General Sans is self-hosted with a fallback stack behind it, so this string
+   appears only if our CSS actually applied.
+
+   > ⚠️ **This check used to assert `backgroundColor === 'rgb(248, 247, 245)'`,
+   > and that was a FALSE PASS on exactly the failure it exists to catch.**
+   > That colour is the *guest* layout's. Pages behind `layouts/app` — the
+   > whole signed-in application — render on white, and white is also what a
+   > browser paints with no stylesheet at all. The assertion therefore passed
+   > with the Vite output missing entirely, which is the A6 defect verbatim.
+   > Assert on something the browser cannot produce by default.
+
    Never assert on a stylesheet rule count; it varies harmlessly between builds.
 4. **`typeof window.Alpine !== 'undefined'`** — this is the single check that
    caught the A6 defect. Every interactive control in this app is Alpine:
@@ -202,6 +218,15 @@ the app's:
   queue, the consultation view, the billing list). Use `'load'`.
 - **Several pages carry two submit buttons**, the first hidden. Scope every
   click to `button[type="submit"]:visible`.
+- **`innerText` does not include the VALUE of an `<input>`.** Checking that a
+  saved value came back by searching the page text finds nothing on any form
+  screen, and reports a failure while the data is sitting correctly in the
+  database. Read fields through `input.value`:
+
+  ```js
+  await page.$eval('#name', el => el.value);          // right
+  (await page.innerText('body')).includes(name);      // wrong on a form page
+  ```
 
 And before every submit, dump `form :invalid` — otherwise a required field you
 forgot (`blood_group`, `clinical_notes`) presents as a mysterious navigation
