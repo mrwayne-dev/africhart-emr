@@ -6,6 +6,7 @@ namespace App\Support;
 
 use App\Models\Setting;
 use Carbon\CarbonImmutable;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * The clinic's own identity and its idea of "today".
@@ -98,6 +99,44 @@ final class ClinicIdentity
     public static function today(): CarbonImmutable
     {
         return CarbonImmutable::now(self::timezone())->startOfDay();
+    }
+
+    /**
+     * A URL for the clinic's logo, or null if it has none.
+     *
+     * Served by OUR route, not Storage::url() and not stancl's asset route.
+     *
+     * Storage::url() is wrong because the /storage symlink points at
+     * storage/app/public — CENTRAL — while the file lives in
+     * storage/tenant<uuid>/app/public. It would emit a path that does not
+     * exist, and the SAME path for every clinic.
+     *
+     * ⚠️ stancl's route('stancl.tenancy.asset') is wrong for a sharper reason:
+     * its controller is bound to InitializeTenancyByDomain, which calls
+     * $tenant->domains(). Clinic has no such relation — the domains table was
+     * dropped so clinics.subdomain could be the single source of addressing.
+     * That route therefore 500s here, and it is precisely the A6 defect that
+     * served every clinic unstyled HTML with no JavaScript
+     * (see config/tenancy.php, asset_helper_tenancy).
+     *
+     * Ours runs on the tenant group's own middleware and takes NO path from the
+     * URL: the filename comes from settings, so there is nothing to traverse.
+     */
+    public static function logoUrl(): ?string
+    {
+        $path = self::setting(Setting::CLINIC_LOGO);
+
+        if (! $path) {
+            return null;
+        }
+
+        // The file must actually be there. A settings row pointing at a deleted
+        // file would otherwise render a broken image on an invoice.
+        if (! Storage::disk('public')->exists($path)) {
+            return null;
+        }
+
+        return route('branding.logo');
     }
 
     public static function forget(): void

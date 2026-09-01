@@ -40,6 +40,17 @@ class Setting extends Model
      * sequence can reset mid-night. Africa/Lagos is the sane default and the
      * only one any current clinic needs.
      */
+    /**
+     * Path to the clinic's logo, RELATIVE to its own public disk.
+     *
+     * A path in key/value, not a new column and not a central field: the logo
+     * is presentation, and per decision 1 only identity (name, subdomain, ID
+     * prefix) lives centrally. The file itself sits in the clinic's own
+     * storage/tenant<uuid>/ directory, so isolation is by location — the same
+     * argument as the invitations table.
+     */
+    public const CLINIC_LOGO = 'clinic_logo';
+
     public const CLINIC_TIMEZONE = 'clinic_timezone';
 
     public const DEFAULT_TIMEZONE = 'Africa/Lagos';

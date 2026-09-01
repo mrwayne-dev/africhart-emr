@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\BrandingLogoController;
 use App\Http\Controllers\ConsultationController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EmailVerificationController;
@@ -15,6 +16,7 @@ use App\Http\Controllers\PasswordResetController;
 use App\Http\Controllers\PatientController;
 use App\Http\Controllers\PatientQueueController;
 use App\Http\Controllers\PrescriptionController;
+use App\Http\Controllers\Settings\BrandingController;
 use App\Http\Controllers\Settings\CatalogueController;
 use App\Http\Controllers\Settings\ClinicProfileController;
 use App\Http\Controllers\Settings\TeamController;
@@ -126,6 +128,13 @@ Route::domain('{clinic}.'.config('tenancy.root_domain'))->middleware([
     // --- Authenticated AND verified ---
     Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+        /*
+         * The logo is READ by anyone who can see an invoice, so it is not
+         * admin-only — only CHANGING it is. Ours rather than stancl's asset
+         * route: see App\Http\Controllers\BrandingLogoController.
+         */
+        Route::get('/branding/logo', BrandingLogoController::class)->name('branding.logo');
 
         // Patient management — all clinical staff and reception
         Route::middleware('role:admin,doctor,nurse,receptionist')->group(function () {
@@ -252,6 +261,10 @@ Route::domain('{clinic}.'.config('tenancy.root_domain'))->middleware([
              */
             Route::redirect('/drug-catalog', '/settings/catalogue')->name('medications.index');
             Route::get('/settings/catalogue', [CatalogueController::class, 'index'])->name('settings.catalogue.index');
+
+            Route::get('/settings/branding', [BrandingController::class, 'edit'])->name('settings.branding.edit');
+            Route::post('/settings/branding', [BrandingController::class, 'update'])->name('settings.branding.update');
+            Route::delete('/settings/branding', [BrandingController::class, 'destroy'])->name('settings.branding.destroy');
             Route::post('/drug-catalog', [MedicationController::class, 'store'])->name('medications.store');
             Route::put('/drug-catalog/{medication}', [MedicationController::class, 'update'])->name('medications.update');
             Route::patch('/drug-catalog/{medication}/toggle', [MedicationController::class, 'toggle'])->name('medications.toggle');

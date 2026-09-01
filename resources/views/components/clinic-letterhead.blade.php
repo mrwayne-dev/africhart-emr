@@ -17,19 +17,31 @@
     $clinicAddress = \App\Support\ClinicIdentity::address();
     $clinicPhone = \App\Support\ClinicIdentity::phone();
     $clinicEmail = \App\Support\ClinicIdentity::email();
+    $clinicLogo = \App\Support\ClinicIdentity::logoUrl();
     $contact = collect([$clinicPhone, $clinicEmail])->filter()->implode(' · ');
 @endphp
 
-<div {{ $attributes->merge(['class' => 'min-w-0']) }}>
-    <p class="{{ $compact ? 'text-base' : 'text-lg' }} font-medium text-ink tracking-tight">
-        {{ $clinicName }}
-    </p>
+<div {{ $attributes->merge(['class' => 'flex items-start gap-3 min-w-0']) }}>
 
-    @if ($clinicAddress)
-        <p class="text-sm text-muted mt-0.5">{{ $clinicAddress }}</p>
+    {{-- The logo is optional and always has been: most clinics will not upload
+         one on day one, and a letterhead that breaks without it would be worse
+         than no logo at all. When absent, the name simply carries the block. --}}
+    @if ($clinicLogo)
+        <img src="{{ $clinicLogo }}" alt=""
+            class="{{ $compact ? 'h-8' : 'h-11' }} w-auto max-w-[9rem] object-contain shrink-0">
     @endif
 
-    @if ($contact)
-        <p class="text-sm text-muted">{{ $contact }}</p>
-    @endif
+    <div class="min-w-0">
+        <p class="{{ $compact ? 'text-base' : 'text-lg' }} font-medium text-ink tracking-tight">
+            {{ $clinicName }}
+        </p>
+
+        @if ($clinicAddress)
+            <p class="text-sm text-muted mt-0.5">{{ $clinicAddress }}</p>
+        @endif
+
+        @if ($contact)
+            <p class="text-sm text-muted">{{ $contact }}</p>
+        @endif
+    </div>
 </div>
