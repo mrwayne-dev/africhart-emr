@@ -70,12 +70,10 @@
         @endunless
 
         @if ($user->isAdmin())
-            <a href="{{ route('staff.index') }}" @click="sidebarOpen = false"
-                class="flex items-center gap-3 px-3 py-2.5 rounded-card text-sm font-medium transition-colors
-                    {{ request()->routeIs('staff.*') ? 'bg-warm text-ink' : 'text-muted hover:bg-warm hover:text-ink' }}">
-                <x-phosphor-users-three class="w-5 h-5" />
-                Staff
-            </a>
+            {{-- No separate "Staff" item: the team is now Settings -> Team &
+                 Seats. Two entries where one leads to the other reads as two
+                 places, and the active-state highlight could only ever match
+                 one of them. --}}
 
             <a href="{{ route('medications.index') }}" @click="sidebarOpen = false"
                 class="flex items-center gap-3 px-3 py-2.5 rounded-card text-sm font-medium transition-colors

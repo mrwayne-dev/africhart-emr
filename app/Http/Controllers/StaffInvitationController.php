@@ -61,14 +61,47 @@ class StaffInvitationController extends BaseController
                 'message' => $e->getMessage(),
             ]);
 
-            return back()->with(
-                'error',
-                "The invitation for {$invitation->email} was created but the email could not be sent. "
-                .'Revoke it below and try again.'
-            );
+            return back()->with($this->linkPayload($invitation, $acceptUrl, delivered: false));
         }
 
-        return back()->with('success', "Invitation sent to {$invitation->email}.");
+        return back()->with($this->linkPayload($invitation, $acceptUrl, delivered: true));
+    }
+
+    /**
+     * Hand the admin the invitation link, once, whatever the email did.
+     *
+     * ── Why this exists ────────────────────────────────────────────────────
+     *
+     * The link was previously built here and passed ONLY to the notification.
+     * Nothing stores it — the table keeps a SHA-256 hash, by design, so a
+     * leaked database is not a set of working invites. The consequence was that
+     * if mail failed, or was stubbed, the link was gone: unrecoverable by
+     * anyone, including us, and the admin's only move was revoke-and-reissue in
+     * the hope that the next send worked.
+     *
+     * That made "invite a staff member" a feature that silently half-worked
+     * wherever mail was not configured. Flashing the link closes it: the email
+     * becomes a convenience, and the admin always has a path that does not
+     * depend on it.
+     *
+     * Flashed, not stored. It lives for exactly one redirect and is never
+     * written anywhere durable, so the hash-only guarantee is untouched. The
+     * person reading it is the admin who just created the invitation and is
+     * already authorised to hold it.
+     *
+     * @return array<string, mixed>
+     */
+    protected function linkPayload(StaffInvitation $invitation, string $acceptUrl, bool $delivered): array
+    {
+        return [
+            'invite_link' => $acceptUrl,
+            'invite_email' => $invitation->email,
+            'invite_delivered' => $delivered,
+            $delivered ? 'success' : 'error' => $delivered
+                ? "Invitation created for {$invitation->email}."
+                : "The invitation for {$invitation->email} was created, but the email could not be sent. "
+                  .'Send them the link below instead.',
+        ];
     }
 
     public function destroy(StaffInvitation $invitation): RedirectResponse

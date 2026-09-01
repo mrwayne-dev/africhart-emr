@@ -16,6 +16,7 @@ use App\Http\Controllers\PatientController;
 use App\Http\Controllers\PatientQueueController;
 use App\Http\Controllers\PrescriptionController;
 use App\Http\Controllers\Settings\ClinicProfileController;
+use App\Http\Controllers\Settings\TeamController;
 use App\Http\Controllers\StaffController;
 use App\Http\Controllers\StaffInvitationController;
 use App\Http\Middleware\InitializeTenancyBySubdomain;
@@ -205,7 +206,13 @@ Route::domain('{clinic}.'.config('tenancy.root_domain'))->middleware([
 
         // --- Staff management (admin only) ---
         Route::middleware('role:admin')->group(function () {
-            Route::get('/staff', [StaffController::class, 'index'])->name('staff.index');
+            /*
+             * /staff is now Settings -> Team & Seats. Kept as a redirect rather
+             * than removed: it is in the sidebar's muscle memory and in any
+             * link already sent to an admin, and a 404 teaches nothing.
+             */
+            Route::redirect('/staff', '/settings/team')->name('staff.index');
+            Route::get('/settings/team', [TeamController::class, 'index'])->name('settings.team.index');
             Route::delete('/staff/{user}/deactivate', [StaffController::class, 'deactivate'])->name('staff.deactivate');
             Route::patch('/staff/{user}/reactivate', [StaffController::class, 'reactivate'])->withTrashed()->name('staff.reactivate');
 
@@ -221,10 +228,20 @@ Route::domain('{clinic}.'.config('tenancy.root_domain'))->middleware([
          * /settings redirects rather than rendering its own landing page: an
          * index that only lists the sections already in the left-hand nav is a
          * page whose entire content is its own navigation.
+         *
+         * ⚠️ The role:admin group is not decoration. This block previously sat
+         * BETWEEN two admin groups without being inside either, so the comment
+         * above said "admin only" while the middleware said nothing at all: a
+         * nurse could open Clinic Profile and rename the clinic, change the
+         * consultation fee, or edit the ID prefix. Caught by asking the browser
+         * what a nurse actually gets (403 on team, 200 on profile) rather than
+         * by reading the routes, where the two looked alike.
          */
-        Route::redirect('/settings', '/settings/profile')->name('settings.index');
-        Route::get('/settings/profile', [ClinicProfileController::class, 'edit'])->name('settings.profile.edit');
-        Route::put('/settings/profile', [ClinicProfileController::class, 'update'])->name('settings.profile.update');
+        Route::middleware('role:admin')->group(function () {
+            Route::redirect('/settings', '/settings/profile')->name('settings.index');
+            Route::get('/settings/profile', [ClinicProfileController::class, 'edit'])->name('settings.profile.edit');
+            Route::put('/settings/profile', [ClinicProfileController::class, 'update'])->name('settings.profile.update');
+        });
 
         // --- Drug catalog (admin only) ---
         Route::middleware('role:admin')->group(function () {
