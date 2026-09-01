@@ -31,6 +31,20 @@ class Setting extends Model
     public const CLINIC_EMAIL = 'clinic_email';
 
     /**
+     * The clinic's own timezone.
+     *
+     * Storage stays UTC — this is for deciding what "today" MEANS to a clinic.
+     * Dashboard counts and the daily queue numbering use whereDate(...,
+     * today()), and today() is the UTC day: a patient checked in at 00:30 WAT
+     * falls out of "today's queue" an hour later, and the daily queue_number
+     * sequence can reset mid-night. Africa/Lagos is the sane default and the
+     * only one any current clinic needs.
+     */
+    public const CLINIC_TIMEZONE = 'clinic_timezone';
+
+    public const DEFAULT_TIMEZONE = 'Africa/Lagos';
+
+    /**
      * Per-request memo, keyed by TENANT.
      *
      * The tenant key is part of the cache key and that is not decoration: one

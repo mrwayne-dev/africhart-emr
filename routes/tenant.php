@@ -15,6 +15,7 @@ use App\Http\Controllers\PasswordResetController;
 use App\Http\Controllers\PatientController;
 use App\Http\Controllers\PatientQueueController;
 use App\Http\Controllers\PrescriptionController;
+use App\Http\Controllers\Settings\ClinicProfileController;
 use App\Http\Controllers\StaffController;
 use App\Http\Controllers\StaffInvitationController;
 use App\Http\Middleware\InitializeTenancyBySubdomain;
@@ -213,6 +214,17 @@ Route::domain('{clinic}.'.config('tenancy.root_domain'))->middleware([
             Route::post('/staff/invitations', [StaffInvitationController::class, 'store'])->name('staff.invitations.store');
             Route::delete('/staff/invitations/{invitation}', [StaffInvitationController::class, 'destroy'])->name('staff.invitations.destroy');
         });
+
+        /*
+         * --- Settings hub (admin only) ---
+         *
+         * /settings redirects rather than rendering its own landing page: an
+         * index that only lists the sections already in the left-hand nav is a
+         * page whose entire content is its own navigation.
+         */
+        Route::redirect('/settings', '/settings/profile')->name('settings.index');
+        Route::get('/settings/profile', [ClinicProfileController::class, 'edit'])->name('settings.profile.edit');
+        Route::put('/settings/profile', [ClinicProfileController::class, 'update'])->name('settings.profile.update');
 
         // --- Drug catalog (admin only) ---
         Route::middleware('role:admin')->group(function () {

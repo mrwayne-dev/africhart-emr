@@ -84,6 +84,13 @@
                 Drug Catalog
             </a>
 
+            <a href="{{ route('settings.index') }}" @click="sidebarOpen = false"
+                class="flex items-center gap-3 px-3 py-2.5 rounded-card text-sm font-medium transition-colors
+                    {{ request()->routeIs('settings.*') ? 'bg-warm text-ink' : 'text-muted hover:bg-warm hover:text-ink' }}">
+                <x-phosphor-gear class="w-5 h-5" />
+                Settings
+            </a>
+
             <a href="{{ route('audit.index') }}" @click="sidebarOpen = false"
                 class="flex items-center gap-3 px-3 py-2.5 rounded-card text-sm font-medium transition-colors
                     {{ request()->routeIs('audit.*') ? 'bg-warm text-ink' : 'text-muted hover:bg-warm hover:text-ink' }}">
