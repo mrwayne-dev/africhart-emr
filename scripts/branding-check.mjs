@@ -8,15 +8,56 @@
  */
 import { chromium } from 'playwright-core';
 import { createHash } from 'node:crypto';
-import { readFileSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdtempSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { deflateSync } from 'node:zlib';
 
 const PORT = '8123';
-const S = process.env.SCRATCH;
+/*
+ * Fixtures are GENERATED, not read from a path someone has to prepare.
+ *
+ * This check previously loaded two PNGs from a scratch directory. When that
+ * directory was cleared the check failed with ENOENT and looked exactly like a
+ * regression in the app — which cost time to disprove. A verification script
+ * that cannot run twice on a clean machine is not a verification script.
+ */
+const S = mkdtempSync(join(tmpdir(), 'branding-check-'));
+
+const solidPng = (path, [r, g, b]) => {
+    const crcTable = Array.from({ length: 256 }, (_, n) => {
+        let c = n;
+        for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
+        return c >>> 0;
+    });
+    const crc = buf => {
+        let c = 0xffffffff;
+        for (const byte of buf) c = crcTable[(c ^ byte) & 0xff] ^ (c >>> 8);
+        return (c ^ 0xffffffff) >>> 0;
+    };
+    const chunk = (type, data) => {
+        const body = Buffer.concat([Buffer.from(type), data]);
+        const len = Buffer.alloc(4); len.writeUInt32BE(data.length);
+        const sum = Buffer.alloc(4); sum.writeUInt32BE(crc(body));
+        return Buffer.concat([len, body, sum]);
+    };
+    const w = 64, h = 64;
+    const ihdr = Buffer.alloc(13);
+    ihdr.writeUInt32BE(w, 0); ihdr.writeUInt32BE(h, 4);
+    ihdr[8] = 8; ihdr[9] = 2;
+    const row = Buffer.concat([Buffer.from([0]), Buffer.concat(Array(w).fill(Buffer.from([r, g, b])))]);
+    const raw = Buffer.concat(Array(h).fill(row));
+    writeFileSync(path, Buffer.concat([
+        Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+        chunk('IHDR', ihdr), chunk('IDAT', deflateSync(raw)), chunk('IEND', Buffer.alloc(0)),
+    ]));
+    return path;
+};
 const CLINICS = [
     { host: 'riverside.africhart-emr.test', admin: 'owner@riverside.test', nurse: 'nurse@riverside.test',
-      name: 'Riverside Family Practice', logo: `${S}/logo-riverside.png` },
+      name: 'Riverside Family Practice', logo: solidPng(join(S, 'riverside.png'), [200, 30, 30]) },
     { host: 'grace.africhart-emr.test', admin: 'admin@grace.test', nurse: 'nurse@grace.test',
-      name: 'Grace Medical Centre', logo: `${S}/logo-grace.png` },
+      name: 'Grace Medical Centre', logo: solidPng(join(S, 'grace.png'), [30, 90, 200]) },
 ];
 
 let failures = 0;

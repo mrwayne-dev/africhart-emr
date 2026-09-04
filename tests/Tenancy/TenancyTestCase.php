@@ -126,6 +126,22 @@ abstract class TenancyTestCase extends TestCase
 
         $this->provisioned[] = $database;
 
+        /*
+         * Treat a provisioned test clinic as already set up.
+         *
+         * PromptFirstRunSetup sends an admin of a fresh, patient-less clinic to
+         * the first-run wizard, and every clinic this helper makes is exactly
+         * that. Without this, any test that signs an admin in and expects to
+         * land somewhere gets a 302 to /setup instead — which is what happened
+         * to SessionIsolationTest's control assertion, where it read as a
+         * session-isolation failure and was nothing of the kind: the session
+         * worked perfectly and the request was simply redirected onward.
+         *
+         * Tests that are ABOUT the wizard clear this — see
+         * SetupWizardTest::asFreshClinic().
+         */
+        $this->inTenant($clinic, fn () => \App\Support\ClinicSetup::markComplete());
+
         return $clinic;
     }
 

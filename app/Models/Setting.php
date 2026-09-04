@@ -53,6 +53,16 @@ class Setting extends Model
 
     public const CLINIC_TIMEZONE = 'clinic_timezone';
 
+    /**
+     * When the first-run wizard was finished or dismissed.
+     *
+     * An explicit marker rather than inferring completeness from whether the
+     * settings happen to be filled. Inference cannot tell "not set up yet" from
+     * "set up, and this clinic genuinely has no address to print" — and it
+     * would nag the second clinic forever.
+     */
+    public const SETUP_COMPLETED_AT = 'setup_completed_at';
+
     public const DEFAULT_TIMEZONE = 'Africa/Lagos';
 
     /**

@@ -19,10 +19,12 @@ use App\Http\Controllers\PrescriptionController;
 use App\Http\Controllers\Settings\BrandingController;
 use App\Http\Controllers\Settings\CatalogueController;
 use App\Http\Controllers\Settings\ClinicProfileController;
+use App\Http\Controllers\Settings\SetupController;
 use App\Http\Controllers\Settings\TeamController;
 use App\Http\Controllers\StaffController;
 use App\Http\Controllers\StaffInvitationController;
 use App\Http\Middleware\InitializeTenancyBySubdomain;
+use App\Http\Middleware\PromptFirstRunSetup;
 use Illuminate\Support\Facades\Route;
 use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
 
@@ -126,7 +128,25 @@ Route::domain('{clinic}.'.config('tenancy.root_domain'))->middleware([
     });
 
     // --- Authenticated AND verified ---
-    Route::middleware(['auth', 'verified'])->group(function () {
+    Route::middleware(['auth', 'verified', PromptFirstRunSetup::class])->group(function () {
+        /*
+         * --- First-run setup wizard (admin only) ---
+         *
+         * Completes what tenant:create left: the profile fields it had no
+         * options for, this clinic's own drug prices, and the rest of the team.
+         * It never re-asks the clinic name (central, set at provisioning) and
+         * never re-issues the first admin's invitation — the person walking
+         * this IS that admin.
+         */
+        Route::middleware('role:admin')->group(function () {
+            Route::get('/setup', [SetupController::class, 'profile'])->name('setup.profile');
+            Route::post('/setup', [SetupController::class, 'storeProfile'])->name('setup.profile.store');
+            Route::get('/setup/drug-prices', [SetupController::class, 'catalogue'])->name('setup.catalogue');
+            Route::post('/setup/drug-prices', [SetupController::class, 'storeCatalogue'])->name('setup.catalogue.store');
+            Route::get('/setup/team', [SetupController::class, 'team'])->name('setup.team');
+            Route::post('/setup/complete', [SetupController::class, 'complete'])->name('setup.complete');
+        });
+
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
         /*
