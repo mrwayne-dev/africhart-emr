@@ -174,7 +174,7 @@ Everything clinical, plus the clinic's own staff and its own session/cache/job t
 | `jobs`, `job_batches`, `failed_jobs` | **Per D1.** Tenant-scoped work only |
 | `password_reset_tokens` | Per-tenant: a reset token is meaningless outside its clinic |
 | `personal_access_tokens` | Sanctum. Per-tenant — see the warning in §8.3 |
-| `settings` | New (A2). ID prefix, consultation fee, branding |
+| `settings` | New (A2), extended by B4. Key/value: `consultation_fee`, `clinic_address`, `clinic_phone`, `clinic_email`, `clinic_timezone`, `clinic_logo`, `setup_completed_at`. **Not the ID prefix** — that is central, see §12 item 6. New keys need no migration, which is how B4's additions reached existing tenants |
 
 ### 4.3 Migration split
 

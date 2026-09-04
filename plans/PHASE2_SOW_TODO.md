@@ -100,7 +100,7 @@ accommodate it.
 | **B1** | Subscription & billing `[NEW]` | ⬜ | **Design locked (D9–D17).** Nothing built yet |
 | **B2** | Plans, gating & metering `[NEW]` | ⬜ | Tiers designed, nothing built |
 | **B3** | Public marketing site `[NEW]` | ✅ | **Complete 2026-08-22** — 10 pages + 3 legal docs. See `PHASE2_PROGRESS_2026-08-22.md` |
-| **B4** | In-clinic account surfaces `[NEW]` | 🟡 | Two seams shipped; wizard + Settings hub absent |
+| **B4** | In-clinic account surfaces `[NEW]` | ✅🟡 | **Buildable scope COMPLETE 2026-09-04.** Settings hub, Clinic Profile, Team & Seats, Drug Catalogue, Branding, setup wizard, clinic identity. Three billing-dependent screens deferred to B1 |
 | **B5** | Super-admin panel `[NEW]` | ⬜ | **Unblocked.** `platform_admins` + the `admin` guard now exist |
 | **B6** | Product telemetry `[NEW]` | ⬜ | Not started |
 | **B7** | Compliance | 🟡 | Legal docs written 2026-08-22 (pending review). **The data-isolation guarantee is now DEMONSTRABLE** — the §6 suite is the evidence. Breach plan not written |
@@ -564,12 +564,59 @@ Root domain is reassigned at project end (settled). Built behind that.
 - [ ] Deferred to A1/A2: find-your-clinic (needs the registry) · `/invite/{token}` (needs
       per-clinic single-use tokens)
 
-#### B4. In-clinic account surfaces `[NEW]` ⬜🟡
-- [ ] First-run setup wizard (profile → fee → catalogue → invite staff → first patient)
-- [ ] Settings hub: Clinic Profile · Billing & Plan · Team & Seats · Branding · Drug Catalogue
-      (🟡 `/drug-catalog` and `/staff` already exist — fold them in)
-- [ ] Plan/usage visibility + upgrade prompts
-- [ ] Billing-state screens (trial ending, payment failed, read-only lockout)
+#### B4. In-clinic account surfaces `[NEW]` ✅🟡 — buildable scope COMPLETE 2026-09-04
+
+Commits `fd6e729` → `8f1fff4`. Tenancy suite **70/70, 358 assertions** (was 65).
+
+**Built**
+
+- [x] ✅ **Settings hub** — `<x-settings-shell>` + `<x-form-field>`, the latter extracted
+      VERBATIM from the app's existing input markup rather than invented, so the settings
+      screens are the same visual language and not a parallel one
+- [x] ✅ **Clinic Profile** — name and `id_prefix` write to CENTRAL `clinics`; address,
+      phone, email, fee and timezone to tenant `settings`. That split is decision 1, not
+      plumbing: a name is identity, and a second editable copy would drift from the
+      registry's. The prefix is editable only while the clinic has zero records — after
+      that it is read-only with the reason on screen, because it is already stamped into
+      every identifier issued
+- [x] ✅ **Clinic identity** — the on-screen invoice had NO clinic name while carrying a
+      Print button, so "Print" handed a patient an anonymous document while "Download PDF"
+      handed them a headed one. Fixed first as the sharpest instance. Page titles composed
+      in the layout (not 18 views), clinic name in the topbar (not 4 dashboards).
+      Vendor chrome deliberately untouched: sidebar, pre-auth layouts, API title
+- [x] ✅ **Timezone, stored and consumed** — the connection is pinned to UTC (`fd6e729`);
+      `todayRange()` makes "today" the CLINIC's day. Not cosmetic: `getNextQueueNumber()`
+      counts today's rows, so a Lagos clinic crossing UTC midnight could reissue a live
+      queue number
+- [x] ✅ **Team & Seats** — `/staff` folded in, not rebuilt. The invite link is now flashed
+      once on creation: it is stored only as a hash, so a failed or stubbed email used to
+      destroy the invitation outright. Seats are counted and displayed but **not enforced** —
+      a seat limit is a plan entitlement, and that is B2 behind B1
+- [x] ✅ **Drug Catalogue** — folded in; per-tenant since before B4 and left that way
+- [x] ✅ **Branding** — logo per-tenant in `storage/tenant<uuid>/`, served by OUR route.
+      NOT stancl's asset route, which is bound to `InitializeTenancyByDomain` and calls
+      `$tenant->domains()` — a relation `Clinic` does not have. That is the A6 defect
+      verbatim and was nearly reintroduced
+- [x] ✅ **First-run setup wizard** — fills only what `tenant:create` leaves undone,
+      measured against a real minimal provision. `setup_completed_at` is a key/value row,
+      so **no migration reaches existing tenants**
+
+**Deferred to B1 — cannot be built before billing exists**
+
+- [ ] ⬜ **Billing & Plan** settings section — listed in the hub but **shown disabled with a
+      reason**, deliberately rather than hidden: the dependency is then visible to an owner,
+      not merely recorded here
+- [ ] ⬜ Plan/usage visibility + upgrade prompts — needs D16's metering
+- [ ] ⬜ Billing-state screens (trial ending, payment failed, read-only lockout) — needs
+      D14's `clinics.status` webhook path
+
+**⚠️ Security fix inside this range — must lead the deploy notes.** Step 2 shipped the
+settings block sitting BETWEEN two `role:admin` groups and inside neither, under a comment
+reading "admin only". It looked gated, was documented as gated, and was not: **a nurse
+could rename the clinic, change the consultation fee, or edit the ID prefix.** Closed in
+`7a13f11`. The hole is live in production until this deploys. Found only by attempting the
+page AS the wrong role — every settings screen now carries a wrong-role-is-blocked check,
+because the gated and ungated blocks look alike in the routes file.
 
 #### B5. Super-admin panel `[NEW]` ⬜
 - [ ] ⚠️ **Get Started promises an email nobody sends — and nobody is told.**
